@@ -1,0 +1,15 @@
+# CP 数据处理器所需的包
+
+pandas>=1.0.0
+numpy>=1.18.0
+openpyxl>=3.0.0
+matplotlib>=3.0.0
+seaborn>=0.10.0
+# 根据需要添加其他依赖项，例如：
+# xlsxwriter>=1.0.0  # 用于写入 Excel 文件的替代方案
+# tkinter            # 通常随 Python 一起提供，用于文件对话框
+# pydantic>=1.8.0    # 可选，用于数据模型
+# Add other dependencies as needed, e.g.:
+# xlsxwriter>=1.0.0  # Alternative for writing Excel files
+# tkinter            # Usually included with Python, needed for file dialogs
+# pydantic>=1.8.0    # Optional, for data models 
