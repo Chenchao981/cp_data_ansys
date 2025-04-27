@@ -7,10 +7,20 @@ import re
 import pandas as pd
 import numpy as np
 from typing import List, Dict, Union, Optional, Tuple
+import io # 导入io模块
+import logging # 导入日志模块
+import sys # 添加系统模块
 
 from cp_data_processor.readers.base_reader import BaseReader
 from cp_data_processor.data_models.cp_data import CPLot, CPWafer, CPParameter
 
+logger = logging.getLogger(__name__) # 获取日志记录器
+# 设置日志级别为DEBUG以显示所有日志
+logger.setLevel(logging.DEBUG)
+# 确保日志输出到控制台
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.DEBUG)
+logger.addHandler(handler)
 
 class DCPReader(BaseReader):
     """
@@ -54,32 +64,106 @@ class DCPReader(BaseReader):
     def _extract_from_file(self, file_path: str, lot: CPLot) -> None:
         """
         从单个 DCP 格式文件中提取数据到 CPLot 对象。
-        
-        Args:
-            file_path: 要读取的文件路径
-            lot: 要填充的 CPLot 对象
+        针对特定格式的CP文件进行优化：表头在第7行，数据从第15行开始。
+        跳过LimitU, LimitL, Bias行。
         """
+        file_basename = os.path.basename(file_path)
+        logger.info(f"开始处理文件: {file_basename}")
+
         try:
-            # 读取制表符分隔的文本文件
-            df = pd.read_csv(file_path, sep='\t', encoding='utf-8')
-        except UnicodeDecodeError:
-            # 如果 UTF-8 解码失败，尝试其他编码
-            df = pd.read_csv(file_path, sep='\t', encoding='latin1')
+            # 直接以二进制模式读取文件，强制不使用解码
+            with open(file_path, 'rb') as f:
+                content = f.read()
+            
+            # 尝试解码
+            decoded = None
+            for encoding in ['utf-8', 'latin1', 'gbk']:
+                try:
+                    decoded = content.decode(encoding)
+                    logger.info(f"成功使用 {encoding} 解码")
+                    break
+                except:
+                    continue
+            
+            if decoded is None:
+                # 如果解码失败，强制使用latin1（不会引发解码错误）
+                decoded = content.decode('latin1', errors='replace')
+                logger.warning(f"无法使用标准编码解码，强制使用latin1替代字符")
+            
+            # 按行分割
+            lines = decoded.splitlines()
+            line_count = len(lines)
+            
+            if line_count < 16: # 需要至少16行（根据您提供的示例）
+                logger.error(f"文件行数不足: {line_count}行")
+                return
+            
+            # --- 硬编码表头和数据位置 ---
+            # 根据您提供的示例，第7行是表头，第15行之后是数据
+            header_line = lines[7] if line_count > 7 else None
+            data_lines = lines[15:] if line_count > 15 else []
+            
+            if not header_line:
+                logger.error("找不到表头行")
+                return
+                
+            if not data_lines:
+                logger.error("找不到数据行")
+                return
+            
+            # 日志输出前几行数据，帮助调试
+            logger.debug(f"表头行: {header_line[:100]}...")
+            for i, line in enumerate(data_lines[:3]):
+                logger.debug(f"数据行 {i+1}: {line[:100]}...")
+            
+            # 准备给Pandas的内容
+            cleaned_data = header_line + '\n' + '\n'.join([line for line in data_lines if line.strip()])
+            
+            # 创建StringIO对象
+            csv_data = io.StringIO(cleaned_data)
+            
+            # 使用pandas读取数据
+            df = pd.read_csv(
+                csv_data, 
+                sep='\t',          # 使用制表符分隔
+                header=0,          # 第一行为表头
+                engine='python',   # 使用Python引擎
+                skip_blank_lines=True,
+                on_bad_lines='warn'
+            )
+            
+            if df.empty:
+                logger.error("Pandas返回了空DataFrame")
+                return
+                
+            # 处理列名问题：确保所有列都有名称
+            df.columns = [f"Col{i}" if not col or pd.isna(col) else col for i, col in enumerate(df.columns)]
+            
+            # 清理列名中的空白
+            df.columns = df.columns.str.strip()
+            
+            logger.info(f"成功读取数据，形状: {df.shape}")
+            
+            # 初始化参数信息
+            if lot.param_count == 0:
+                self._setup_header_map(df)
+                self._add_param_info(df, lot)
+                logger.info(f"从文件提取了 {lot.param_count} 个参数信息")
+            
+            # 创建晶圆对象
+            wafer_id = self.extract_wafer_id(file_path)
+            wafer = self._create_wafer(df, wafer_id, file_path)
+            
+            # 添加到Lot
+            if wafer and wafer.chip_count > 0:
+                lot.wafers.append(wafer)
+                logger.info(f"成功添加晶圆 {wafer.wafer_id}，包含 {wafer.chip_count} 个芯片数据")
+            else:
+                logger.warning(f"晶圆数据无效或为空，已跳过")
+                
         except Exception as e:
-            print(f"读取文件 {file_path} 时出错: {e}")
+            logger.exception(f"处理文件 {file_path} 时出错: {str(e)}")
             return
-        
-        # 如果是第一个文件，提取参数信息
-        if lot.param_count == 0:
-            self._setup_header_map(df)
-            self._add_param_info(df, lot)
-        
-        # 提取晶圆数据
-        wafer_id = self.extract_wafer_id(file_path)
-        wafer = self._create_wafer(df, wafer_id, file_path)
-        
-        # 添加到 lot 中
-        lot.wafers.append(wafer)
     
     def _setup_header_map(self, df: pd.DataFrame) -> None:
         """设置列标题映射和参数列列表"""

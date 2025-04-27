@@ -6,17 +6,17 @@ from ..data_models.cp_data import CPParameter, CPWafer, CPLot
 class YieldAnalyzer(BaseAnalyzer):
     """CP数据良率分析器，用于计算各种良率指标"""
     
-    def __init__(self, data=None, bin_good=1, parameters=None):
+    def __init__(self, data=None, pass_bin=1, parameters=None):
         """
         初始化良率分析器
         
         Args:
             data: CP数据，可以是DataFrame、CPLot对象
-            bin_good: 良品的bin号，默认为1
+            pass_bin: 良品的bin号，默认为1
             parameters: 需要计算良率的参数列表，默认为None表示计算所有参数
         """
         super().__init__(data)
-        self.bin_good = bin_good
+        self.pass_bin = pass_bin
         self.parameters = parameters
         self.results = {
             'total_yield': 0.0,
@@ -33,7 +33,7 @@ class YieldAnalyzer(BaseAnalyzer):
         
         # 计算总体良率（基于bin号）
         total_dies = len(df)
-        good_dies = len(df[df['Bin'] == self.bin_good])
+        good_dies = len(df[df['Bin'] == self.pass_bin])
         self.results['total_yield'] = (good_dies / total_dies) * 100 if total_dies > 0 else 0
         
         # 计算每个晶圆的良率
@@ -41,7 +41,7 @@ class YieldAnalyzer(BaseAnalyzer):
             wafer_groups = df.groupby('Wafer')
             for wafer, group in wafer_groups:
                 wafer_dies = len(group)
-                wafer_good_dies = len(group[group['Bin'] == self.bin_good])
+                wafer_good_dies = len(group[group['Bin'] == self.pass_bin])
                 self.results['wafer_yields'][wafer] = (wafer_good_dies / wafer_dies) * 100 if wafer_dies > 0 else 0
         
         # 计算每个参数的良率（如果有上下限）

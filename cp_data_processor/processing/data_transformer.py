@@ -30,6 +30,16 @@ class DataTransformer:
         self.cp_lot = cp_lot
         self.calculated_params = {}  # 记录已计算的参数 {参数名: 参数对象}
     
+    @property
+    def data(self):
+        """
+        获取处理后的数据
+        
+        Returns:
+            pd.DataFrame 或 CPLot: 根据输入类型返回处理后的数据
+        """
+        return self.cp_lot
+    
     def add_calculated_parameter(self, 
                                  param_id: str, 
                                  formula: Union[str, Callable],

@@ -3,6 +3,7 @@ import pandas as pd
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import matplotlib.pyplot as plt
+import re # 导入正则表达式模块
 
 # 导入各功能模块
 from .readers import create_reader
@@ -128,24 +129,29 @@ class CPDataProcessorApp:
             ("Excel Files", "*.xlsx;*.xls")
         ]
         
-        filename = filedialog.askopenfilename(filetypes=filetypes)
-        if filename:
-            self.input_file.set(filename)
+        # 修改为支持多文件选择
+        filenames = filedialog.askopenfilenames(filetypes=filetypes)
+        if filenames:
+            # 将多个文件路径合并成一个字符串，用分号分隔
+            self.input_file.set(";".join(filenames))
             
-            # 根据文件扩展名推断测试类型
-            ext = os.path.splitext(filename)[1].lower()
-            if ext == '.txt' or ext == '.csv':
-                if 'dcp' in filename.lower():
-                    self.test_type.set("DCP格式")
-                else:
-                    self.test_type.set("CW格式")
+            # 根据第一个文件的扩展名推断测试类型
+            first_file = filenames[0]
+            ext = os.path.splitext(first_file)[1].lower()
+            if ext == '.txt':
+                self.test_type.set("DCP格式")
+            elif ext == '.csv':
+                self.test_type.set("CW格式")
             elif ext == '.xlsx' or ext == '.xls':
                 self.test_type.set("MEX格式")
             
-            # 根据文件名推断输出文件名
-            base_name = os.path.splitext(os.path.basename(filename))[0]
-            output_dir = os.path.dirname(filename)
-            self.output_file.set(os.path.join(output_dir, f"{base_name}_结果.xlsx"))
+            # 创建输出目录和输出文件名
+            first_base_name = os.path.splitext(os.path.basename(first_file))[0]
+            output_dir = os.path.join(os.path.dirname(first_file), f"{first_base_name}_结果")
+            # 确保输出目录存在
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
+            self.output_file.set(os.path.join(output_dir, f"{first_base_name}_结果.xlsx"))
     
     def _browse_output_file(self):
         """浏览输出文件"""
@@ -163,12 +169,21 @@ class CPDataProcessorApp:
     def _format_to_reader_type(self, format_str):
         """将显示格式转换为读取器类型"""
         if format_str == "DCP格式":
-            return "dcp"
+            return "DCP"
         elif format_str == "CW格式":
-            return "cw"
+            return "CW"
         elif format_str == "MEX格式":
-            return "mex"
-        return "dcp"  # 默认
+            return "MEX"
+        return "DCP"  # 默认
+    
+    def _sanitize_sheet_name(self, name: str) -> str:
+        """清理工作表名称，移除或替换Excel不允许的字符，并截断长度。"""
+        # 定义Excel不允许的字符: : \ / ? * [ ]
+        invalid_chars = r'[\\/\\?\\*\\:\\[\\\]]' # 正则表达式模式
+        # 将不允许的字符替换为下划线
+        sanitized_name = re.sub(invalid_chars, '_', name)
+        # 限制工作表名称长度为31个字符 (Excel限制)
+        return sanitized_name[:31]
     
     def _process_data(self):
         """处理数据"""
@@ -177,14 +192,27 @@ class CPDataProcessorApp:
             messagebox.showerror("错误", "请选择输入文件")
             return
         
-        if not os.path.exists(self.input_file.get()):
-            messagebox.showerror("错误", "输入文件不存在")
-            return
+        # 获取文件列表（可能是分号分隔的多个文件）
+        input_files = self.input_file.get().split(";")
+        for input_file in input_files:
+            if not os.path.exists(input_file):
+                messagebox.showerror("错误", f"输入文件不存在: {input_file}")
+                return
         
         # 检查输出文件
         if not self.output_file.get():
             messagebox.showerror("错误", "请指定输出文件")
             return
+        
+        # 确保输出目录存在
+        output_dir = os.path.dirname(self.output_file.get())
+        if not os.path.exists(output_dir):
+            try:
+                os.makedirs(output_dir)
+                self._log(f"创建输出目录: {output_dir}")
+            except Exception as e:
+                messagebox.showerror("错误", f"无法创建输出目录: {str(e)}")
+                return
         
         try:
             self.status_var.set("正在处理数据...")
@@ -195,98 +223,127 @@ class CPDataProcessorApp:
             
             # 创建读取器并读取数据
             self._log(f"使用 {self.test_type.get()} 读取器读取数据...")
-            reader = create_reader(reader_type)
-            self.data = reader.read(self.input_file.get())
-            
-            if isinstance(self.data, pd.DataFrame):
-                self._log(f"成功读取数据: {len(self.data)} 行, {len(self.data.columns)} 列")
-            else:
-                self._log(f"成功读取数据")
-            
-            # 应用数据转换
-            if self.add_cal_data.get():
-                self._log("正在添加计算数据...")
-                transformer = DataTransformer(self.data)
-                # 这里可以添加一些计算参数的代码
-                # 例如: transformer.add_calculated_parameter('新参数', lambda df: df['参数1'] + df['参数2'])
-                self.data = transformer.data
-            
-            # 进行数据分析
-            self._log("正在进行数据分析...")
-            
-            # 统计分析
-            stats_analyzer = StatsAnalyzer(self.data, by_wafer=True)
-            stats_results = stats_analyzer.analyze()
-            self._log(f"完成统计分析")
-            
-            # 良率分析
-            yield_analyzer = YieldAnalyzer(self.data)
-            yield_results = yield_analyzer.analyze()
-            self._log(f"完成良率分析: 总良率 {yield_results['total_yield']:.2f}%")
-            
-            # 创建Excel导出器
-            exporter = ExcelExporter()
-            
-            # 添加原始数据
-            exporter.add_dataframe(self.data, "原始数据")
-            
-            # 添加统计分析结果
-            summary_df = stats_analyzer.get_summary(format='dataframe')
-            exporter.add_dataframe(summary_df, "统计分析")
-            
-            # 添加良率分析结果
-            wafer_yield_df = pd.DataFrame({
-                '晶圆': list(yield_results['wafer_yields'].keys()),
-                '良率(%)': [round(y, 2) for y in yield_results['wafer_yields'].values()]
-            })
-            exporter.add_dataframe(wafer_yield_df, "良率分析")
-            
-            # 绘制图表
-            if self.show_boxplot.get():
-                self._log("正在生成箱形图...")
-                box_plotter = BoxPlotter(self.data)
-                fig_box = box_plotter.plot().fig
-                exporter.add_figure(fig_box, "箱形图")
-            
-            if self.show_bin_map.get() and 'X' in self.data.columns and 'Y' in self.data.columns:
-                self._log("正在生成晶圆Bin图...")
-                wafer_plotter = WaferMapPlotter(self.data)
-                fig_bin = wafer_plotter.plot().fig
-                exporter.add_figure(fig_bin, "晶圆Bin图")
-            
-            if self.show_data_color_map.get() and 'X' in self.data.columns and 'Y' in self.data.columns:
-                self._log("正在生成数据颜色图...")
-                # 选择第一个参数生成颜色图
-                exclude_cols = ['Wafer', 'Seq', 'Bin', 'X', 'Y']
-                params = [col for col in self.data.columns if col not in exclude_cols]
-                if params:
-                    wafer_plotter = WaferMapPlotter(self.data)
-                    fig_param = wafer_plotter.plot(parameter=params[0]).fig
-                    exporter.add_figure(fig_param, f"参数{params[0]}图")
-            
-            if self.show_scatter_plot.get():
-                self._log("正在生成散点图...")
-                # 选择前两个参数生成散点图
-                exclude_cols = ['Wafer', 'Seq', 'Bin', 'X', 'Y']
-                params = [col for col in self.data.columns if col not in exclude_cols]
-                if len(params) >= 2:
-                    scatter_plotter = ScatterPlotter(self.data)
-                    fig_scatter = scatter_plotter.plot(x_param=params[0], y_param=params[1]).fig
-                    exporter.add_figure(fig_scatter, f"{params[0]} vs {params[1]}")
-            
-            # 保存结果
-            self._log(f"正在保存结果到: {self.output_file.get()}")
-            success = exporter.save(self.output_file.get())
-            
-            if success:
-                self._log("数据处理完成")
-                self.status_var.set("处理完成")
-                messagebox.showinfo("完成", f"数据处理完成，结果已保存到:\n{self.output_file.get()}")
-            else:
-                self._log("保存结果失败")
-                self.status_var.set("保存失败")
-                messagebox.showerror("错误", "保存结果失败")
-            
+            try:
+                # 传递文件列表和明确的格式类型
+                reader = create_reader(
+                    file_paths=input_files,
+                    format_type=reader_type,
+                    multi_wafer=self.wafer_type.get() == "MPW"
+                )
+                cp_data = reader.read()
+                
+                # 根据返回类型处理数据
+                if isinstance(cp_data, pd.DataFrame):
+                    self.data = cp_data
+                    self._log(f"成功读取数据: {len(self.data)} 行, {len(self.data.columns)} 列")
+                else:
+                    # 假设是CPLot对象
+                    self._log(f"成功读取数据: {cp_data.wafer_count} 片晶圆, {cp_data.param_count} 个参数")
+                    self.data = cp_data
+                
+                # 应用数据转换
+                if self.add_cal_data.get():
+                    self._log("正在添加计算数据...")
+                    transformer = DataTransformer(self.data)
+                    # 这里可以添加一些计算参数的代码
+                    # 例如: transformer.add_calculated_parameter('新参数', lambda df: df['参数1'] + df['参数2'])
+                    transformer.add_standard_calculated_parameters()
+                    self.data = transformer.data
+                
+                # 进行数据分析
+                self._log("正在进行数据分析...")
+                
+                # 确保有合并后的数据用于分析
+                if not hasattr(self.data, 'combined_data') or self.data.combined_data is None or self.data.combined_data.empty:
+                    messagebox.showerror("错误", "没有可用于分析的数据。请检查文件读取是否成功。")
+                    self._log("错误：无法分析数据，因为合并数据为空。")
+                    self.status_var.set("分析错误")
+                    return
+                    
+                analysis_df = self.data.combined_data
+                
+                # 统计分析
+                stats_analyzer = StatsAnalyzer(analysis_df, by_wafer=True)
+                stats_results = stats_analyzer.analyze()
+                self._log(f"完成统计分析")
+                
+                # 良率分析
+                yield_analyzer = YieldAnalyzer(analysis_df, pass_bin=self.data.pass_bin)
+                yield_results = yield_analyzer.analyze()
+                self._log(f"完成良率分析: 总良率 {yield_results['total_yield']:.2f}%")
+                
+                # 创建Excel导出器
+                exporter = ExcelExporter()
+                
+                # 添加原始数据
+                exporter.add_dataframe(analysis_df, "原始数据")
+                
+                # 添加统计分析结果
+                summary_df = stats_analyzer.get_summary(format='dataframe')
+                exporter.add_dataframe(summary_df, "统计分析")
+                
+                # 添加良率分析结果
+                wafer_yield_df = pd.DataFrame({
+                    '晶圆': list(yield_results['wafer_yields'].keys()),
+                    '良率(%)': [round(y, 2) for y in yield_results['wafer_yields'].values()]
+                })
+                exporter.add_dataframe(wafer_yield_df, "良率分析")
+                
+                # 绘制图表
+                if self.show_boxplot.get():
+                    self._log("正在生成箱形图...")
+                    box_plotter = BoxPlotter(analysis_df)
+                    fig_box = box_plotter.plot().fig
+                    # 清理工作表名
+                    sheet_name = self._sanitize_sheet_name("箱形图")
+                    exporter.add_figure(fig_box, sheet_name)
+                
+                if self.show_bin_map.get() and 'X' in analysis_df.columns and 'Y' in analysis_df.columns:
+                    self._log("正在生成晶圆Bin图...")
+                    wafer_plotter = WaferMapPlotter(analysis_df)
+                    fig_bin = wafer_plotter.plot().fig
+                    # 清理工作表名
+                    sheet_name = self._sanitize_sheet_name("晶圆Bin图")
+                    exporter.add_figure(fig_bin, sheet_name)
+                
+                if self.show_data_color_map.get() and 'X' in analysis_df.columns and 'Y' in analysis_df.columns:
+                    self._log("正在生成数据颜色图...")
+                    exclude_cols = ['Wafer', 'Seq', 'Bin', 'X', 'Y']
+                    params = [col for col in analysis_df.columns if col not in exclude_cols]
+                    if params:
+                        param_name = params[0]
+                        wafer_plotter = WaferMapPlotter(analysis_df)
+                        fig_param = wafer_plotter.plot(parameter=param_name).fig
+                        # 清理工作表名 (包含参数名)
+                        sheet_name = self._sanitize_sheet_name(f"参数{param_name}图")
+                        exporter.add_figure(fig_param, sheet_name)
+                
+                if self.show_scatter_plot.get() and 'X' in analysis_df.columns and 'Y' in analysis_df.columns:
+                    self._log("正在生成散点图...")
+                    exclude_cols = ['Wafer', 'Seq', 'Bin', 'X', 'Y']
+                    params = [col for col in analysis_df.columns if col not in exclude_cols]
+                    if len(params) >= 2:
+                        param_x = params[0]
+                        param_y = params[1]
+                        scatter_plotter = ScatterPlotter(analysis_df)
+                        fig_scatter = scatter_plotter.plot(x_param=param_x, y_param=param_y).fig
+                        # 清理工作表名 (包含两个参数名)
+                        sheet_name = self._sanitize_sheet_name(f"{param_x}_vs_{param_y}")
+                        exporter.add_figure(fig_scatter, sheet_name)
+                
+                # 导出到Excel文件
+                self._log(f"正在导出Excel文件: {self.output_file.get()}")
+                exporter.save(self.output_file.get())
+                
+                self.status_var.set("数据处理完成")
+                self._log("处理完成!")
+                messagebox.showinfo("完成", "数据处理已完成!")
+                
+            except Exception as e:
+                self._log(f"处理过程中出错: {str(e)}")
+                self.status_var.set("处理出错")
+                messagebox.showerror("错误", f"处理数据时出错: {str(e)}")
+                
         except Exception as e:
             self._log(f"处理过程中出错: {str(e)}")
             self.status_var.set("处理出错")
