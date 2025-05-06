@@ -64,7 +64,7 @@ class DCPReader(BaseReader):
     def _extract_from_file(self, file_path: str, lot: CPLot) -> None:
         """
         从单个 DCP 格式文件中提取数据到 CPLot 对象。
-        针对特定格式的CP文件进行优化：表头在第7行，数据从第15行开始。
+        针对特定格式的CP文件进行优化：表头在第6行，数据从第15行开始。
         跳过LimitU, LimitL, Bias行。
         """
         file_basename = os.path.basename(file_path)
@@ -99,8 +99,8 @@ class DCPReader(BaseReader):
                 return
             
             # --- 硬编码表头和数据位置 ---
-            # 根据您提供的示例，第7行是表头，第15行之后是数据
-            header_line = lines[7] if line_count > 7 else None
+            # 根据您提供的示例，第6行是表头，第15行之后是数据
+            header_line = lines[6] if line_count > 7 else None
             data_lines = lines[15:] if line_count > 15 else []
             
             if not header_line:

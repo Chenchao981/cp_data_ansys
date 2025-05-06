@@ -273,6 +273,17 @@ plotter.save('box_plot.png')
    - 错误处理和状态代码
    - 日志输出控制
 
+### 模块化与功能完善 (日期: 2024-05-06)
+
+本次迭代主要关注模块化重构和功能完善：
+
+1.  **散点图功能**: 添加了 `python_cp/plotting/scatter_plot.py` 模块，用于根据配置生成参数间的散点图，并将结果输出到 Excel 文件。主流程 (`main_processor.py`) 已更新，可通过配置文件 (`scatter_plot_configs`, `plot_scatter_plot`) 控制此功能。
+2.  **Yield 计算器重构**: 将良率计算逻辑从 `数据类型定义.py` 中提取到独立的 `python_cp/yield_calculator.py` 模块，提高了模块的内聚性。相关的 Excel 导出逻辑 (`excel_exporter.py`) 已更新为调用新模块。
+3.  **Reader 模块整理**: 创建了 `python_cp/readers/` 子目录，并将 `CWReader`, `MEXReader`, `DCPReader` 相关代码和文档移入该目录，统一管理数据读取器。
+4.  **启用 DCP 读取器**: 在主流程 (`main_processor.py`) 中取消了对 `DCPReader` 相关代码的注释，现在可以通过命令行参数 `--format DCP` 来使用 DCP 格式读取功能。
+5.  **通用代码整合**: 移除了冗余的 `通用代码.py` 模块。将其中的核心通用函数（如唯一名称生成、成对字符内容提取、单位转换等）整合进了 `通用工具函数.py`，并更新了 `CWReader` 和 `MEXReader` 以使用整合后的函数。
+6.  **文档修复**: 修正了 `wafer_map.md`, `boxplot.md`, `mex_reader.md` 等 Markdown 文件中的换行符问题，提高了文档的可读性。
+
 ## 使用说明
 
 ### 图形界面使用
