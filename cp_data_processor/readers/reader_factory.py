@@ -10,6 +10,7 @@ from cp_data_processor.readers.base_reader import BaseReader
 from cp_data_processor.readers.cw_reader import CWReader
 from cp_data_processor.readers.dcp_reader import DCPReader
 from cp_data_processor.readers.mex_reader import MEXReader
+from cp_data_processor.readers.excel_txt_reader import ExcelTXTReader
 
 # 获取日志记录器
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ def create_reader(file_paths: Union[str, List[str]],
     
     Args:
         file_paths: 要读取的文件路径，可以是单个字符串或字符串列表
-        format_type: 指定的格式类型 ('CW', 'CWSW', 'CWMW', 'DCP', 'MEX')，如果为 None 则自动判断
+        format_type: 指定的格式类型 ('CW', 'CWSW', 'CWMW', 'DCP', 'MEX', 'ETXT')，如果为 None 则自动判断
         pass_bin: 表示通过的 Bin 值，默认为 1
         multi_wafer: 对于 CW 格式，是否为多晶圆模式
         
@@ -38,7 +39,7 @@ def create_reader(file_paths: Union[str, List[str]],
     paths = [file_paths] if isinstance(file_paths, str) else file_paths
     
     # 确保format_type是大写并且是有效类型
-    valid_formats = ['CW', 'CWSW', 'CWMW', 'DCP', 'MEX']
+    valid_formats = ['CW', 'CWSW', 'CWMW', 'DCP', 'MEX', 'ETXT']
     
     # 如果指定了格式类型，直接使用
     if format_type is not None:
@@ -81,7 +82,12 @@ def create_reader(file_paths: Union[str, List[str]],
         if extension == '.csv':
             format_type = 'CWMW' if multi_wafer else 'CWSW'
         elif extension == '.txt':
-            format_type = 'DCP'
+            # 检查是否为Excel格式的TXT文件
+            if ExcelTXTReader.is_excel_format(file_path):
+                format_type = 'ETXT'
+                logger.info("检测到Excel格式的TXT文件")
+            else:
+                format_type = 'DCP'
         elif extension in ['.xls', '.xlsx']:
             format_type = 'MEX'
         else:
@@ -101,6 +107,8 @@ def create_reader(file_paths: Union[str, List[str]],
         return DCPReader(paths, pass_bin)
     elif format_type == 'MEX':
         return MEXReader(paths, pass_bin)
+    elif format_type == 'ETXT':
+        return ExcelTXTReader(paths, pass_bin)
     else:
         error_msg = f"不支持的格式类型: {format_type}"
         logger.error(error_msg)
