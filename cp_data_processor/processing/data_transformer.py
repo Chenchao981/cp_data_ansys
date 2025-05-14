@@ -177,60 +177,91 @@ class DataTransformer:
             outlier_method: 检测异常值的方法，可选 'std_dev'（标准差法）、'iqr'（四分位法）
             std_dev_threshold: 使用标准差法时，超过均值多少个标准差视为异常值
         """
+        print(f"开始数据清洗（{outlier_method}方法处理异常值）...")
+        
+        # 确保combined_data存在并有数据
         if self.cp_lot.combined_data is None or self.cp_lot.combined_data.empty:
-            return
+            # 如果没有，尝试合并数据
+            print("合并晶圆数据...")
+            self.cp_lot.combine_data_from_wafers()
+            
+            # 再次检查合并后的数据
+            if self.cp_lot.combined_data is None or self.cp_lot.combined_data.empty:
+                print("没有可用的数据，无法进行清洗")
+                return
         
         # 获取所有数值参数的列表
         numeric_params = []
         for param in self.cp_lot.params:
-            if param.id in self.cp_lot.combined_data.columns:
-                if np.issubdtype(self.cp_lot.combined_data[param.id].dtype, np.number):
-                    numeric_params.append(param.id)
+            try:
+                if param.id in self.cp_lot.combined_data.columns:
+                    # 安全检查列的数据类型
+                    param_series = self.cp_lot.combined_data[param.id]
+                    if pd.api.types.is_numeric_dtype(param_series) and not param_series.empty:
+                        numeric_params.append(param.id)
+            except Exception as e:
+                print(f"检查参数 {param.id} 时出错: {e}")
+                continue
+        
+        print(f"找到 {len(numeric_params)} 个数值参数进行清洗")
         
         # 对每个参数处理异常值
         for param_id in numeric_params:
-            if outlier_method == 'std_dev':
-                # 标准差法
-                param_values = self.cp_lot.combined_data[param_id]
-                valid_values = param_values.dropna()
+            try:
+                if outlier_method == 'std_dev':
+                    # 标准差法
+                    param_values = self.cp_lot.combined_data[param_id]
+                    valid_values = param_values.dropna()
+                    
+                    if not valid_values.empty:
+                        mean = valid_values.mean()
+                        std_dev = valid_values.std()
+                        
+                        # 将异常值替换为 NaN
+                        lower_bound = mean - std_dev_threshold * std_dev
+                        upper_bound = mean + std_dev_threshold * std_dev
+                        
+                        # 标记异常值
+                        outliers = (param_values < lower_bound) | (param_values > upper_bound)
+                        outlier_count = outliers.sum()
+                        
+                        # 替换异常值
+                        self.cp_lot.combined_data.loc[outliers, param_id] = np.nan
+                        print(f"参数 {param_id}: 检测到 {outlier_count} 个异常值 (超出均值±{std_dev_threshold}倍标准差)")
                 
-                if not valid_values.empty:
-                    mean = valid_values.mean()
-                    std_dev = valid_values.std()
+                elif outlier_method == 'iqr':
+                    # 四分位法
+                    param_values = self.cp_lot.combined_data[param_id]
+                    valid_values = param_values.dropna()
                     
-                    # 将异常值替换为 NaN
-                    lower_bound = mean - std_dev_threshold * std_dev
-                    upper_bound = mean + std_dev_threshold * std_dev
-                    
-                    # 标记异常值
-                    outliers = (param_values < lower_bound) | (param_values > upper_bound)
-                    
-                    # 替换异常值
-                    self.cp_lot.combined_data.loc[outliers, param_id] = np.nan
-            
-            elif outlier_method == 'iqr':
-                # 四分位法
-                param_values = self.cp_lot.combined_data[param_id]
-                valid_values = param_values.dropna()
-                
-                if not valid_values.empty:
-                    q1 = valid_values.quantile(0.25)
-                    q3 = valid_values.quantile(0.75)
-                    iqr = q3 - q1
-                    
-                    # 将异常值替换为 NaN
-                    lower_bound = q1 - 1.5 * iqr
-                    upper_bound = q3 + 1.5 * iqr
-                    
-                    # 标记异常值
-                    outliers = (param_values < lower_bound) | (param_values > upper_bound)
-                    
-                    # 替换异常值
-                    self.cp_lot.combined_data.loc[outliers, param_id] = np.nan
+                    if not valid_values.empty:
+                        q1 = valid_values.quantile(0.25)
+                        q3 = valid_values.quantile(0.75)
+                        iqr = q3 - q1
+                        
+                        # 将异常值替换为 NaN
+                        lower_bound = q1 - 1.5 * iqr
+                        upper_bound = q3 + 1.5 * iqr
+                        
+                        # 标记异常值
+                        outliers = (param_values < lower_bound) | (param_values > upper_bound)
+                        outlier_count = outliers.sum()
+                        
+                        # 替换异常值
+                        self.cp_lot.combined_data.loc[outliers, param_id] = np.nan
+                        print(f"参数 {param_id}: 检测到 {outlier_count} 个异常值 (IQR方法)")
+            except Exception as e:
+                print(f"处理参数 {param_id} 时出错: {e}")
+                continue
         
         # 更新晶圆的 chip_data
         for param_id in numeric_params:
-            self._update_wafer_chip_data(param_id)
+            try:
+                self._update_wafer_chip_data(param_id)
+            except Exception as e:
+                print(f"更新晶圆数据 {param_id} 时出错: {e}")
+        
+        print("数据清洗完成")
     
     def normalize_parameters(self, method: str = 'min_max') -> None:
         """
