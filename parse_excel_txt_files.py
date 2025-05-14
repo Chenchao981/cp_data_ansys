@@ -160,22 +160,18 @@ def parse_directory(directory_path):
 
 def main():
     """主函数"""
-    # 允许用户指定路径，或者使用默认路径
     if len(sys.argv) > 1:
         # 使用命令行参数指定的路径
         directory_path = sys.argv[1]
     else:
-        # 使用默认路径（项目内的示例数据）
-        directory_path = os.path.join(current_dir, "data", "FA53-5465-305A-250303@203_001")
+        # 默认使用项目根目录下的 "data" 文件夹
+        directory_path = os.path.join(current_dir, "data")
         
-        # 如果默认路径不存在，尝试D盘的路径
+        # 检查默认路径是否存在，如果不存在则提示用户并退出
         if not os.path.exists(directory_path):
-            directory_path = r"D:\data\rawdata\FA53-5465-305A-250303@203_001"
-            
-            # 如果D盘路径也不存在，再尝试其他可能的路径
-            if not os.path.exists(directory_path):
-                # 尝试在原始命令行参数指定的路径
-                directory_path = r"D:\cp_data_ansys\data\FA53-5465-305A-250303@203_001"
+            logger.error(f"默认数据目录 {directory_path} 不存在。请创建该目录并放入数据文件，或通过命令行参数指定有效的数据目录路径。")
+            print(f"错误: 默认数据目录 {directory_path} 不存在。请创建该目录并放入数据文件，或通过命令行参数指定有效的数据目录路径。")
+            sys.exit(1)
     
     # 解析指定目录
     print(f"开始解析目录: {directory_path}")

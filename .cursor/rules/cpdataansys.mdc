@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+./vbas 是参考程序。不参与python程序分析
+
+./data 文件夹是示例数据存放位置
+
+
