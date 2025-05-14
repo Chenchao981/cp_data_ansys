@@ -331,32 +331,57 @@ class ExcelTXTReader(BaseReader):
 
     @staticmethod
     def is_excel_format(file_path: str) -> bool:
-        """
-        检查文件是否为Excel格式（即使扩展名是.TXT）
-        
-        Args:
-            file_path: 要检查的文件路径
-            
-        Returns:
-            bool: 如果文件是Excel格式，返回True；否则返回False
-        """
+        logger.debug(f"is_excel_format: Checking file {file_path}")
         try:
-            # 尝试读取文件的前几个字节
-            with open(file_path, 'rb') as f:
-                header = f.read(8)  # 读取前8个字节
-            
-            # 检查是否为Office XML格式的特征（以"PK"开头）
-            if header.startswith(b'PK'):
-                return True
-            
-            # 尝试使用pandas读取
+            # 1. 检查 'PK' 头 (现代 Office XML .xlsx)
             try:
-                # 尝试读取前几行
-                pd.read_excel(file_path, nrows=5)
+                with open(file_path, 'rb') as f:
+                    header = f.read(2)
+                    if header == b'PK':
+                        logger.debug(f"is_excel_format: File {file_path} has 'PK' header. Likely .xlsx structure.")
+                        # 进一步确认是否能被 openpyxl 读取元数据
+                        try:
+                            pd.read_excel(file_path, nrows=0, engine='openpyxl')
+                            logger.debug(f"is_excel_format: Confirmed .xlsx structure with openpyxl for {file_path}. Returning True.")
+                            return True
+                        except Exception as e_openpyxl_pk:
+                            logger.warning(f"is_excel_format: PK header found, but openpyxl failed for {file_path}: {type(e_openpyxl_pk).__name__} - {e_openpyxl_pk}")
+                            # 继续尝试其他引擎或方法
+                            pass 
+            except FileNotFoundError: # open itself might fail
+                logger.error(f"is_excel_format: FileNotFoundError (during PK check) for {file_path}.")
+                return False # 如果文件不存在，则无法继续
+            except Exception as e_pk_check: # 其他打开文件的错误
+                logger.error(f"is_excel_format: Error during PK check for {file_path}: {type(e_pk_check).__name__} - {e_pk_check}")
+                pass # 继续尝试其他引擎
+
+            logger.debug(f"is_excel_format: PK check did not confirm Excel, or openpyxl failed after PK for {file_path}.")
+
+            # 2. 尝试 openpyxl (以防是非PK开头的xlsx变体，或作为主要尝试)
+            try:
+                logger.debug(f"is_excel_format: Attempting pd.read_excel(nrows=0, engine='openpyxl') for {file_path}")
+                pd.read_excel(file_path, nrows=0, engine='openpyxl')
+                logger.debug(f"is_excel_format: pd.read_excel with openpyxl SUCCEEDED for {file_path}. Returning True.")
                 return True
-            except:
-                pass
-                
+            except Exception as e_openpyxl_direct:
+                logger.debug(f"is_excel_format: pd.read_excel with openpyxl FAILED for {file_path}: {type(e_openpyxl_direct).__name__} - {e_openpyxl_direct}")
+                # 如果是 BadZipFile，则几乎肯定不是 openpyxl 能处理的，但还是会尝试xlrd
+                pass 
+
+            # 3. 尝试 xlrd (用于旧版 .xls 二进制格式)
+            try:
+                logger.debug(f"is_excel_format: Attempting pd.read_excel(nrows=0, engine='xlrd') for {file_path}")
+                pd.read_excel(file_path, nrows=0, engine='xlrd')
+                logger.debug(f"is_excel_format: pd.read_excel with xlrd SUCCEEDED for {file_path}. Returning True.")
+                return True
+            except Exception as e_xlrd:
+                logger.debug(f"is_excel_format: pd.read_excel with xlrd FAILED for {file_path}: {type(e_xlrd).__name__} - {e_xlrd}")
+                # xlrd 可能会对非xls文件抛出 XLRDError 或 ValueError
+                pass 
+
+            logger.debug(f"is_excel_format: All Excel checks FAILED for {file_path}. Returning False.")
             return False
-        except:
+
+        except Exception as e_outer: # 捕获其他非常意外的外部错误
+            logger.error(f"is_excel_format: Outer generic exception for {file_path}: {type(e_outer).__name__} - {e_outer}")
             return False 
