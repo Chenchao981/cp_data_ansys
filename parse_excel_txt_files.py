@@ -38,22 +38,42 @@ def collect_wafer_data(lot: CPLot) -> pd.DataFrame:
     
     for wafer in lot.wafers:
         if hasattr(wafer, 'chip_data') and wafer.chip_data is not None:
-            # 添加Wafer ID和Bin列
+            # 添加Wafer ID和基本信息列
             df = wafer.chip_data.copy()
-            df['WaferID'] = wafer.wafer_id
             
-            # 如果有X,Y坐标，添加到数据中
+            # 正确命名晶圆ID列为Wafer
+            df['Wafer'] = wafer.wafer_id
+            
+            # 确保X,Y,Bin,Seq列存在并添加到数据中
+            if hasattr(wafer, 'seq') and wafer.seq is not None:
+                df['Seq'] = wafer.seq
             if hasattr(wafer, 'x') and wafer.x is not None:
                 df['X'] = wafer.x
             if hasattr(wafer, 'y') and wafer.y is not None:
                 df['Y'] = wafer.y
             if hasattr(wafer, 'bin') and wafer.bin is not None:
                 df['Bin'] = wafer.bin
+            
+            # 确保CONT和No.U列存在
+            if 'CONT' not in df.columns:
+                df['CONT'] = ''
+            if 'No.U' not in df.columns:
+                df['No.U'] = 1
+                
+            # 添加source_lot_id作为参考
+            if hasattr(wafer, 'source_lot_id') and wafer.source_lot_id is not None:
+                df['source_lot_id'] = wafer.source_lot_id
                 
             all_data.append(df)
     
     if all_data:
-        return pd.concat(all_data, ignore_index=True)
+        combined_df = pd.concat(all_data, ignore_index=True)
+        
+        # 确保列名符合预期格式
+        if 'WaferID' in combined_df.columns and 'Wafer' not in combined_df.columns:
+            combined_df = combined_df.rename(columns={'WaferID': 'Wafer'})
+            
+        return combined_df
     return pd.DataFrame()
 
 def print_lot_info(lot: CPLot):

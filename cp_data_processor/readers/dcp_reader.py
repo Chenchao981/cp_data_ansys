@@ -48,24 +48,94 @@ class DCPReader(BaseReader):
             CPLot: 包含所有读取数据的 CPLot 对象
         """
         # 创建新的 CPLot 对象
-        lot_id = self.extract_lot_id(self.file_paths[0]) if self.file_paths else "UnknownLot"
-        self.lot = CPLot(lot_id=lot_id, pass_bin=self.pass_bin)
+        # lot_id 的初始化将推迟到第一个文件被解析时，基于其R2C2内容
+        self.lot = CPLot(lot_id="UnknownLot_Initial", pass_bin=self.pass_bin) 
         
-        # 遍历所有文件
+        first_file_processed = False
         for file_path in self.file_paths:
-            self._extract_from_file(file_path, self.lot)
+            lot_id_from_r2c2, wafer_id_from_r3c2 = self._extract_ids_from_r2c2_r2c3(file_path)
+            
+            if not first_file_processed and lot_id_from_r2c2:
+                # 使用第一个文件的R2C2 LotID作为整个批次的ID
+                self.lot.lot_id = lot_id_from_r2c2
+                first_file_processed = True
+
+            self._extract_from_file(file_path, self.lot, lot_id_from_r2c2, wafer_id_from_r3c2)
         
+        if not first_file_processed: # 如果没有成功处理任何文件以设置lot_id
+             self.lot.lot_id = self.extract_lot_id(self.file_paths[0]) if self.file_paths else "UnknownLot_Fallback"
+
         # 更新计数并合并数据
         self.lot.update_counts()
         self.lot.combine_data_from_wafers()
         
         return self.lot
     
-    def _extract_from_file(self, file_path: str, lot: CPLot) -> None:
+    def _extract_ids_from_r2c2_r2c3(self, file_path: str) -> Tuple[Optional[str], Optional[str]]:
+        """
+        从文件的第二行第二列和第三行第二列提取LotID和WaferID。
+        
+        Returns:
+            Tuple[Optional[str], Optional[str]]: (lot_id_r2c2, wafer_id_r3c2)
+        """
+        lot_id_r2c2 = None
+        wafer_id_r3c2 = None
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                try:
+                    lines = f.readlines()
+                except Exception as e:
+                    logger.error(f"读取文件时出错: {e}，尝试二进制读取")
+                    with open(file_path, 'rb') as f2:
+                        content = f2.read()
+                        # 尝试不同编码
+                        for encoding in ['utf-8', 'latin1', 'gbk']:
+                            try:
+                                lines = content.decode(encoding).splitlines()
+                                logger.info(f"成功使用{encoding}解码文件")
+                                break
+                            except UnicodeDecodeError:
+                                continue
+                        else:
+                            # 如果所有编码都失败，使用replace模式
+                            lines = content.decode('latin1', errors='replace').splitlines()
+            
+            logger.debug(f"文件的前三行内容：")
+            for i in range(min(3, len(lines))):
+                logger.debug(f"行 {i+1}: {lines[i]}")
+            
+            # 提取第二行第二列的LotID
+            if len(lines) >= 2:
+                # 尝试不同的分隔符
+                for sep in ['\t', '\\t', ' ', ',']:
+                    parts = lines[1].split(sep)
+                    if len(parts) >= 2:
+                        lot_id_r2c2 = parts[1].strip()
+                        logger.debug(f"使用分隔符 '{sep}' 从R2C2提取到LotID: {lot_id_r2c2}")
+                        break
+            
+            # 提取第三行第二列的WaferID
+            if len(lines) >= 3:
+                # 尝试不同的分隔符
+                for sep in ['\t', '\\t', ' ', ',']:
+                    parts = lines[2].split(sep)
+                    if len(parts) >= 2:
+                        wafer_id_r3c2 = parts[1].strip()
+                        logger.debug(f"使用分隔符 '{sep}' 从R3C2提取到WaferID: {wafer_id_r3c2}")
+                        break
+            
+            if len(lines) < 3:
+                logger.warning(f"文件 {os.path.basename(file_path)} 行数不足3行，无法提取完整ID信息。")
+
+        except Exception as e:
+            logger.error(f"从文件 {os.path.basename(file_path)} 提取ID时出错: {e}")
+        
+        return lot_id_r2c2, wafer_id_r3c2
+    
+    def _extract_from_file(self, file_path: str, lot: CPLot, lot_id_r2c2: Optional[str], wafer_id_r3c2: Optional[str]) -> None:
         """
         从单个 DCP 格式文件中提取数据到 CPLot 对象。
-        针对特定格式的CP文件进行优化：表头在第6行，数据从第15行开始。
-        跳过LimitU, LimitL, Bias行。
+        使用从R2C2/R2C3预先提取的ID。
         """
         file_basename = os.path.basename(file_path)
         logger.info(f"开始处理文件: {file_basename}")
@@ -98,6 +168,26 @@ class DCPReader(BaseReader):
                 logger.error(f"文件行数不足: {line_count}行")
                 return
             
+            # --- LotID 和 WaferID 从参数传入，不再依赖文件名提取 ---
+            current_wafer_id = wafer_id_r3c2
+
+            if not current_wafer_id: # 如果从R2C3未能提取到wafer_id，则尝试从文件名后备
+                current_wafer_id = self.extract_wafer_id(file_path)
+                logger.warning(f"未能从 {file_basename} 的R2C3提取WaferID，回退到从文件名提取: {current_wafer_id}")
+            
+            # 格式化wafer_id为"250303@203_001"形式
+            if wafer_id_r3c2 and lot_id_r2c2:
+                # 提取lot_id中的编号部分
+                lot_parts = lot_id_r2c2.split('-')
+                if len(lot_parts) > 2 and '@' in lot_parts[2]:
+                    wafer_part = lot_parts[2].split('@')[0]
+                    site_part = lot_parts[2].split('@')[1]
+                    formatted_wafer_id = f"{wafer_part}@{site_part}_{wafer_id_r3c2.zfill(3)}"
+                    current_wafer_id = formatted_wafer_id
+            
+            if not lot_id_r2c2:
+                 logger.warning(f"未能从 {file_basename} 的R2C2提取LotID。CPWafer.source_lot_id 将为 None。")
+
             # --- 硬编码表头和数据位置 ---
             # 根据您提供的示例，第6行是表头，第15行之后是数据
             header_line = lines[6] if line_count > 7 else None
@@ -122,15 +212,18 @@ class DCPReader(BaseReader):
             # 创建StringIO对象
             csv_data = io.StringIO(cleaned_data)
             
-            # 使用pandas读取数据
-            df = pd.read_csv(
-                csv_data, 
-                sep='\t',          # 使用制表符分隔
-                header=0,          # 第一行为表头
-                engine='python',   # 使用Python引擎
-                skip_blank_lines=True,
-                on_bad_lines='warn'
-            )
+            # 尝试使用pandas读取数据
+            try:
+                # 假设是制表符分隔的数据
+                df = pd.read_csv(csv_data, sep='\t')
+            except:
+                try:
+                    # 如果失败，尝试猜测分隔符
+                    csv_data.seek(0)  # 重置位置
+                    df = pd.read_csv(csv_data, sep=None, engine='python')
+                except Exception as e:
+                    logger.error(f"Pandas无法读取数据: {e}")
+                    return
             
             if df.empty:
                 logger.error("Pandas返回了空DataFrame")
@@ -151,8 +244,7 @@ class DCPReader(BaseReader):
                 logger.info(f"从文件提取了 {lot.param_count} 个参数信息")
             
             # 创建晶圆对象
-            wafer_id = self.extract_wafer_id(file_path)
-            wafer = self._create_wafer(df, wafer_id, file_path)
+            wafer = self._create_wafer(df, current_wafer_id, file_path, lot_id_r2c2)
             
             # 添加到Lot
             if wafer and wafer.chip_count > 0:
@@ -210,7 +302,7 @@ class DCPReader(BaseReader):
         lot.product = product_name
         lot.param_count = len(lot.params)
     
-    def _create_wafer(self, df: pd.DataFrame, wafer_id: str, file_path: str) -> CPWafer:
+    def _create_wafer(self, df: pd.DataFrame, wafer_id: str, file_path: str, lot_id_r2c2: Optional[str] = None) -> CPWafer:
         """创建并填充晶圆对象"""
         # 过滤出对应晶圆的数据
         wafer_df = df
@@ -220,12 +312,13 @@ class DCPReader(BaseReader):
         
         # 如果没有数据，返回空晶圆
         if wafer_df.empty:
-            return CPWafer(wafer_id=wafer_id, file_path=file_path)
+            return CPWafer(wafer_id=wafer_id, file_path=file_path, source_lot_id=lot_id_r2c2)
         
         # 创建晶圆对象
         wafer = CPWafer(
             wafer_id=wafer_id,
             file_path=file_path,
+            source_lot_id=lot_id_r2c2,
             chip_count=len(wafer_df)
         )
         
@@ -278,6 +371,10 @@ class DCPReader(BaseReader):
                             float_values.append(np.nan)
                     
                     param_data[param.id] = np.array(float_values)
+        
+        # 添加No.U列，默认为1
+        if 'No.U' not in param_data:
+            param_data['No.U'] = np.ones(len(wafer_df))
         
         wafer.chip_data = pd.DataFrame(param_data)
         return wafer

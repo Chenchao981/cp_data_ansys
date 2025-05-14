@@ -13,7 +13,7 @@ from datetime import datetime
 def clean_csv_data(input_file, output_file=None):
     """
     清洗CSV数据，按照指定顺序重排字段：
-    Wafer, Seq, Bin, X, Y, CONT, [其他参数]
+    Wafer, Seq, Bin, X, Y, No.U, CONT, [其他参数]
     
     Args:
         input_file: 输入CSV文件路径
@@ -26,48 +26,80 @@ def clean_csv_data(input_file, output_file=None):
     
     # 读取CSV文件，注意忽略索引列
     try:
-        df = pd.read_csv(input_file, index_col=0)
-        print(f"成功读取CSV文件，形状: {df.shape}")
+        # 尝试不同方式读取以适应可能的格式差异
+        try:
+            df = pd.read_csv(input_file, index_col=0)
+            print(f"成功读取CSV文件（带索引列），形状: {df.shape}")
+        except:
+            df = pd.read_csv(input_file)
+            print(f"成功读取CSV文件（无索引列），形状: {df.shape}")
     except Exception as e:
         print(f"读取文件时出错: {str(e)}")
         return None
     
-    # 创建序号列（Seq）
-    df['Seq'] = df.index + 1
+    # 创建或确保序号列（Seq）存在
+    if 'Seq' not in df.columns:
+        df['Seq'] = df.index + 1 if df.index.is_numeric() else range(1, len(df) + 1)
     
     # 确保必需的列存在
-    # Ensure 'WaferID' is present (it should be from the parsing script)
-    # Ensure 'CONT' is present, if not, add it with a default value (e.g., 0 or NaN)
-    required_base_cols = ['WaferID', 'Bin', 'X', 'Y'] # CONT is handled specially if missing
+    required_base_cols = ['Bin', 'X', 'Y', 'No.U'] 
     for col in required_base_cols:
         if col not in df.columns:
-            if col == 'WaferID':
-                # This case should ideally not happen if input CSV is correct
-                print(f"Warning: Column 'WaferID' not found, adding with default value 1.")
-                df['WaferID'] = 1 
+            print(f"Warning: Column '{col}' not found, adding with default value 0 or 1.")
+            if col == 'No.U':
+                df[col] = 1  # 默认值为1
             else:
-                print(f"Warning: Column '{col}' not found, adding with default value 0.")
-                df[col] = 0
+                df[col] = 0  # 默认值为0
                 
     if 'CONT' not in df.columns:
-        print(f"Warning: Column 'CONT' not found, adding with default value 0.")
-        df['CONT'] = 0 # Default value for CONT if missing
+        print(f"Warning: Column 'CONT' not found, adding with default value (blank).")
+        df['CONT'] = ""  # 默认值为空字符串
     
-    # No longer renaming WaferID to Wafer. We want 'WaferID'.
-    # if 'WaferID' in df.columns:
-    #     df = df.rename(columns={'WaferID': 'Wafer'})
+    # 重命名WaferID列为Wafer（如果存在）
+    if 'WaferID' in df.columns and 'Wafer' not in df.columns:
+        df = df.rename(columns={'WaferID': 'Wafer'})
+    
+    # 确保Wafer列存在
+    if 'Wafer' not in df.columns and df.index.name == 'WaferID':
+        df = df.reset_index()
+        df = df.rename(columns={'WaferID': 'Wafer'})
+    elif 'Wafer' not in df.columns:
+        print("Warning: Wafer column not found, trying to extract from file name.")
+        filename = os.path.basename(input_file)
+        wafer_id = filename.split('_')[0] if '_' in filename else "Unknown"
+        df['Wafer'] = wafer_id
     
     # 确定列的新顺序
-    fixed_columns = ['WaferID', 'Seq', 'Bin', 'X', 'Y', 'CONT']
+    fixed_columns = ['Wafer', 'Seq', 'Bin', 'X', 'Y', 'No.U', 'CONT']
     
     # 获取其他所有列（除了固定列）并按字母排序
     other_columns = sorted([col for col in df.columns if col not in fixed_columns])
     
     # 新的列顺序
-    new_column_order = fixed_columns + other_columns
+    new_column_order = fixed_columns.copy()
+    
+    # 添加优先参数列
+    priority_params = ['IGSS0', 'IGSS1', 'IGSSR1', 'BVDSS1', 'BVDSS2', 'DELTABV', 'IDSS1', 'VTH', 'RDSON1', 'VFSDS', 'IGSS2', 'IGSSR2', 'IDSS2']
+    for param in priority_params:
+        if param in df.columns and param not in new_column_order:
+            new_column_order.append(param)
+    
+    # 添加其他列
+    for col in other_columns:
+        if col not in new_column_order:
+            new_column_order.append(col)
+    
+    # 只保留存在的列
+    final_columns = [col for col in new_column_order if col in df.columns]
     
     # 重排列
-    df = df[new_column_order]
+    df = df[final_columns]
+    
+    # 格式化数值型数据，特别是科学计数法的数据
+    for col in df.columns:
+        if df[col].dtype in ['float64', 'float32']:
+            # 尝试保留原始格式
+            df[col] = df[col].apply(lambda x: format_number(x))
     
     # 生成输出文件路径（如果未指定）
     if output_file is None:
@@ -80,6 +112,27 @@ def clean_csv_data(input_file, output_file=None):
     print(f"数据清洗完成，已保存到: {output_file}")
     
     return output_file
+
+def format_number(value):
+    """
+    根据数值大小选择适当的格式
+    """
+    if pd.isna(value):
+        return ""
+    
+    try:
+        # 检查是否是接近0的小数，需要科学计数法
+        if abs(value) < 0.0001 and value != 0:
+            return f"{value:.2e}"
+        # VTH, RDSON1 等通常保留2-3位小数
+        elif abs(value) < 10 and value != 0:
+            return f"{value:.2f}"
+        # 其他普通数字
+        else:
+            return f"{value:.3g}"
+    except:
+        # 如果有任何格式化错误，返回原始值
+        return value
 
 def main():
     """主函数"""

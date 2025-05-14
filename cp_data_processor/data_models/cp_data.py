@@ -29,6 +29,7 @@ class CPWafer:
     """存储单个晶圆的信息和测试数据。"""
     wafer_id: str                     # 晶圆 ID
     file_path: Optional[str] = None   # 原始数据文件路径 (可选)
+    source_lot_id: Optional[str] = None  # 存储从文件R2C2提取的LotID
     chip_count: int = 0               # 晶圆上的芯片总数
     seq: Optional[np.ndarray] = None  # 每个芯片的序号 (numpy array)
     bin: Optional[np.ndarray] = None  # 每个芯片的 Bin 值 (numpy array)
@@ -78,11 +79,13 @@ class CPLot:
             if wafer.chip_data is not None and not wafer.chip_data.empty:
                 # 创建包含基础信息的 DataFrame
                 info_df = pd.DataFrame({
-                    'Wafer': wafer.wafer_id,
+                    'LotID': wafer.source_lot_id if wafer.source_lot_id is not None else self.lot_id,
+                    'WaferID': wafer.wafer_id,
                     'Seq': wafer.seq if wafer.seq is not None else np.nan,
                     'Bin': wafer.bin if wafer.bin is not None else np.nan,
                     'X': wafer.x if wafer.x is not None else np.nan,
                     'Y': wafer.y if wafer.y is not None else np.nan,
+                    'CONT': np.ones(len(wafer.chip_data)) * 1  # 添加CONT列，默认值为1
                 })
                 # 确保索引与 chip_data 对齐，如果 chip_data 有索引的话
                 if wafer.chip_data.index.name or wafer.chip_data.index.equals(pd.RangeIndex(start=0, stop=len(wafer.chip_data), step=1)):
@@ -98,9 +101,9 @@ class CPLot:
 
         if all_dfs:
             self.combined_data = pd.concat(all_dfs, ignore_index=True)
-            # 确保列顺序符合预期 (Wafer, Seq, Bin, X, Y, Params...)
-            param_cols = [p.id for p in self.params]
-            ordered_cols = ['Wafer', 'Seq', 'Bin', 'X', 'Y'] + param_cols
+            # 确保列顺序符合预期 (LotID, WaferID, Seq, Bin, X, Y, CONT, Params...)
+            param_cols = sorted([p.id for p in self.params])
+            ordered_cols = ['LotID', 'WaferID', 'Seq', 'Bin', 'X', 'Y', 'CONT'] + param_cols
             # 处理可能在 combined_data 中但不在 ordered_cols 中的列 (例如索引)
             final_cols = [col for col in ordered_cols if col in self.combined_data.columns]
             self.combined_data = self.combined_data[final_cols]

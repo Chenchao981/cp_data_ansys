@@ -24,6 +24,7 @@ class CPWafer:
     对应 VBA 中的 CPWafer 类型。
     """
     wafer_id: str                     # 晶圆编号 (例如: "Wafer01", "Slot3")
+    source_lot_id: Optional[str] = None # 从文件原始R2C2提取的LotID (Python新增字段)
     file_path: Optional[str] = None   # 读取该晶圆数据的源文件路径 (Python新增字段)
     chip_count: int = 0               # 该晶圆上测试的芯片 (Die/Site) 总数
     seq: Optional[np.ndarray] = None  # 芯片测试序号 (1D NumPy 数组, int/float)
@@ -102,7 +103,7 @@ class CPLot:
     def combine_data_from_wafers(self) -> None:
         """
         将所有晶圆的 `chip_data` 合并到 `combined_data` DataFrame 中。
-        会添加 'wafer_id', 'seq', 'x', 'y', 'bin' 列。
+        会添加 'LotID' (来自 wafer.source_lot_id), 'WaferID' (原wafer_id), 'Seq' (原seq), 'Bin' (原bin), 'X' (原x), 'Y' (原y) 列。
         """
         if not self.wafers:
             self.combined_data = pd.DataFrame()
@@ -113,24 +114,35 @@ class CPLot:
             if wafer.chip_data is not None and not wafer.chip_data.empty:
                 # 创建一个临时 DataFrame 以便合并
                 temp_df = wafer.chip_data.copy()
-                temp_df['wafer_id'] = wafer.wafer_id
+                temp_df['LotID'] = wafer.source_lot_id # 使用source_lot_id作为LotID列
+                temp_df['WaferID'] = wafer.wafer_id    # 重命名为WaferID
                 if wafer.seq is not None:
-                    temp_df['seq'] = wafer.seq
+                    temp_df['Seq'] = wafer.seq         # 重命名为Seq
                 if wafer.x is not None:
-                    temp_df['x'] = wafer.x
+                    temp_df['X'] = wafer.x             # 重命名为X
                 if wafer.y is not None:
-                    temp_df['y'] = wafer.y
+                    temp_df['Y'] = wafer.y             # 重命名为Y
                 if wafer.bin is not None:
-                    temp_df['bin'] = wafer.bin
+                    temp_df['Bin'] = wafer.bin         # 重命名为Bin
                 all_wafer_data.append(temp_df)
 
         if all_wafer_data:
             self.combined_data = pd.concat(all_wafer_data, ignore_index=True)
-            # 将 wafer_id, seq, x, y, bin 列移动到前面
-            cols_to_move = ['wafer_id', 'seq', 'x', 'y', 'bin']
-            # 过滤掉实际不存在的列
+            # 按要求排列列的顺序：LotID, WaferID, Seq, Bin, X, Y, CONT, ...
+            cols_to_move = ['LotID', 'WaferID', 'Seq', 'Bin', 'X', 'Y'] 
+            
+            # 将'CONT'列提前到指定位置(如果存在)
+            if 'CONT' in self.combined_data.columns:
+                cols_to_move.append('CONT')
+            
+            # 过滤掉实际不存在的列，保留指定顺序
             cols_to_move = [col for col in cols_to_move if col in self.combined_data.columns]
+            
+            # 其他参数列按字母顺序排序
             remaining_cols = [col for col in self.combined_data.columns if col not in cols_to_move]
+            remaining_cols.sort()  # 字母顺序排序
+            
+            # 重新组合所有列
             self.combined_data = self.combined_data[cols_to_move + remaining_cols]
         else:
             self.combined_data = pd.DataFrame()

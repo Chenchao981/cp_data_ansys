@@ -52,30 +52,27 @@ def perform_data_analysis_and_save_csvs(lot: CPLot, output_dir: Path):
     # 1. 保存清洗后的合并数据 (_combined_data.csv)
     try:
         logger.info(f"准备生成 {lot.lot_id}_combined_data.csv ...")
-        df_to_save = cleaned_df.copy()
-        df_to_save.insert(0, 'LotID', lot.lot_id)
-        df_to_save.rename(columns={'Wafer': 'WaferID'}, inplace=True)
+        # df_to_save = cleaned_df.copy() # cleaned_df已经是combined_data的副本
+        # df_to_save.insert(0, 'LotID', lot.lot_id) # LotID 列已经由 CPLot.combine_data_from_wafers() 添加，且值来自 wafer.source_lot_id
+                                                # 所以这里不再需要插入 CPLot 对象的 lot_id
 
-        base_columns = ['LotID', 'WaferID', 'Seq', 'Bin', 'X', 'Y']
-        final_ordered_cols = list(base_columns)
-        
-        remaining_cols = [col for col in df_to_save.columns if col not in base_columns]
-        
-        if 'CONT' in remaining_cols:
-            final_ordered_cols.append('CONT')
-            remaining_cols.remove('CONT')
-        
-        remaining_cols.sort() # 按字母顺序排序其余参数
-        final_ordered_cols.extend(remaining_cols)
-        
-        # 确保所有期望的列都存在于DataFrame中，只选择存在的列
-        final_ordered_cols = [col for col in final_ordered_cols if col in df_to_save.columns]
-        
-        df_output_combined = df_to_save[final_ordered_cols]
-        
-        output_combined_file = output_dir / f"{lot.lot_id}_combined_data.csv"
-        df_output_combined.to_csv(output_combined_file, index=False)
+        # 确保列的顺序是期望的，特别是 LotID, wafer_id 等在前面
+        # CPLot.combine_data_from_wafers() 已经处理了列顺序
+        # 但如果需要强制特定顺序，可以在这里重新排序列
+        # desired_order = ['LotID', 'wafer_id', 'seq', 'Bin', 'X', 'Y'] # 示例，Bin,X,Y的大小写需匹配实际列名
+        # param_cols_sorted = sorted([col for col in cleaned_df.columns if col not in desired_order and col not in ['CONT']])
+        # final_columns = desired_order + ['CONT'] + param_cols_sorted
+        # final_columns = [col for col in final_columns if col in cleaned_df.columns] # 确保列存在
+        # df_to_save_ordered = cleaned_df[final_columns]
+
+        # 直接使用 cleaned_df，因为 LotID 和顺序已在 CPLot 中处理
+        df_to_save = cleaned_df 
+
+        output_combined_filename = f"{lot.lot_id}_combined_data.csv"
+        output_combined_file = output_dir / output_combined_filename
+        df_to_save.to_csv(output_combined_file, index=False)
         logger.info(f"清洗后的合并数据已保存到: {output_combined_file}")
+
     except Exception as e:
         logger.exception(f"保存 {lot.lot_id}_combined_data.csv 时出错: {e}")
 
@@ -88,56 +85,65 @@ def perform_data_analysis_and_save_csvs(lot: CPLot, output_dir: Path):
         stats_analyzer.calculate_basic_stats()
         summary_df = lot.summary_stats
         if summary_df is not None and not summary_df.empty:
+            # summary_df 的 LotID 列将是 CPLot 对象的 lot_id (例如 "FA53")
+            # 这符合我们对 all_lots_combined_summary.csv 的预期，即按批次（如FA53, NCEH等）汇总
             summary_df_with_lotid = summary_df.copy()
-            summary_df_with_lotid.insert(0, 'LotID', lot.lot_id) # 插入LotID作为第一列
+            summary_df_with_lotid.insert(0, 'LotID', lot.lot_id) 
             
-            # 使用固定的全局文件名
             output_summary_global_filename = "all_lots_combined_summary.csv"
             output_summary_file = output_dir / output_summary_global_filename
             
-            # 当前实现会覆盖文件。若要追加，需要在main函数层面进行读取、合并、写入的逻辑。
             summary_df_with_lotid.to_csv(output_summary_file, index=False)
-            logger.info(f"基本统计量 (LotID: {lot.lot_id}) 已保存到: {output_summary_file}")
+            logger.info(f"基本统计量已保存到: {output_summary_file}")
         else:
-            logger.warning(f"Lot {lot.lot_id} 未生成统计摘要数据。")
+            logger.warning(f"Lot {lot.lot_id} 的统计摘要数据为空，无法保存。")
     except Exception as e:
-        logger.exception(f"保存统计摘要到 all_lots_combined_summary.csv 时出错: {e}")
+        logger.exception(f"保存 all_lots_combined_summary.csv 时出错: {e}")
 
-    # 3. 保存良率信息 (_combined_Yield.csv - 保持per-lot)
+    # 3. 保存良率信息 (_yield.csv)
     try:
-        logger.info(f"准备生成 {lot.lot_id}_combined_Yield.csv ...")
-        yield_data_list = []
-        bins_to_count = [3, 4, 6, 7, 8, 9]
-
-        for wafer in lot.wafers:
-            wafer_yield_data = {
-                'LotID': lot.lot_id,
-                'WaferID': wafer.wafer_id,
-                'Yield': wafer.yield_rate if wafer.yield_rate is not None else np.nan,
-                'Total': wafer.chip_count,
-                'Pass': wafer.pass_chips if wafer.pass_chips is not None else np.nan
-            }
-            if wafer.bin is not None:
-                for bin_val in bins_to_count:
-                    wafer_yield_data[f'Bin{bin_val}'] = np.sum(wafer.bin == bin_val)
-            else:
-                 for bin_val in bins_to_count:
-                    wafer_yield_data[f'Bin{bin_val}'] = 0
+        logger.info(f"准备生成 {lot.lot_id}_yield.csv ...")
+        yield_df = lot.calculate_yield_summary() # 假设这个方法现在也考虑了新的 LotID 结构
+                                              # 或者它操作的是 wafer 级别的良率，然后我们按 wafer.source_lot_id 分组
+                                              # 目前 calculate_yield_summary 内部可能需要调整以正确处理多 LotID 的情况
+                                              # 但为了简化，我们先假设它能工作，或者只针对 CPLot.lot_id 这一级
+                                              # 如果要在 _yield.csv 中体现每个文件的R2C2 LotID，则该函数和这里的调用需要修改
+        if yield_df is not None and not yield_df.empty:
+            # 当前 yield_df 应该是基于 CPLot.wafers 计算的，每个 wafer 有自己的 wafer_id 和 source_lot_id
+            # 我们需要确保输出的 _yield.csv 包含正确的 LotID (来自 wafer.source_lot_id) 和 WaferID
+            # 假设 calculate_yield_summary() 返回的 DataFrame 已经包含了 wafer_id
+            # 我们需要从 lot.wafers 映射 source_lot_id 到 yield_df
             
-            yield_data_list.append(wafer_yield_data)
+            # 创建 wafer_id 到 source_lot_id 的映射
+            wafer_to_source_lot_map = {w.wafer_id: w.source_lot_id for w in lot.wafers}
+            
+            # 将 source_lot_id 添加到 yield_df
+            # 假设 yield_df 中有一列是 'WaferID' 或类似的，并且与 CPWafer.wafer_id 对应
+            # 找到与 wafer_id 匹配的列名，可能需要更灵活的匹配
+            wafer_id_col_in_yield = 'WaferID' # 与CPLot.combine_data_from_wafers中的命名一致
+            if wafer_id_col_in_yield in yield_df.columns:
+                yield_df_with_lotid = yield_df.copy()
+                yield_df_with_lotid.insert(0, 'LotID', yield_df_with_lotid[wafer_id_col_in_yield].map(wafer_to_source_lot_map))
+            else:
+                logger.warning(f"在 {lot.lot_id}_yield.csv 的源数据中未找到WaferID列，无法添加精确的LotID(R2C2)")
+                yield_df_with_lotid = yield_df.copy()
+                yield_df_with_lotid.insert(0, 'LotID', lot.lot_id) # 回退到使用批次LotID
 
-        if yield_data_list:
-            yield_df = pd.DataFrame(yield_data_list)
-            # 确保列顺序
-            yield_columns_ordered = ['LotID', 'WaferID', 'Yield', 'Total', 'Pass'] + [f'Bin{b}' for b in bins_to_count]
-            yield_df = yield_df[yield_columns_ordered]
-            output_yield_file = output_dir / f"{lot.lot_id}_combined_Yield.csv"
-            yield_df.to_csv(output_yield_file, index=False)
-            logger.info(f"Lot {lot.lot_id} 的良率信息已保存到: {output_yield_file}")
+            # 调整列顺序
+            desired_yield_cols = ['LotID', 'WaferID', 'Yield', 'Total', 'Pass']
+            # 提取Bin列，通常是 'BinX' 格式
+            bin_cols = sorted([col for col in yield_df_with_lotid.columns if col.startswith('Bin') and col not in desired_yield_cols])
+            final_yield_columns = [col for col in desired_yield_cols + bin_cols if col in yield_df_with_lotid.columns]
+            df_to_save_yield = yield_df_with_lotid[final_yield_columns]
+
+            output_yield_filename = f"{lot.lot_id}_yield.csv"
+            output_yield_file = output_dir / output_yield_filename
+            df_to_save_yield.to_csv(output_yield_file, index=False)
+            logger.info(f"良率信息已保存到: {output_yield_file}")
         else:
-            logger.warning(f"Lot {lot.lot_id} 未生成良率数据。")
+            logger.warning(f"Lot {lot.lot_id} 的良率数据为空，无法保存。")
     except Exception as e:
-        logger.exception(f"保存 {lot.lot_id}_combined_Yield.csv 时出错: {e}")
+        logger.exception(f"保存 {lot.lot_id}_yield.csv 时出错: {e}")
 
     # 4. 保存正态性检验结果 (_normality_test_results.csv - 保持per-lot)
     try:
