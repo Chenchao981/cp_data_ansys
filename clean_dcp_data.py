@@ -44,8 +44,8 @@ def collect_wafer_data(lot: CPLot) -> pd.DataFrame:
             # 添加Wafer ID和基本信息列
             df = wafer.chip_data.copy()
             
-            # 正确命名晶圆ID列为Wafer
-            df['Wafer'] = wafer.wafer_id
+            # 正确命名晶圆ID列为Wafer_ID
+            df['Wafer_ID'] = wafer.wafer_id
             
             # 确保X,Y,Bin,Seq列存在并添加到数据中
             if hasattr(wafer, 'seq') and wafer.seq is not None:
@@ -63,9 +63,9 @@ def collect_wafer_data(lot: CPLot) -> pd.DataFrame:
             if 'No.U' not in df.columns:
                 df['No.U'] = 1
                 
-            # 添加source_lot_id作为参考
+            # 添加Lot_ID作为参考
             if hasattr(wafer, 'source_lot_id') and wafer.source_lot_id is not None:
-                df['source_lot_id'] = wafer.source_lot_id
+                df['Lot_ID'] = wafer.source_lot_id
                 
             all_data.append(df)
     
@@ -73,8 +73,8 @@ def collect_wafer_data(lot: CPLot) -> pd.DataFrame:
         combined_df = pd.concat(all_data, ignore_index=True)
         
         # 确保列名符合预期格式
-        if 'WaferID' in combined_df.columns and 'Wafer' not in combined_df.columns:
-            combined_df = combined_df.rename(columns={'WaferID': 'Wafer'})
+        # if 'WaferID' in combined_df.columns and 'Wafer' not in combined_df.columns:
+        #     combined_df = combined_df.rename(columns={'WaferID': 'Wafer'})
             
         return combined_df
     return pd.DataFrame()
@@ -112,7 +112,8 @@ def process_lot_data(lot: CPLot, output_dir: str, apply_clean: bool = True, outl
         if combined_data is not None and not combined_data.empty:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             raw_output_file = os.path.join(output_dir, f"{lot.lot_id}_{timestamp}.csv")
-            combined_data.to_csv(raw_output_file)
+            # Ensure index is not written to the CSV
+            combined_data.to_csv(raw_output_file, index=False)
             logger.info(f"原始数据已保存到: {raw_output_file}")
             print(f"原始数据已保存到: {raw_output_file}")
             

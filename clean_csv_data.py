@@ -13,7 +13,7 @@ from datetime import datetime
 def clean_csv_data(input_file, output_file=None):
     """
     清洗CSV数据，按照指定顺序重排字段：
-    Wafer, Seq, Bin, X, Y, No.U, CONT, [其他参数]
+    Lot_ID, Wafer_ID, Seq, Bin, X, Y, CONT, [优先参数], [其他参数]
     
     Args:
         input_file: 输入CSV文件路径
@@ -24,19 +24,20 @@ def clean_csv_data(input_file, output_file=None):
     """
     print(f"开始处理文件: {input_file}")
     
-    # 读取CSV文件，注意忽略索引列
+    # 读取CSV文件
     try:
-        # 尝试不同方式读取以适应可能的格式差异
-        try:
-            df = pd.read_csv(input_file, index_col=0)
-            print(f"成功读取CSV文件（带索引列），形状: {df.shape}")
-        except:
-            df = pd.read_csv(input_file)
-            print(f"成功读取CSV文件（无索引列），形状: {df.shape}")
+        df = pd.read_csv(input_file)
+        print(f"成功读取CSV文件，形状: {df.shape}")
+        print(f"Debug: df.columns after initial read: {df.columns.tolist()}") # DEBUG
     except Exception as e:
         print(f"读取文件时出错: {str(e)}")
         return None
     
+    # 移除可能存在的 'Unnamed: 0' 列，如果它是由之前的索引写入产生的
+    if 'Unnamed: 0' in df.columns:
+        df = df.drop(columns=['Unnamed: 0'])
+        print(f"Debug: Dropped 'Unnamed: 0' column. New columns: {df.columns.tolist()}") # DEBUG
+
     # 创建或确保序号列（Seq）存在
     if 'Seq' not in df.columns:
         df['Seq'] = df.index + 1 if df.index.is_numeric() else range(1, len(df) + 1)
@@ -55,31 +56,50 @@ def clean_csv_data(input_file, output_file=None):
         print(f"Warning: Column 'CONT' not found, adding with default value (blank).")
         df['CONT'] = ""  # 默认值为空字符串
     
-    # 重命名WaferID列为Wafer（如果存在）
-    if 'WaferID' in df.columns and 'Wafer' not in df.columns:
-        df = df.rename(columns={'WaferID': 'Wafer'})
-    
-    # 确保Wafer列存在
-    if 'Wafer' not in df.columns and df.index.name == 'WaferID':
+    # 确保 Lot_ID 列存在 (通常由 clean_dcp_data.py 提供)
+    if 'Lot_ID' not in df.columns:
+        print(f"Warning: Column 'Lot_ID' not found, attempting to extract from filename or defaulting.")
+        # 尝试从文件名提取，或设置默认值
+        filename_parts = os.path.basename(input_file).split('_')
+        df['Lot_ID'] = filename_parts[0] if filename_parts else "Unknown_Lot"
+
+    # 重命名旧的Wafer列为Wafer_ID（如果存在且Wafer_ID不存在）
+    if 'Wafer' in df.columns and 'Wafer_ID' not in df.columns:
+        df = df.rename(columns={'Wafer': 'Wafer_ID'})
+    # 确保Wafer_ID列存在
+    elif 'Wafer_ID' not in df.columns and df.index.name == 'WaferID': # 兼容旧的WaferID索引名
         df = df.reset_index()
-        df = df.rename(columns={'WaferID': 'Wafer'})
-    elif 'Wafer' not in df.columns:
-        print("Warning: Wafer column not found, trying to extract from file name.")
+        df = df.rename(columns={'WaferID': 'Wafer_ID'})
+    elif 'Wafer_ID' not in df.columns:
+        print("Warning: Wafer_ID column not found, trying to extract from file name.")
         filename = os.path.basename(input_file)
-        wafer_id = filename.split('_')[0] if '_' in filename else "Unknown"
-        df['Wafer'] = wafer_id
+        # 尝试从文件名提取，例如 FA53-5465-305A-250303@203_001_someotherpart.csv -> 001
+        # 这部分逻辑可能需要根据实际文件名格式调整
+        wafer_id_from_filename = "Unknown_Wafer"
+        parts = filename.split('_')
+        if len(parts) > 1 and '@' in parts[0]: # 假设格式如 Lot@Wafer_...
+            lot_wafer_part = parts[0].split('@')
+            if len(lot_wafer_part) > 1:
+                wafer_id_from_filename = lot_wafer_part[1]
+        elif len(parts) > 1 : # 备用逻辑，如果文件名是 Wafer_...
+             wafer_id_from_filename = parts[0]
+
+        df['Wafer_ID'] = wafer_id_from_filename
     
     # 确定列的新顺序
-    fixed_columns = ['Wafer', 'Seq', 'Bin', 'X', 'Y', 'No.U', 'CONT']
+    fixed_columns = ['Lot_ID', 'Wafer_ID', 'Seq', 'Bin', 'X', 'Y', 'CONT']
+    print(f"Debug: fixed_columns: {fixed_columns}") # DEBUG
     
     # 获取其他所有列（除了固定列）并按字母排序
     other_columns = sorted([col for col in df.columns if col not in fixed_columns])
+    print(f"Debug: df.columns: {df.columns.tolist()}") # DEBUG
+    print(f"Debug: other_columns: {other_columns}") # DEBUG
     
     # 新的列顺序
     new_column_order = fixed_columns.copy()
     
     # 添加优先参数列
-    priority_params = ['IGSS0', 'IGSS1', 'IGSSR1', 'BVDSS1', 'BVDSS2', 'DELTABV', 'IDSS1', 'VTH', 'RDSON1', 'VFSDS', 'IGSS2', 'IGSSR2', 'IDSS2']
+    priority_params = ['IGSS0', 'IGSS1', 'IGSSR1', 'VTH', 'BVDSS1', 'BVDSS2', 'IDSS1', 'IDSS2', 'IGSS2', 'IGSSR2']
     for param in priority_params:
         if param in df.columns and param not in new_column_order:
             new_column_order.append(param)
@@ -89,8 +109,10 @@ def clean_csv_data(input_file, output_file=None):
         if col not in new_column_order:
             new_column_order.append(col)
     
+    print(f"Debug: new_column_order after additions: {new_column_order}") # DEBUG
     # 只保留存在的列
     final_columns = [col for col in new_column_order if col in df.columns]
+    print(f"Debug: final_columns: {final_columns}") # DEBUG
     
     # 重排列
     df = df[final_columns]
