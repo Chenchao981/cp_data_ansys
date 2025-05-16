@@ -188,10 +188,16 @@ class DCPReader(BaseReader):
             if not lot_id_r2c2:
                  logger.warning(f"未能从 {file_basename} 的R2C2提取LotID。CPWafer.source_lot_id 将为 None。")
 
-            # --- 硬编码表头和数据位置 ---
-            # 根据您提供的示例，第6行是表头，第15行之后是数据
-            header_line = lines[6] if line_count > 7 else None
-            data_lines = lines[15:] if line_count > 15 else []
+            # --- 调整表头和数据位置基于提供的示例 ---
+            # 源数据中：
+            # 第1行(索引0)为 "Program name..."
+            # 标题行 ("No.U X Y Bin...") 实际为文件的第7行 (索引6)
+            # 数据从文件的第16行 (索引15) 开始 (跳过Limit和Bias信息行)
+            header_line_index = 6 
+            data_start_index = 15
+
+            header_line = lines[header_line_index] if line_count > header_line_index else None
+            data_lines = lines[data_start_index:] if line_count > data_start_index else []
             
             if not header_line:
                 logger.error("找不到表头行")
@@ -214,15 +220,18 @@ class DCPReader(BaseReader):
             
             # 尝试使用pandas读取数据
             try:
-                # 假设是制表符分隔的数据
-                df = pd.read_csv(csv_data, sep='\t')
-            except:
+                # 优先尝试使用正则表达式匹配一个或多个空白字符作为分隔符
+                csv_data.seek(0) # 确保每次尝试前重置 StringIO 对象
+                df = pd.read_csv(csv_data, sep='\s+', engine='python')
+                logger.info(f"成功使用 sep='\\s+' 读取数据，形状: {df.shape}")
+            except Exception as e_regex:
+                logger.warning(f"使用 sep='\\s+' 读取失败: {e_regex}。尝试使用 sep='\\t'...")
                 try:
-                    # 如果失败，尝试猜测分隔符
-                    csv_data.seek(0)  # 重置位置
-                    df = pd.read_csv(csv_data, sep=None, engine='python')
-                except Exception as e:
-                    logger.error(f"Pandas无法读取数据: {e}")
+                    csv_data.seek(0)
+                    df = pd.read_csv(csv_data, sep='\t', engine='python') # engine='python' 可以更好地处理复杂情况
+                    logger.info(f"成功使用 sep='\\t' 读取数据，形状: {df.shape}")
+                except Exception as e_tab:
+                    logger.error(f"使用 sep='\\t' 也失败: {e_tab}。Pandas无法读取数据。")
                     return
             
             if df.empty:

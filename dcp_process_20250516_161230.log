@@ -1,0 +1,1806 @@
+2025-05-16 16:12:31,963 - __main__ - INFO - 开始处理目录: D:\data\
+2025-05-16 16:12:31,972 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_001.TXT
+2025-05-16 16:12:31,972 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_002.TXT
+2025-05-16 16:12:31,973 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_003.TXT
+2025-05-16 16:12:31,974 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_004.TXT
+2025-05-16 16:12:31,974 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_005.TXT
+2025-05-16 16:12:31,976 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_006.TXT
+2025-05-16 16:12:31,976 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_007.TXT
+2025-05-16 16:12:31,977 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_008.TXT
+2025-05-16 16:12:31,978 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_009.TXT
+2025-05-16 16:12:31,979 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_010.TXT
+2025-05-16 16:12:31,980 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_011.TXT
+2025-05-16 16:12:31,981 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_012.TXT
+2025-05-16 16:12:31,982 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_013.TXT
+2025-05-16 16:12:31,983 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_014.TXT
+2025-05-16 16:12:31,983 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_015.TXT
+2025-05-16 16:12:31,984 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_016.TXT
+2025-05-16 16:12:31,985 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_017.TXT
+2025-05-16 16:12:31,985 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_018.TXT
+2025-05-16 16:12:31,986 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_019.TXT
+2025-05-16 16:12:31,986 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_020.TXT
+2025-05-16 16:12:31,987 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_021.TXT
+2025-05-16 16:12:31,988 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_022.TXT
+2025-05-16 16:12:31,989 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_023.TXT
+2025-05-16 16:12:31,989 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_024.TXT
+2025-05-16 16:12:31,990 - __main__ - INFO - 找到DCP文件: FA54-5339-327A-250501@203_025.TXT
+2025-05-16 16:12:31,990 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_001.TXT
+2025-05-16 16:12:31,991 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_002.TXT
+2025-05-16 16:12:31,991 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_003.TXT
+2025-05-16 16:12:31,992 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_004.TXT
+2025-05-16 16:12:31,992 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_005.TXT
+2025-05-16 16:12:31,993 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_006.TXT
+2025-05-16 16:12:31,993 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_007.TXT
+2025-05-16 16:12:31,994 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_008.TXT
+2025-05-16 16:12:31,994 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_009.TXT
+2025-05-16 16:12:31,995 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_010.TXT
+2025-05-16 16:12:31,995 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_011.TXT
+2025-05-16 16:12:31,996 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_012.TXT
+2025-05-16 16:12:31,997 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_013.TXT
+2025-05-16 16:12:31,997 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_014.TXT
+2025-05-16 16:12:31,999 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_015.TXT
+2025-05-16 16:12:31,999 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_016.TXT
+2025-05-16 16:12:32,000 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_017.TXT
+2025-05-16 16:12:32,000 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_018.TXT
+2025-05-16 16:12:32,001 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_019.TXT
+2025-05-16 16:12:32,002 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_020.TXT
+2025-05-16 16:12:32,002 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_021.TXT
+2025-05-16 16:12:32,004 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_022.TXT
+2025-05-16 16:12:32,005 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_023.TXT
+2025-05-16 16:12:32,005 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_024.TXT
+2025-05-16 16:12:32,005 - __main__ - INFO - 找到DCP文件: FA54-5340-325A-250502@203_025.TXT
+2025-05-16 16:12:32,005 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_001.TXT
+2025-05-16 16:12:32,006 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_002.TXT
+2025-05-16 16:12:32,007 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_003.TXT
+2025-05-16 16:12:32,007 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_004.TXT
+2025-05-16 16:12:32,008 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_005.TXT
+2025-05-16 16:12:32,008 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_006.TXT
+2025-05-16 16:12:32,009 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_007.TXT
+2025-05-16 16:12:32,010 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_008.TXT
+2025-05-16 16:12:32,012 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_009.TXT
+2025-05-16 16:12:32,012 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_010.TXT
+2025-05-16 16:12:32,013 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_011.TXT
+2025-05-16 16:12:32,014 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_012.TXT
+2025-05-16 16:12:32,014 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_013.TXT
+2025-05-16 16:12:32,015 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_014.TXT
+2025-05-16 16:12:32,015 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_015.TXT
+2025-05-16 16:12:32,016 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_016.TXT
+2025-05-16 16:12:32,016 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_017.TXT
+2025-05-16 16:12:32,017 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_018.TXT
+2025-05-16 16:12:32,017 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250430@203_019.TXT
+2025-05-16 16:12:32,018 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250501@203_020.TXT
+2025-05-16 16:12:32,018 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250501@203_021.TXT
+2025-05-16 16:12:32,019 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250501@203_022.TXT
+2025-05-16 16:12:32,021 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250501@203_023.TXT
+2025-05-16 16:12:32,022 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250501@203_024.TXT
+2025-05-16 16:12:32,022 - __main__ - INFO - 找到DCP文件: FA54-5341-327A-250501@203_025.TXT
+2025-05-16 16:12:32,022 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_001.TXT
+2025-05-16 16:12:32,023 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_002.TXT
+2025-05-16 16:12:32,024 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_003.TXT
+2025-05-16 16:12:32,024 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_004.TXT
+2025-05-16 16:12:32,025 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_005.TXT
+2025-05-16 16:12:32,025 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_006.TXT
+2025-05-16 16:12:32,026 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_007.TXT
+2025-05-16 16:12:32,026 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_008.TXT
+2025-05-16 16:12:32,027 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_009.TXT
+2025-05-16 16:12:32,028 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_010.TXT
+2025-05-16 16:12:32,028 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_011.TXT
+2025-05-16 16:12:32,029 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_012.TXT
+2025-05-16 16:12:32,029 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_013.TXT
+2025-05-16 16:12:32,030 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_014.TXT
+2025-05-16 16:12:32,031 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_015.TXT
+2025-05-16 16:12:32,032 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_016.TXT
+2025-05-16 16:12:32,033 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_017.TXT
+2025-05-16 16:12:32,033 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_018.TXT
+2025-05-16 16:12:32,034 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_019.TXT
+2025-05-16 16:12:32,035 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_020.TXT
+2025-05-16 16:12:32,035 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_021.TXT
+2025-05-16 16:12:32,036 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_022.TXT
+2025-05-16 16:12:32,036 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_023.TXT
+2025-05-16 16:12:32,037 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_024.TXT
+2025-05-16 16:12:32,037 - __main__ - INFO - 找到DCP文件: FA54-5342-325A-250501@203_025.TXT
+2025-05-16 16:12:32,037 - __main__ - INFO - 找到 100 个DCP文件
+2025-05-16 16:12:32,038 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,038 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,038 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,038 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	1
+
+2025-05-16 16:12:32,038 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,038 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 1
+2025-05-16 16:12:32,038 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_001.TXT
+2025-05-16 16:12:32,039 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,039 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,039 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	0.000E+00	5.000E-09	3.204E+00	1.294E+02	1.297E+02	1.520E-08	2.320E-08	6...
+2025-05-16 16:12:32,039 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	1.400E-09	5.100E-09	3.116E+00	1.296E+02	1.299E+02	9.400E-09	1.840E-08	2...
+2025-05-16 16:12:32,039 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	1.000E-08	1.000E-09	1.200E-09	3.207E+00	1.299E+02	1.303E+02	1.190E-08	1.850E-08	3...
+2025-05-16 16:12:32,046 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,047 - cp_data_processor.readers.dcp_reader - INFO - 从文件提取了 12 个参数信息
+2025-05-16 16:12:32,047 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 1，包含 142 个芯片数据
+2025-05-16 16:12:32,048 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,048 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,048 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,048 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	2
+
+2025-05-16 16:12:32,049 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,049 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 2
+2025-05-16 16:12:32,049 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_002.TXT
+2025-05-16 16:12:32,049 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,049 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,049 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	0.000E+00	4.000E-10	3.408E+00	1.298E+02	1.302E+02	1.030E-08	1.990E-08	3...
+2025-05-16 16:12:32,049 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	7.000E-10	8.000E-10	3.383E+00	1.301E+02	1.302E+02	1.070E-08	2.000E-08	5...
+2025-05-16 16:12:32,049 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	6.000E-10	1.400E-09	3.309E+00	1.301E+02	1.303E+02	1.020E-08	1.940E-08	6...
+2025-05-16 16:12:32,050 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,051 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 2，包含 142 个芯片数据
+2025-05-16 16:12:32,052 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,052 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,052 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,052 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	3
+
+2025-05-16 16:12:32,052 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,053 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 3
+2025-05-16 16:12:32,053 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_003.TXT
+2025-05-16 16:12:32,053 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,054 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,054 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	4.000E-10	2.500E-09	3.290E+00	1.300E+02	1.303E+02	1.010E-08	1.860E-08	1...
+2025-05-16 16:12:32,054 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	1.800E-09	1.400E-09	3.147E+00	1.299E+02	1.302E+02	1.280E-08	1.930E-08	3...
+2025-05-16 16:12:32,055 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	4.200E-09	3.500E-09	3.212E+00	1.303E+02	1.305E+02	1.110E-08	2.010E-08	4...
+2025-05-16 16:12:32,056 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,057 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 3，包含 142 个芯片数据
+2025-05-16 16:12:32,057 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,058 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,058 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,058 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	4
+
+2025-05-16 16:12:32,058 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,058 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 4
+2025-05-16 16:12:32,058 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_004.TXT
+2025-05-16 16:12:32,059 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,059 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,059 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	1.000E-08	2.600E-09	5.200E-09	3.313E+00	1.290E+02	1.294E+02	1.100E-08	1.770E-08	5...
+2025-05-16 16:12:32,059 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	2.000E-09	4.400E-09	3.277E+00	1.294E+02	1.297E+02	1.020E-08	1.960E-08	5...
+2025-05-16 16:12:32,059 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	2.300E-09	0.000E+00	3.160E+00	1.296E+02	1.300E+02	1.030E-08	1.930E-08	1...
+2025-05-16 16:12:32,061 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,062 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 4，包含 142 个芯片数据
+2025-05-16 16:12:32,063 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,063 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,063 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,063 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	5
+
+2025-05-16 16:12:32,063 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,063 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 5
+2025-05-16 16:12:32,063 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_005.TXT
+2025-05-16 16:12:32,064 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,064 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,065 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	3.000E-10	2.900E-09	3.216E+00	1.292E+02	1.294E+02	1.390E-08	2.030E-08	4...
+2025-05-16 16:12:32,065 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	1.000E-08	2.700E-09	1.200E-09	3.166E+00	1.293E+02	1.297E+02	1.000E-08	1.980E-08	2...
+2025-05-16 16:12:32,065 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	2.200E-09	6.900E-09	3.129E+00	1.296E+02	1.298E+02	1.030E-08	1.820E-08	5...
+2025-05-16 16:12:32,067 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,068 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 5，包含 142 个芯片数据
+2025-05-16 16:12:32,068 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,068 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,068 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,069 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	6
+
+2025-05-16 16:12:32,069 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,069 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 6
+2025-05-16 16:12:32,069 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_006.TXT
+2025-05-16 16:12:32,069 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,069 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,070 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	6.000E-10	4.000E-10	3.203E+00	1.296E+02	1.300E+02	1.080E-08	1.880E-08	2...
+2025-05-16 16:12:32,070 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	0.000E+00	2.800E-09	4.300E-09	3.191E+00	1.291E+02	1.293E+02	9.700E-09	1.910E-08	8...
+2025-05-16 16:12:32,070 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	2.000E-08	1.000E-09	2.900E-09	3.154E+00	1.297E+02	1.300E+02	1.040E-08	1.710E-08	4...
+2025-05-16 16:12:32,071 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,072 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 6，包含 142 个芯片数据
+2025-05-16 16:12:32,072 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,073 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,073 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,073 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	7
+
+2025-05-16 16:12:32,073 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,073 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 7
+2025-05-16 16:12:32,074 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_007.TXT
+2025-05-16 16:12:32,074 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,074 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,074 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	8.000E-10	1.500E-09	3.120E+00	1.293E+02	1.296E+02	1.080E-08	1.700E-08	3...
+2025-05-16 16:12:32,075 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	2.800E-09	1.300E-09	3.088E+00	1.297E+02	1.301E+02	1.010E-08	1.940E-08	3...
+2025-05-16 16:12:32,075 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	2.000E-08	2.000E-09	3.500E-09	3.132E+00	1.300E+02	1.303E+02	1.030E-08	1.760E-08	4...
+2025-05-16 16:12:32,077 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,078 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 7，包含 142 个芯片数据
+2025-05-16 16:12:32,078 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,079 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,079 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,079 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	8
+
+2025-05-16 16:12:32,079 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,079 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 8
+2025-05-16 16:12:32,079 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_008.TXT
+2025-05-16 16:12:32,080 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,080 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,080 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	1.000E-08	4.700E-09	2.800E-09	3.136E+00	1.296E+02	1.300E+02	1.460E-08	2.290E-08	1...
+2025-05-16 16:12:32,080 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	1.000E-08	1.400E-09	6.100E-09	3.158E+00	1.296E+02	1.299E+02	1.390E-08	2.120E-08	5...
+2025-05-16 16:12:32,080 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	2.700E-09	4.600E-09	3.132E+00	1.298E+02	1.302E+02	1.170E-08	2.010E-08	3...
+2025-05-16 16:12:32,081 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,082 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 8，包含 142 个芯片数据
+2025-05-16 16:12:32,082 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,083 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,083 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,083 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	9
+
+2025-05-16 16:12:32,083 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,083 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 9
+2025-05-16 16:12:32,083 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_009.TXT
+2025-05-16 16:12:32,084 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,084 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,084 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	5.000E-10	9.000E-10	3.108E+00	1.301E+02	1.304E+02	1.030E-08	1.960E-08	4...
+2025-05-16 16:12:32,084 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	1.000E-08	8.000E-10	2.600E-09	3.076E+00	1.292E+02	1.297E+02	1.260E-08	1.990E-08	3...
+2025-05-16 16:12:32,084 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	4.400E-09	3.300E-09	3.085E+00	1.298E+02	1.303E+02	1.040E-08	1.980E-08	2...
+2025-05-16 16:12:32,085 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,087 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 9，包含 142 个芯片数据
+2025-05-16 16:12:32,087 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,088 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,088 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,088 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	10
+
+2025-05-16 16:12:32,088 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,088 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 10
+2025-05-16 16:12:32,089 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_010.TXT
+2025-05-16 16:12:32,089 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,089 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,089 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	0.000E+00	1.000E-10	3.184E+00	1.293E+02	1.297E+02	9.800E-09	1.780E-08	4...
+2025-05-16 16:12:32,089 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	1.300E-09	2.800E-09	3.137E+00	1.294E+02	1.298E+02	9.400E-09	1.590E-08	4...
+2025-05-16 16:12:32,089 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	4	0.000E+00	2.090E-05	999.9									...
+2025-05-16 16:12:32,091 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,092 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 10，包含 142 个芯片数据
+2025-05-16 16:12:32,092 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,092 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,092 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,092 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	11
+
+2025-05-16 16:12:32,093 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,093 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 11
+2025-05-16 16:12:32,093 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_011.TXT
+2025-05-16 16:12:32,093 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,093 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,094 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	5.000E-10	2.800E-09	3.059E+00	1.296E+02	1.300E+02	1.030E-08	1.870E-08	4...
+2025-05-16 16:12:32,094 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	2.500E-09	2.500E-09	3.074E+00	1.296E+02	1.300E+02	9.800E-09	2.040E-08	2...
+2025-05-16 16:12:32,094 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	2.100E-09	5.400E-09	3.047E+00	1.298E+02	1.301E+02	1.100E-08	1.880E-08	4...
+2025-05-16 16:12:32,095 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,096 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 11，包含 142 个芯片数据
+2025-05-16 16:12:32,096 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,096 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,097 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,097 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	12
+
+2025-05-16 16:12:32,097 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,098 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 12
+2025-05-16 16:12:32,098 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_012.TXT
+2025-05-16 16:12:32,099 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,099 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,099 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	1.000E-08	8.000E-10	3.700E-09	3.138E+00	1.301E+02	1.305E+02	9.500E-09	1.740E-08	3...
+2025-05-16 16:12:32,099 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	9.000E-10	3.200E-09	3.083E+00	1.291E+02	1.295E+02	1.030E-08	2.010E-08	2...
+2025-05-16 16:12:32,100 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	1.000E-08	0.000E+00	0.000E+00	3.099E+00	1.296E+02	1.301E+02	9.300E-09	1.840E-08	3...
+2025-05-16 16:12:32,102 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,103 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 12，包含 142 个芯片数据
+2025-05-16 16:12:32,103 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,104 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,104 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,104 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	13
+
+2025-05-16 16:12:32,104 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,104 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 13
+2025-05-16 16:12:32,105 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_013.TXT
+2025-05-16 16:12:32,105 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,105 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,105 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	1.000E-08	1.200E-09	3.500E-09	3.089E+00	1.292E+02	1.297E+02	1.100E-08	1.810E-08	2...
+2025-05-16 16:12:32,105 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	1.400E-09	3.700E-09	3.027E+00	1.296E+02	1.299E+02	9.100E-09	1.780E-08	4...
+2025-05-16 16:12:32,105 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	1.000E-08	8.000E-10	1.400E-09	3.057E+00	1.300E+02	1.303E+02	9.200E-09	1.830E-08	3...
+2025-05-16 16:12:32,107 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,108 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 13，包含 142 个芯片数据
+2025-05-16 16:12:32,108 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,108 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,109 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,109 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	14
+
+2025-05-16 16:12:32,109 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,109 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 14
+2025-05-16 16:12:32,110 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_014.TXT
+2025-05-16 16:12:32,111 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,111 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,111 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	2.500E-09	2.000E-09	3.158E+00	1.294E+02	1.297E+02	1.040E-08	1.870E-08	2...
+2025-05-16 16:12:32,111 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	2.000E-08	8.000E-10	3.000E-10	3.100E+00	1.296E+02	1.299E+02	1.100E-08	1.770E-08	3...
+2025-05-16 16:12:32,111 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	2.200E-09	1.000E-09	3.079E+00	1.298E+02	1.301E+02	9.900E-09	1.870E-08	1...
+2025-05-16 16:12:32,113 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,114 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 14，包含 142 个芯片数据
+2025-05-16 16:12:32,114 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,114 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,114 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,115 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	15
+
+2025-05-16 16:12:32,115 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,115 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 15
+2025-05-16 16:12:32,115 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_015.TXT
+2025-05-16 16:12:32,115 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,115 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,116 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	1.100E-09	1.700E-09	3.038E+00	1.300E+02	1.304E+02	1.480E-08	2.140E-08	4...
+2025-05-16 16:12:32,116 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	3.800E-09	2.800E-09	3.049E+00	1.293E+02	1.296E+02	9.000E-09	1.890E-08	5...
+2025-05-16 16:12:32,116 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	3.600E-09	2.600E-09	3.033E+00	1.299E+02	1.302E+02	9.000E-09	1.680E-08	5...
+2025-05-16 16:12:32,117 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,118 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 15，包含 142 个芯片数据
+2025-05-16 16:12:32,119 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,119 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,119 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,119 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	16
+
+2025-05-16 16:12:32,119 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,119 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 16
+2025-05-16 16:12:32,119 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_016.TXT
+2025-05-16 16:12:32,119 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,120 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,121 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	1.400E-09	5.300E-09	3.107E+00	1.289E+02	1.293E+02	1.240E-08	1.910E-08	3...
+2025-05-16 16:12:32,121 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	1.000E-08	1.000E-09	4.000E-10	3.043E+00	1.294E+02	1.296E+02	1.140E-08	1.860E-08	2...
+2025-05-16 16:12:32,122 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	1.000E-08	2.200E-09	7.000E-10	3.087E+00	1.297E+02	1.300E+02	1.050E-08	1.930E-08	2...
+2025-05-16 16:12:32,124 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,125 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 16，包含 142 个芯片数据
+2025-05-16 16:12:32,125 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,125 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,125 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,126 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	17
+
+2025-05-16 16:12:32,126 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,126 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 17
+2025-05-16 16:12:32,126 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_017.TXT
+2025-05-16 16:12:32,126 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,126 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,126 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	7.000E-10	4.500E-09	3.110E+00	1.292E+02	1.296E+02	1.070E-08	1.600E-08	2...
+2025-05-16 16:12:32,127 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	2.000E-09	3.000E-10	3.066E+00	1.294E+02	1.297E+02	1.170E-08	2.210E-08	4...
+2025-05-16 16:12:32,127 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	8.000E-10	3.000E-10	3.035E+00	1.295E+02	1.299E+02	9.800E-09	2.000E-08	3...
+2025-05-16 16:12:32,128 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,129 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 17，包含 142 个芯片数据
+2025-05-16 16:12:32,129 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,129 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,129 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,129 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	18
+
+2025-05-16 16:12:32,130 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,130 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 18
+2025-05-16 16:12:32,130 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_018.TXT
+2025-05-16 16:12:32,130 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,130 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,131 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	1.000E-09	0.000E+00	3.131E+00	1.296E+02	1.300E+02	9.100E-09	1.770E-08	5...
+2025-05-16 16:12:32,131 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	6.000E-10	2.700E-09	3.069E+00	1.290E+02	1.294E+02	1.180E-08	1.960E-08	9...
+2025-05-16 16:12:32,132 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	2.900E-09	1.000E-10	3.112E+00	1.296E+02	1.300E+02	1.060E-08	1.930E-08	2...
+2025-05-16 16:12:32,134 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,135 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 18，包含 142 个芯片数据
+2025-05-16 16:12:32,136 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,136 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,136 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,136 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	19
+
+2025-05-16 16:12:32,136 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,136 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 19
+2025-05-16 16:12:32,137 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_019.TXT
+2025-05-16 16:12:32,137 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,137 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,137 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	2.900E-09	8.000E-10	3.074E+00	1.295E+02	1.297E+02	1.160E-08	1.760E-08	2...
+2025-05-16 16:12:32,138 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	0.000E+00	1.400E-09	2.300E-09	3.005E+00	1.297E+02	1.299E+02	1.090E-08	1.770E-08	5...
+2025-05-16 16:12:32,138 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	2.000E-08	2.400E-09	4.400E-09	3.049E+00	1.298E+02	1.301E+02	9.600E-09	1.960E-08	2...
+2025-05-16 16:12:32,139 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,140 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 19，包含 142 个芯片数据
+2025-05-16 16:12:32,141 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,141 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,141 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,141 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	20
+
+2025-05-16 16:12:32,141 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,142 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 20
+2025-05-16 16:12:32,142 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_020.TXT
+2025-05-16 16:12:32,142 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,142 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,143 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	7.000E-10	3.500E-09	3.220E+00	1.287E+02	1.291E+02	9.400E-09	1.620E-08	1...
+2025-05-16 16:12:32,143 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	1.500E-09	2.700E-09	3.153E+00	1.293E+02	1.296E+02	1.240E-08	1.880E-08	4...
+2025-05-16 16:12:32,143 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	2.700E-09	1.100E-09	3.116E+00	1.295E+02	1.298E+02	1.080E-08	2.010E-08	2...
+2025-05-16 16:12:32,146 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,147 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 20，包含 142 个芯片数据
+2025-05-16 16:12:32,147 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,148 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,148 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,148 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	21
+
+2025-05-16 16:12:32,148 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,148 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 21
+2025-05-16 16:12:32,148 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_021.TXT
+2025-05-16 16:12:32,148 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,149 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,149 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	2.300E-09	6.100E-09	3.070E+00	1.290E+02	1.294E+02	1.510E-08	2.190E-08	3...
+2025-05-16 16:12:32,149 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	0.000E+00	1.200E-09	1.100E-09	2.965E+00	1.289E+02	1.293E+02	9.400E-09	1.870E-08	1...
+2025-05-16 16:12:32,149 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	2.000E-08	4.800E-09	0.000E+00	3.010E+00	1.294E+02	1.298E+02	9.000E-09	1.680E-08	9...
+2025-05-16 16:12:32,149 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,150 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 21，包含 142 个芯片数据
+2025-05-16 16:12:32,151 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,151 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,151 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,151 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	22
+
+2025-05-16 16:12:32,151 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,152 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 22
+2025-05-16 16:12:32,152 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_022.TXT
+2025-05-16 16:12:32,152 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,152 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,152 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	1.000E-09	2.900E-09	3.125E+00	1.295E+02	1.298E+02	1.510E-08	2.360E-08	3...
+2025-05-16 16:12:32,153 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	5.000E-10	2.500E-09	3.033E+00	1.298E+02	1.301E+02	1.020E-08	1.790E-08	4...
+2025-05-16 16:12:32,154 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	2.300E-09	1.300E-09	3.073E+00	1.300E+02	1.303E+02	1.010E-08	1.880E-08	1...
+2025-05-16 16:12:32,155 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,156 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 22，包含 142 个芯片数据
+2025-05-16 16:12:32,157 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,157 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,157 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,157 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	23
+
+2025-05-16 16:12:32,157 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,157 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 23
+2025-05-16 16:12:32,158 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_023.TXT
+2025-05-16 16:12:32,158 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,158 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,158 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	4.100E-09	3.000E-10	3.196E+00	1.291E+02	1.294E+02	1.140E-08	2.050E-08	2...
+2025-05-16 16:12:32,158 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	0.000E+00	3.500E-09	1.100E-09	3.157E+00	1.293E+02	1.297E+02	9.900E-09	1.900E-08	3...
+2025-05-16 16:12:32,158 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	3.200E-09	3.600E-09	3.191E+00	1.297E+02	1.300E+02	1.020E-08	1.920E-08	2...
+2025-05-16 16:12:32,160 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,160 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 23，包含 142 个芯片数据
+2025-05-16 16:12:32,161 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,161 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,161 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,161 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	24
+
+2025-05-16 16:12:32,161 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,162 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 24
+2025-05-16 16:12:32,162 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_024.TXT
+2025-05-16 16:12:32,162 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,162 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,162 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	3.000E-10	9.000E-10	3.051E+00	1.293E+02	1.296E+02	9.700E-09	1.910E-08	4...
+2025-05-16 16:12:32,163 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	1.000E-08	2.000E-10	3.300E-09	3.022E+00	1.288E+02	1.293E+02	9.500E-09	1.890E-08	2...
+2025-05-16 16:12:32,163 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	1.200E-09	5.000E-10	3.028E+00	1.294E+02	1.298E+02	1.180E-08	1.900E-08	1...
+2025-05-16 16:12:32,164 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,165 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 24，包含 142 个芯片数据
+2025-05-16 16:12:32,166 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,166 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,167 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5339-327A-250501@203
+
+2025-05-16 16:12:32,167 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	25
+
+2025-05-16 16:12:32,167 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5339-327A-250501@203
+2025-05-16 16:12:32,167 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 25
+2025-05-16 16:12:32,167 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5339-327A-250501@203_025.TXT
+2025-05-16 16:12:32,168 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,168 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,168 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	1.300E-09	3.100E-09	3.006E+00	1.298E+02	1.300E+02	7.000E-09	1.520E-08	3...
+2025-05-16 16:12:32,169 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	1.600E-09	8.000E-10	2.987E+00	1.298E+02	1.301E+02	7.500E-09	1.660E-08	1...
+2025-05-16 16:12:32,169 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	1.000E-08	3.700E-09	3.600E-09	3.020E+00	1.301E+02	1.303E+02	7.800E-09	1.720E-08	1...
+2025-05-16 16:12:32,171 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,171 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 25，包含 142 个芯片数据
+2025-05-16 16:12:32,172 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,172 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,172 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,172 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	1
+
+2025-05-16 16:12:32,173 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,173 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 1
+2025-05-16 16:12:32,173 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_001.TXT
+2025-05-16 16:12:32,173 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,173 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,173 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	5.000E-09	2.400E-09	2.962E+00	1.302E+02	1.305E+02	1.050E-08	1.650E-08	1...
+2025-05-16 16:12:32,173 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	1.000E-08	1.900E-09	6.000E-09	2.899E+00	1.296E+02	1.300E+02	8.500E-09	1.590E-08	4...
+2025-05-16 16:12:32,174 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	3.000E-08	9.000E-10	2.200E-09	2.924E+00	1.301E+02	1.305E+02	6.800E-09	1.570E-08	1...
+2025-05-16 16:12:32,175 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,176 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 1，包含 142 个芯片数据
+2025-05-16 16:12:32,177 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,177 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,177 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,177 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	2
+
+2025-05-16 16:12:32,178 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,178 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 2
+2025-05-16 16:12:32,178 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_002.TXT
+2025-05-16 16:12:32,178 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,179 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,179 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	2.000E-03	1.000E-08	2.700E-09	6.900E-09	3.003E+00	1.296E+02	1.300E+02	8.800E-09	1.480E-08	4...
+2025-05-16 16:12:32,179 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	1.000E-08	2.800E-09	1.200E-09	2.903E+00	1.296E+02	1.300E+02	9.400E-09	1.650E-08	5...
+2025-05-16 16:12:32,179 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	3.000E-08	2.900E-09	4.600E-09	2.972E+00	1.300E+02	1.300E+02	9.500E-09	1.780E-08	1...
+2025-05-16 16:12:32,180 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,181 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 2，包含 142 个芯片数据
+2025-05-16 16:12:32,181 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,181 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,182 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,182 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	3
+
+2025-05-16 16:12:32,182 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,182 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 3
+2025-05-16 16:12:32,182 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_003.TXT
+2025-05-16 16:12:32,182 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,182 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,183 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	2.000E-03	0.000E+00	1.200E-09	1.000E-09	3.043E+00	1.283E+02	1.287E+02	1.040E-08	1.980E-08	6...
+2025-05-16 16:12:32,183 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	2.000E-08	2.700E-09	1.000E-09	2.994E+00	1.287E+02	1.291E+02	8.900E-09	1.830E-08	3...
+2025-05-16 16:12:32,183 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	2.000E-03	0.000E+00	6.000E-10	3.400E-09	3.000E+00	1.293E+02	1.297E+02	8.100E-09	1.650E-08	3...
+2025-05-16 16:12:32,184 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,185 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 3，包含 142 个芯片数据
+2025-05-16 16:12:32,186 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,186 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,186 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,187 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	4
+
+2025-05-16 16:12:32,187 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,187 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 4
+2025-05-16 16:12:32,188 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_004.TXT
+2025-05-16 16:12:32,188 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,188 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,188 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	5.000E-10	1.100E-09	2.925E+00	1.301E+02	1.304E+02	1.180E-08	1.970E-08	1...
+2025-05-16 16:12:32,189 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	2.000E-03	2.000E-08	1.400E-09	5.400E-09	2.900E+00	1.293E+02	1.297E+02	1.040E-08	2.090E-08	3...
+2025-05-16 16:12:32,189 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	2.000E-03	1.000E-08	5.000E-10	2.900E-09	2.911E+00	1.297E+02	1.301E+02	1.080E-08	1.910E-08	3...
+2025-05-16 16:12:32,191 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,192 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 4，包含 142 个芯片数据
+2025-05-16 16:12:32,192 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,192 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,192 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,193 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	5
+
+2025-05-16 16:12:32,193 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,193 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 5
+2025-05-16 16:12:32,193 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_005.TXT
+2025-05-16 16:12:32,193 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,193 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,194 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	1.000E-08	4.700E-09	3.300E-09	3.034E+00	1.298E+02	1.302E+02	1.090E-08	1.650E-08	4...
+2025-05-16 16:12:32,194 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	0.000E+00	3.500E-09	1.500E-09	2.971E+00	1.298E+02	1.300E+02	8.800E-09	1.730E-08	4...
+2025-05-16 16:12:32,194 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	1.000E-08	1.400E-09	3.300E-09	2.993E+00	1.299E+02	1.301E+02	9.100E-09	1.810E-08	1...
+2025-05-16 16:12:32,195 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,196 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 5，包含 142 个芯片数据
+2025-05-16 16:12:32,196 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,197 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,197 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,197 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	6
+
+2025-05-16 16:12:32,197 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,197 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 6
+2025-05-16 16:12:32,197 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_006.TXT
+2025-05-16 16:12:32,198 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,198 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,198 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	1.000E-08	1.300E-09	7.000E-10	2.889E+00	1.284E+02	1.289E+02	1.010E-08	1.960E-08	3...
+2025-05-16 16:12:32,199 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	4.000E-08	3.000E-10	2.000E-10	2.797E+00	1.287E+02	1.293E+02	8.600E-09	1.980E-08	1...
+2025-05-16 16:12:32,199 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	2.000E-03	0.000E+00	3.300E-09	2.400E-09	2.851E+00	1.292E+02	1.296E+02	8.100E-09	1.770E-08	4...
+2025-05-16 16:12:32,200 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,201 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 6，包含 142 个芯片数据
+2025-05-16 16:12:32,202 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,202 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,202 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,203 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	7
+
+2025-05-16 16:12:32,203 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,203 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 7
+2025-05-16 16:12:32,203 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_007.TXT
+2025-05-16 16:12:32,203 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,204 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,204 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	3.300E-09	1.600E-09	2.882E+00	1.301E+02	1.304E+02	1.230E-08	1.940E-08	3...
+2025-05-16 16:12:32,204 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	2.000E-03	7.000E-08	3.000E-10	1.000E-09	2.871E+00	1.295E+02	1.298E+02	8.300E-09	1.500E-08	1...
+2025-05-16 16:12:32,204 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	1.000E-08	1.000E-09	1.900E-09	2.922E+00	1.299E+02	1.302E+02	8.400E-09	1.720E-08	1...
+2025-05-16 16:12:32,205 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,206 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 7，包含 142 个芯片数据
+2025-05-16 16:12:32,207 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,207 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,207 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,207 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	8
+
+2025-05-16 16:12:32,208 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,208 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 8
+2025-05-16 16:12:32,208 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_008.TXT
+2025-05-16 16:12:32,209 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,209 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,210 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	2.000E-03	3.000E-08	3.100E-09	3.500E-09	2.925E+00	1.297E+02	1.300E+02	1.260E-08	2.090E-08	2...
+2025-05-16 16:12:32,210 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	1.000E-08	4.100E-09	4.800E-09	2.851E+00	1.299E+02	1.300E+02	1.190E-08	2.100E-08	4...
+2025-05-16 16:12:32,210 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	2.000E-03	1.000E-08	4.500E-09	3.200E-09	2.895E+00	1.299E+02	1.300E+02	1.080E-08	2.100E-08	3...
+2025-05-16 16:12:32,211 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,212 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 8，包含 142 个芯片数据
+2025-05-16 16:12:32,213 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,213 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,213 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,213 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	9
+
+2025-05-16 16:12:32,213 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,214 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 9
+2025-05-16 16:12:32,214 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_009.TXT
+2025-05-16 16:12:32,215 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,215 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,215 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	3.500E-09	2.300E-09	2.973E+00	1.285E+02	1.287E+02	1.630E-08	2.500E-08	1...
+2025-05-16 16:12:32,215 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	0.000E+00	1.300E-09	1.800E-09	2.915E+00	1.289E+02	1.292E+02	1.280E-08	2.110E-08	6...
+2025-05-16 16:12:32,216 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	2.200E-09	1.100E-09	2.900E+00	1.293E+02	1.296E+02	9.800E-09	1.840E-08	1...
+2025-05-16 16:12:32,217 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,218 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 9，包含 142 个芯片数据
+2025-05-16 16:12:32,219 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,219 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,219 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,220 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	10
+
+2025-05-16 16:12:32,221 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,221 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 10
+2025-05-16 16:12:32,221 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_010.TXT
+2025-05-16 16:12:32,222 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,222 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,222 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	3.000E-10	7.700E-09	2.975E+00	1.302E+02	1.305E+02	1.220E-08	1.810E-08	6...
+2025-05-16 16:12:32,223 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	0.000E+00	7.000E-10	3.000E-09	2.906E+00	1.296E+02	1.299E+02	1.110E-08	1.840E-08	6...
+2025-05-16 16:12:32,223 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	4.000E-08	3.200E-09	4.000E-10	2.925E+00	1.299E+02	1.303E+02	9.200E-09	1.790E-08	3...
+2025-05-16 16:12:32,224 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,226 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 10，包含 142 个芯片数据
+2025-05-16 16:12:32,226 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,226 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,226 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,227 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	11
+
+2025-05-16 16:12:32,227 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,227 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 11
+2025-05-16 16:12:32,227 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_011.TXT
+2025-05-16 16:12:32,227 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,228 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,228 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	2.000E-03	4.000E-08	2.600E-09	2.400E-09	2.992E+00	1.298E+02	1.301E+02	8.600E-09	1.620E-08	4...
+2025-05-16 16:12:32,228 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	1.000E-08	1.000E-10	3.400E-09	2.925E+00	1.297E+02	1.300E+02	1.010E-08	1.690E-08	1...
+2025-05-16 16:12:32,228 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	1.000E-08	7.000E-10	2.100E-09	2.943E+00	1.298E+02	1.300E+02	8.900E-09	1.660E-08	2...
+2025-05-16 16:12:32,231 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,232 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 11，包含 142 个芯片数据
+2025-05-16 16:12:32,233 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,233 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,234 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,234 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	12
+
+2025-05-16 16:12:32,234 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,234 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 12
+2025-05-16 16:12:32,235 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_012.TXT
+2025-05-16 16:12:32,235 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,235 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,236 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	2.000E-03	5.000E-08	4.300E-09	1.400E-09	3.011E+00	1.285E+02	1.288E+02	1.150E-08	1.980E-08	4...
+2025-05-16 16:12:32,236 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	1.000E-08	2.700E-09	3.200E-09	3.042E+00	1.288E+02	1.292E+02	9.400E-09	1.980E-08	4...
+2025-05-16 16:12:32,236 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	2.000E-03	3.000E-08	3.500E-09	4.000E-10	2.974E+00	1.292E+02	1.296E+02	8.600E-09	1.790E-08	3...
+2025-05-16 16:12:32,238 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,239 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 12，包含 142 个芯片数据
+2025-05-16 16:12:32,239 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,239 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,240 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,240 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	13
+
+2025-05-16 16:12:32,240 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,240 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 13
+2025-05-16 16:12:32,240 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_013.TXT
+2025-05-16 16:12:32,241 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,241 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,241 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	7	2.000E-03	0.000E+00	5.700E-09	7.000E-10	3.080E+00	1.195E+02						...
+2025-05-16 16:12:32,241 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	3.000E-03	1.000E-08	6.000E-10	2.300E-09	3.018E+00	1.294E+02	1.298E+02	8.000E-09	1.490E-08	6...
+2025-05-16 16:12:32,241 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	2.000E-03	1.000E-08	1.400E-09	3.300E-09	2.980E+00	1.297E+02	1.302E+02	7.500E-09	1.550E-08	5...
+2025-05-16 16:12:32,243 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,245 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 13，包含 142 个芯片数据
+2025-05-16 16:12:32,245 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,246 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,246 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,246 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	14
+
+2025-05-16 16:12:32,246 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,246 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 14
+2025-05-16 16:12:32,246 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_014.TXT
+2025-05-16 16:12:32,247 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,247 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,247 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	3.000E-08	1.000E-09	4.000E-09	3.088E+00	1.298E+02	1.302E+02	1.120E-08	1.760E-08	4...
+2025-05-16 16:12:32,248 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	1.000E-08	1.800E-09	2.600E-09	2.962E+00	1.297E+02	1.300E+02	1.100E-08	1.700E-08	5...
+2025-05-16 16:12:32,248 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	2.000E-03	0.000E+00	1.400E-09	8.000E-10	3.011E+00	1.299E+02	1.301E+02	1.090E-08	1.780E-08	3...
+2025-05-16 16:12:32,249 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,250 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 14，包含 142 个芯片数据
+2025-05-16 16:12:32,251 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,251 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,251 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,251 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	15
+
+2025-05-16 16:12:32,252 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,252 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 15
+2025-05-16 16:12:32,252 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_015.TXT
+2025-05-16 16:12:32,252 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,252 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,253 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	2.000E-03	2.000E-08	3.500E-09	2.800E-09	3.120E+00	1.288E+02	1.292E+02	1.160E-08	1.910E-08	1...
+2025-05-16 16:12:32,253 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	2.000E-08	4.000E-10	3.500E-09	3.097E+00	1.290E+02	1.293E+02	8.000E-09	1.620E-08	3...
+2025-05-16 16:12:32,254 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	2.000E-10	2.300E-09	3.072E+00	1.294E+02	1.298E+02	8.500E-09	1.620E-08	2...
+2025-05-16 16:12:32,256 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,257 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 15，包含 142 个芯片数据
+2025-05-16 16:12:32,258 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,258 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,258 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,258 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	16
+
+2025-05-16 16:12:32,258 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,259 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 16
+2025-05-16 16:12:32,259 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_016.TXT
+2025-05-16 16:12:32,259 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,259 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,260 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	2.000E-08	2.900E-09	8.000E-10	3.060E+00	1.300E+02	1.303E+02	1.320E-08	2.130E-08	4...
+2025-05-16 16:12:32,260 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	0.000E+00	1.300E-09	1.700E-09	3.005E+00	1.294E+02	1.297E+02	7.700E-09	1.700E-08	1...
+2025-05-16 16:12:32,260 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	2.000E-08	5.000E-10	9.000E-10	3.080E+00	1.298E+02	1.302E+02	9.000E-09	1.580E-08	3...
+2025-05-16 16:12:32,262 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,262 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 16，包含 142 个芯片数据
+2025-05-16 16:12:32,263 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,263 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,263 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,263 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	17
+
+2025-05-16 16:12:32,264 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,265 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 17
+2025-05-16 16:12:32,265 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_017.TXT
+2025-05-16 16:12:32,266 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,266 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,266 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	2.000E-08	0.000E+00	3.900E-09	3.031E+00	1.296E+02	1.299E+02	1.060E-08	1.730E-08	2...
+2025-05-16 16:12:32,267 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	3.000E-08	4.200E-09	7.000E-10	2.926E+00	1.295E+02	1.299E+02	7.300E-09	1.560E-08	3...
+2025-05-16 16:12:32,267 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	1.800E-09	1.000E-09	2.978E+00	1.297E+02	1.298E+02	6.600E-09	1.550E-08	3...
+2025-05-16 16:12:32,269 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,270 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 17，包含 142 个芯片数据
+2025-05-16 16:12:32,272 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,272 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,272 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,273 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	18
+
+2025-05-16 16:12:32,273 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,273 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 18
+2025-05-16 16:12:32,273 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_018.TXT
+2025-05-16 16:12:32,273 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,274 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,274 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	1.800E-09	6.600E-09	3.037E+00	1.286E+02	1.290E+02	1.100E-08	1.870E-08	5...
+2025-05-16 16:12:32,274 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	0.000E+00	2.800E-09	1.500E-09	2.899E+00	1.289E+02	1.293E+02	1.020E-08	1.970E-08	5...
+2025-05-16 16:12:32,274 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	1.200E-09	2.800E-09	2.987E+00	1.293E+02	1.296E+02	9.300E-09	1.780E-08	4...
+2025-05-16 16:12:32,276 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,278 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 18，包含 142 个芯片数据
+2025-05-16 16:12:32,278 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,279 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,279 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,279 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	19
+
+2025-05-16 16:12:32,280 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,280 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 19
+2025-05-16 16:12:32,280 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_019.TXT
+2025-05-16 16:12:32,280 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,280 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,281 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	2.000E-03	1.000E-08	1.500E-09	3.500E-09	3.013E+00	1.299E+02	1.302E+02	1.040E-08	1.640E-08	4...
+2025-05-16 16:12:32,281 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	0.000E+00	5.000E-10	1.300E-09	2.933E+00	1.295E+02	1.297E+02	8.400E-09	1.620E-08	5...
+2025-05-16 16:12:32,281 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	2.000E-03	3.000E-08	2.000E-09	2.000E-10	2.928E+00	1.298E+02	1.300E+02	8.400E-09	1.430E-08	5...
+2025-05-16 16:12:32,283 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,284 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 19，包含 142 个芯片数据
+2025-05-16 16:12:32,284 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,285 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,285 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,285 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	20
+
+2025-05-16 16:12:32,285 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,285 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 20
+2025-05-16 16:12:32,286 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_020.TXT
+2025-05-16 16:12:32,286 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,286 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,286 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	1.300E-09	2.400E-09	2.924E+00	1.298E+02	1.301E+02	7.700E-09	1.570E-08	4...
+2025-05-16 16:12:32,287 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	2.000E-03	3.000E-08	2.200E-09	2.200E-09	2.792E+00	1.297E+02	1.299E+02	9.100E-09	1.810E-08	2...
+2025-05-16 16:12:32,287 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	2.000E-03	1.000E-08	1.400E-09	6.100E-09	2.903E+00	1.298E+02	1.300E+02	8.500E-09	1.610E-08	1...
+2025-05-16 16:12:32,290 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,291 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 20，包含 142 个芯片数据
+2025-05-16 16:12:32,291 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,291 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,291 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,292 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	21
+
+2025-05-16 16:12:32,292 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,292 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 21
+2025-05-16 16:12:32,292 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_021.TXT
+2025-05-16 16:12:32,293 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,293 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,293 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	1.000E-08	6.000E-09	1.200E-09	2.933E+00	1.289E+02	1.294E+02	1.060E-08	1.720E-08	1...
+2025-05-16 16:12:32,293 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	2.000E-03	2.000E-08	9.000E-10	1.400E-09	2.888E+00	1.292E+02	1.295E+02	4.600E-09	1.080E-08	5...
+2025-05-16 16:12:32,293 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	3.000E-08	4.400E-09	3.300E-09	2.918E+00	1.295E+02	1.298E+02	5.400E-09	9.700E-09	2...
+2025-05-16 16:12:32,295 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,296 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 21，包含 142 个芯片数据
+2025-05-16 16:12:32,297 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,297 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,297 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,298 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	22
+
+2025-05-16 16:12:32,298 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,299 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 22
+2025-05-16 16:12:32,299 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_022.TXT
+2025-05-16 16:12:32,299 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,299 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,301 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	2.000E-03	0.000E+00	2.400E-09	2.500E-09	2.924E+00	1.300E+02	1.305E+02	1.420E-08	2.140E-08	7...
+2025-05-16 16:12:32,301 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	2.000E-03	0.000E+00	3.900E-09	7.000E-10	2.875E+00	1.299E+02	1.301E+02	1.040E-08	1.840E-08	2...
+2025-05-16 16:12:32,301 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	3.000E-08	2.000E-10	4.500E-09	2.923E+00	1.302E+02	1.305E+02	9.800E-09	1.700E-08	4...
+2025-05-16 16:12:32,303 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,304 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 22，包含 142 个芯片数据
+2025-05-16 16:12:32,305 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,305 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,305 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,305 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	23
+
+2025-05-16 16:12:32,305 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,306 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 23
+2025-05-16 16:12:32,306 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_023.TXT
+2025-05-16 16:12:32,306 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,306 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,306 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	2.000E-08	3.600E-09	1.800E-09	3.077E+00	1.296E+02	1.299E+02	6.800E-09	1.290E-08	3...
+2025-05-16 16:12:32,307 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	4.000E-08	7.000E-10	3.000E-09	2.933E+00	1.297E+02	1.298E+02	8.600E-09	1.470E-08	2...
+2025-05-16 16:12:32,307 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	4.100E-09	9.000E-10	2.994E+00	1.296E+02	1.298E+02	6.500E-09	1.430E-08	2...
+2025-05-16 16:12:32,308 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,310 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 23，包含 142 个芯片数据
+2025-05-16 16:12:32,310 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,311 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,311 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,311 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	24
+
+2025-05-16 16:12:32,312 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,312 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 24
+2025-05-16 16:12:32,312 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_024.TXT
+2025-05-16 16:12:32,313 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,313 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,313 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	2.000E-03	2.000E-08	1.100E-09	7.000E-10	3.038E+00	1.290E+02	1.294E+02	9.000E-09	1.480E-08	5...
+2025-05-16 16:12:32,313 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	1.000E-08	1.200E-09	3.800E-09	2.971E+00	1.293E+02	1.296E+02	8.000E-09	1.690E-08	1...
+2025-05-16 16:12:32,313 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	1.000E-08	3.000E-10	5.000E-10	3.024E+00	1.296E+02	1.300E+02	6.800E-09	1.580E-08	4...
+2025-05-16 16:12:32,316 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,317 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 24，包含 142 个芯片数据
+2025-05-16 16:12:32,317 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,317 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,318 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5340-325A-250502@203
+
+2025-05-16 16:12:32,318 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	25
+
+2025-05-16 16:12:32,318 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5340-325A-250502@203
+2025-05-16 16:12:32,318 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 25
+2025-05-16 16:12:32,318 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5340-325A-250502@203_025.TXT
+2025-05-16 16:12:32,319 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,319 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,319 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	0.000E+00	1.600E-09	3.034E+00	1.296E+02	1.300E+02	6.700E-09	1.330E-08	1...
+2025-05-16 16:12:32,319 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	2.000E-03	3.000E-08	3.800E-09	1.000E-10	2.959E+00	1.298E+02	1.300E+02	5.400E-09	1.330E-08	7...
+2025-05-16 16:12:32,319 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	1.800E-09	5.400E-09	2.992E+00	1.300E+02	1.302E+02	6.200E-09	1.270E-08	8...
+2025-05-16 16:12:32,321 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,322 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 25，包含 142 个芯片数据
+2025-05-16 16:12:32,323 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,323 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,324 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,324 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	1
+
+2025-05-16 16:12:32,324 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,324 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 1
+2025-05-16 16:12:32,325 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_001.TXT
+2025-05-16 16:12:32,325 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,325 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,326 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	2.300E-09	3.200E-09	3.181E+00	1.293E+02	1.296E+02	6.400E-09	1.170E-08	2...
+2025-05-16 16:12:32,326 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	2.000E-09	3.900E-09	3.102E+00	1.288E+02	1.292E+02	6.900E-09	1.600E-08	7...
+2025-05-16 16:12:32,326 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	2.300E-09	5.400E-09	3.143E+00	1.293E+02	1.298E+02	7.300E-09	1.470E-08	3...
+2025-05-16 16:12:32,329 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,330 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 1，包含 142 个芯片数据
+2025-05-16 16:12:32,330 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,330 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,330 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,332 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	2
+
+2025-05-16 16:12:32,332 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,333 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 2
+2025-05-16 16:12:32,333 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_002.TXT
+2025-05-16 16:12:32,333 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,334 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,334 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	4.000E-10	0.000E+00	3.045E+00	1.286E+02	1.291E+02	9.000E-09	1.740E-08	4...
+2025-05-16 16:12:32,334 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	1.000E-08	1.700E-09	3.200E-09	3.030E+00	1.290E+02	1.293E+02	8.100E-09	1.730E-08	4...
+2025-05-16 16:12:32,334 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	3.000E-09	3.000E-10	3.087E+00	1.293E+02	1.295E+02	9.500E-09	1.580E-08	3...
+2025-05-16 16:12:32,336 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,337 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 2，包含 142 个芯片数据
+2025-05-16 16:12:32,337 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,337 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,337 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,338 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	3
+
+2025-05-16 16:12:32,338 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,338 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 3
+2025-05-16 16:12:32,338 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_003.TXT
+2025-05-16 16:12:32,339 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,339 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,339 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	1.000E-08	2.300E-09	5.000E-09	3.008E+00	1.296E+02	1.298E+02	8.300E-09	1.760E-08	3...
+2025-05-16 16:12:32,339 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	1.400E-09	1.800E-09	3.005E+00	1.296E+02	1.298E+02	9.600E-09	1.780E-08	2...
+2025-05-16 16:12:32,339 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	2.200E-09	1.200E-09	3.073E+00	1.296E+02	1.297E+02	8.200E-09	1.780E-08	1...
+2025-05-16 16:12:32,341 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,342 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 3，包含 142 个芯片数据
+2025-05-16 16:12:32,342 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,343 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,343 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,343 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	4
+
+2025-05-16 16:12:32,344 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,344 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 4
+2025-05-16 16:12:32,344 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_004.TXT
+2025-05-16 16:12:32,344 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,344 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,344 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	7.000E-10	3.600E-09	3.021E+00	1.294E+02	1.298E+02	6.500E-09	1.400E-08	5...
+2025-05-16 16:12:32,345 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	2.000E-08	2.300E-09	1.400E-09	3.026E+00	1.286E+02	1.291E+02	8.300E-09	1.760E-08	2...
+2025-05-16 16:12:32,345 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	1.300E-09	1.000E-10	3.062E+00	1.293E+02	1.297E+02	7.500E-09	1.800E-08	1...
+2025-05-16 16:12:32,346 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,347 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 4，包含 142 个芯片数据
+2025-05-16 16:12:32,348 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,348 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,348 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,348 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	5
+
+2025-05-16 16:12:32,348 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,348 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 5
+2025-05-16 16:12:32,348 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_005.TXT
+2025-05-16 16:12:32,349 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,349 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,349 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	2.000E-09	5.000E-10	3.053E+00	1.293E+02	1.297E+02	1.020E-08	1.880E-08	2...
+2025-05-16 16:12:32,349 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	1.000E-09	1.900E-09	3.017E+00	1.295E+02	1.298E+02	7.500E-09	1.800E-08	4...
+2025-05-16 16:12:32,349 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	6.000E-10	2.000E-09	3.039E+00	1.298E+02	1.300E+02	8.500E-09	1.640E-08	2...
+2025-05-16 16:12:32,351 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,352 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 5，包含 142 个芯片数据
+2025-05-16 16:12:32,352 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,352 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,352 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,353 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	6
+
+2025-05-16 16:12:32,353 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,353 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 6
+2025-05-16 16:12:32,353 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_006.TXT
+2025-05-16 16:12:32,354 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,355 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,355 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	3	0.000E+00	99.99										...
+2025-05-16 16:12:32,355 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	6.000E-10	2.100E-09	2.978E+00	1.296E+02	1.299E+02	9.400E-09	1.660E-08	1...
+2025-05-16 16:12:32,355 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	2.200E-09	1.200E-09	3.016E+00	1.299E+02	1.301E+02	8.400E-09	1.740E-08	2...
+2025-05-16 16:12:32,357 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,358 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 6，包含 142 个芯片数据
+2025-05-16 16:12:32,358 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,358 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,359 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,359 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	7
+
+2025-05-16 16:12:32,359 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,359 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 7
+2025-05-16 16:12:32,359 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_007.TXT
+2025-05-16 16:12:32,359 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,359 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,359 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	1.000E-08	3.600E-09	7.200E-09	3.030E+00	1.288E+02	1.292E+02	8.900E-09	1.660E-08	5...
+2025-05-16 16:12:32,359 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	1.000E-08	2.000E-09	2.400E-09	2.986E+00	1.284E+02	1.288E+02	7.700E-09	1.970E-08	2...
+2025-05-16 16:12:32,359 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	0.000E+00	2.500E-09	3.016E+00	1.291E+02	1.296E+02	7.200E-09	1.790E-08	2...
+2025-05-16 16:12:32,361 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,362 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 7，包含 142 个芯片数据
+2025-05-16 16:12:32,362 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,362 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,362 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,363 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	8
+
+2025-05-16 16:12:32,363 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,363 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 8
+2025-05-16 16:12:32,363 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_008.TXT
+2025-05-16 16:12:32,363 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,364 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,364 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	2.000E-08	5.000E-10	4.600E-09	2.992E+00	1.295E+02	1.298E+02	7.600E-09	1.480E-08	4...
+2025-05-16 16:12:32,364 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	1.900E-09	1.300E-09	2.889E+00	1.295E+02	1.298E+02	8.700E-09	1.860E-08	2...
+2025-05-16 16:12:32,365 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	1.500E-09	1.300E-09	2.901E+00	1.298E+02	1.301E+02	7.600E-09	1.760E-08	3...
+2025-05-16 16:12:32,367 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,369 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 8，包含 142 个芯片数据
+2025-05-16 16:12:32,369 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,369 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,370 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,370 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	9
+
+2025-05-16 16:12:32,370 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,370 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 9
+2025-05-16 16:12:32,370 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_009.TXT
+2025-05-16 16:12:32,370 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,370 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,371 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	7.000E-10	3.400E-09	3.057E+00	1.298E+02	1.301E+02	8.800E-09	1.590E-08	4...
+2025-05-16 16:12:32,371 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	1.000E-08	1.300E-09	1.200E-09	2.998E+00	1.298E+02	1.301E+02	9.100E-09	1.850E-08	3...
+2025-05-16 16:12:32,371 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	4.000E-10	1.400E-09	3.005E+00	1.299E+02	1.302E+02	8.600E-09	1.870E-08	6...
+2025-05-16 16:12:32,372 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,373 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 9，包含 142 个芯片数据
+2025-05-16 16:12:32,373 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,374 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,374 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,374 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	10
+
+2025-05-16 16:12:32,374 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,374 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 10
+2025-05-16 16:12:32,374 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_010.TXT
+2025-05-16 16:12:32,375 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,375 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,375 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	2.000E-10	3.500E-09	2.987E+00	1.287E+02	1.291E+02	1.010E-08	1.790E-08	3...
+2025-05-16 16:12:32,375 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	2.500E-09	0.000E+00	2.925E+00	1.283E+02	1.288E+02	8.300E-09	1.880E-08	3...
+2025-05-16 16:12:32,376 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	1.300E-09	6.300E-09	2.942E+00	1.290E+02	1.295E+02	7.800E-09	1.780E-08	1...
+2025-05-16 16:12:32,378 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,380 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 10，包含 142 个芯片数据
+2025-05-16 16:12:32,381 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,381 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,381 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,381 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	11
+
+2025-05-16 16:12:32,382 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,382 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 11
+2025-05-16 16:12:32,382 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_011.TXT
+2025-05-16 16:12:32,382 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,382 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,382 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	1.000E-08	0.000E+00	6.000E-10	3.064E+00	1.295E+02	1.298E+02	7.100E-09	1.120E-08	0...
+2025-05-16 16:12:32,383 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	4.000E-09	8.000E-10	3.024E+00	1.297E+02	1.299E+02	7.300E-09	1.590E-08	1...
+2025-05-16 16:12:32,383 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	2.000E-10	6.400E-09	3.027E+00	1.298E+02	1.302E+02	7.000E-09	1.440E-08	3...
+2025-05-16 16:12:32,384 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,385 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 11，包含 142 个芯片数据
+2025-05-16 16:12:32,385 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,386 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,386 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,386 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	12
+
+2025-05-16 16:12:32,386 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,386 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 12
+2025-05-16 16:12:32,387 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_012.TXT
+2025-05-16 16:12:32,387 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,388 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,388 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	3.000E-10	3.100E-09	3.100E+00	1.297E+02	1.301E+02	8.200E-09	1.450E-08	3...
+2025-05-16 16:12:32,388 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	1.000E-08	0.000E+00	4.600E-09	3.036E+00	1.297E+02	1.300E+02	8.100E-09	1.770E-08	4...
+2025-05-16 16:12:32,388 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	2.900E-09	1.500E-09	3.073E+00	1.300E+02	1.301E+02	7.000E-09	1.740E-08	2...
+2025-05-16 16:12:32,389 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,390 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 12，包含 142 个芯片数据
+2025-05-16 16:12:32,392 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,392 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,392 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,393 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	13
+
+2025-05-16 16:12:32,393 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,393 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 13
+2025-05-16 16:12:32,393 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_013.TXT
+2025-05-16 16:12:32,393 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,393 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,394 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	1.000E-08	4.100E-09	1.400E-09	3.090E+00	1.289E+02	1.292E+02	1.060E-08	1.930E-08	8...
+2025-05-16 16:12:32,394 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	1.900E-09	1.700E-09	3.084E+00	1.284E+02	1.289E+02	9.200E-09	1.810E-08	4...
+2025-05-16 16:12:32,394 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	1.000E-08	1.600E-09	1.800E-09	3.114E+00	1.290E+02	1.295E+02	8.000E-09	1.820E-08	3...
+2025-05-16 16:12:32,395 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,396 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 13，包含 142 个芯片数据
+2025-05-16 16:12:32,397 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,397 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,397 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,397 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	14
+
+2025-05-16 16:12:32,397 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,398 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 14
+2025-05-16 16:12:32,398 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_014.TXT
+2025-05-16 16:12:32,398 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,399 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,399 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	8.000E-10	2.600E-09	3.055E+00	1.295E+02	1.298E+02	7.300E-09	1.570E-08	3...
+2025-05-16 16:12:32,399 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	0.000E+00	4.000E-10	3.200E-09	3.036E+00	1.296E+02	1.299E+02	6.100E-09	1.610E-08	2...
+2025-05-16 16:12:32,400 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	1.100E-09	3.800E-09	3.019E+00	1.297E+02	1.301E+02	8.600E-09	1.550E-08	4...
+2025-05-16 16:12:32,401 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,403 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 14，包含 142 个芯片数据
+2025-05-16 16:12:32,403 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,403 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,403 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,403 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	15
+
+2025-05-16 16:12:32,404 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,404 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 15
+2025-05-16 16:12:32,404 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_015.TXT
+2025-05-16 16:12:32,404 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,404 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,404 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	1.000E-09	2.200E-09	3.157E+00	1.297E+02	1.299E+02	8.600E-09	1.410E-08	3...
+2025-05-16 16:12:32,405 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	0.000E+00	0.000E+00	7.000E-10	3.042E+00	1.296E+02	1.300E+02	7.700E-09	1.560E-08	2...
+2025-05-16 16:12:32,405 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	1.700E-09	1.400E-09	3.118E+00	1.300E+02	1.301E+02	7.900E-09	1.450E-08	5...
+2025-05-16 16:12:32,406 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,407 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 15，包含 142 个芯片数据
+2025-05-16 16:12:32,407 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,407 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,408 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,408 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	16
+
+2025-05-16 16:12:32,408 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,408 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 16
+2025-05-16 16:12:32,408 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_016.TXT
+2025-05-16 16:12:32,409 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,409 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,409 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	8.000E-10	5.800E-09	3.058E+00	1.287E+02	1.290E+02	7.300E-09	1.590E-08	2...
+2025-05-16 16:12:32,409 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	6.000E-10	3.000E-10	2.969E+00	1.283E+02	1.288E+02	7.800E-09	1.910E-08	1...
+2025-05-16 16:12:32,409 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	3.300E-09	2.300E-09	3.050E+00	1.291E+02	1.295E+02	7.600E-09	1.650E-08	2...
+2025-05-16 16:12:32,411 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,412 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 16，包含 142 个芯片数据
+2025-05-16 16:12:32,413 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,413 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,413 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,413 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	17
+
+2025-05-16 16:12:32,413 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,413 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 17
+2025-05-16 16:12:32,414 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_017.TXT
+2025-05-16 16:12:32,414 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,414 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,414 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	4.000E-10	1.000E-09	3.189E+00	1.293E+02	1.296E+02	8.100E-09	1.630E-08	5...
+2025-05-16 16:12:32,414 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	1.000E-08	0.000E+00	7.000E-10	3.077E+00	1.296E+02	1.297E+02	8.200E-09	1.480E-08	1...
+2025-05-16 16:12:32,414 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	3.600E-09	2.000E-10	3.095E+00	1.297E+02	1.300E+02	7.700E-09	1.490E-08	2...
+2025-05-16 16:12:32,416 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,417 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 17，包含 142 个芯片数据
+2025-05-16 16:12:32,417 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,418 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,418 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,418 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	18
+
+2025-05-16 16:12:32,418 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,418 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 18
+2025-05-16 16:12:32,418 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_018.TXT
+2025-05-16 16:12:32,419 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,419 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,419 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	6.000E-10	7.100E-09	3.063E+00	1.297E+02	1.300E+02	7.900E-09	1.300E-08	3...
+2025-05-16 16:12:32,419 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	1.000E-08	1.700E-09	3.000E-10	2.945E+00	1.297E+02	1.300E+02	8.000E-09	1.800E-08	5...
+2025-05-16 16:12:32,419 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	2.000E-08	1.200E-09	9.000E-10	3.040E+00	1.298E+02	1.301E+02	8.000E-09	1.690E-08	2...
+2025-05-16 16:12:32,422 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,423 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 18，包含 142 个芯片数据
+2025-05-16 16:12:32,423 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,423 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,423 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250430@203
+
+2025-05-16 16:12:32,423 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	19
+
+2025-05-16 16:12:32,424 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250430@203
+2025-05-16 16:12:32,424 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 19
+2025-05-16 16:12:32,424 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250430@203_019.TXT
+2025-05-16 16:12:32,424 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,424 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,424 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	1.000E-08	5.000E-10	3.100E-09	3.108E+00	1.285E+02	1.290E+02	7.900E-09	1.550E-08	1...
+2025-05-16 16:12:32,425 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	0.000E+00	4.000E-10	2.000E-09	3.064E+00	1.283E+02	1.287E+02	8.600E-09	1.570E-08	1...
+2025-05-16 16:12:32,425 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	3.600E-09	3.600E-09	3.111E+00	1.289E+02	1.294E+02	7.300E-09	1.640E-08	7...
+2025-05-16 16:12:32,426 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,427 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 19，包含 142 个芯片数据
+2025-05-16 16:12:32,427 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,427 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,428 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250501@203
+
+2025-05-16 16:12:32,428 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	20
+
+2025-05-16 16:12:32,428 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250501@203
+2025-05-16 16:12:32,428 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 20
+2025-05-16 16:12:32,428 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250501@203_020.TXT
+2025-05-16 16:12:32,429 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,429 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,429 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	1.500E-09	1.600E-09	3.065E+00	1.293E+02	1.296E+02	7.200E-09	1.220E-08	2...
+2025-05-16 16:12:32,429 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	2.000E-09	2.200E-09	2.999E+00	1.294E+02	1.296E+02	6.700E-09	1.550E-08	1...
+2025-05-16 16:12:32,429 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	3.000E-10	7.000E-10	3.032E+00	1.295E+02	1.299E+02	7.100E-09	1.430E-08	3...
+2025-05-16 16:12:32,432 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,434 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 20，包含 142 个芯片数据
+2025-05-16 16:12:32,434 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,435 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,435 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250501@203
+
+2025-05-16 16:12:32,435 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	21
+
+2025-05-16 16:12:32,435 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250501@203
+2025-05-16 16:12:32,435 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 21
+2025-05-16 16:12:32,435 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250501@203_021.TXT
+2025-05-16 16:12:32,436 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,436 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,436 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	2.700E-09	1.000E-09	3.141E+00	1.296E+02	1.299E+02	9.000E-09	1.570E-08	1...
+2025-05-16 16:12:32,436 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	1.000E-08	2.200E-09	1.300E-09	3.104E+00	1.295E+02	1.299E+02	6.800E-09	1.400E-08	8...
+2025-05-16 16:12:32,436 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	6.000E-10	3.000E-10	3.131E+00	1.298E+02	1.300E+02	5.400E-09	1.410E-08	3...
+2025-05-16 16:12:32,439 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,439 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 21，包含 142 个芯片数据
+2025-05-16 16:12:32,440 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,440 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,440 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250501@203
+
+2025-05-16 16:12:32,440 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	22
+
+2025-05-16 16:12:32,441 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250501@203
+2025-05-16 16:12:32,441 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 22
+2025-05-16 16:12:32,441 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250501@203_022.TXT
+2025-05-16 16:12:32,441 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,442 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,442 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	9.000E-10	5.000E-09	3.052E+00	1.284E+02	1.288E+02	8.200E-09	1.590E-08	2...
+2025-05-16 16:12:32,442 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	1.000E-10	3.900E-09	2.988E+00	1.282E+02	1.286E+02	9.000E-09	1.700E-08	1...
+2025-05-16 16:12:32,443 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	1.000E-08	6.000E-10	3.700E-09	3.042E+00	1.288E+02	1.292E+02	7.800E-09	1.390E-08	3...
+2025-05-16 16:12:32,445 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,447 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 22，包含 142 个芯片数据
+2025-05-16 16:12:32,447 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,448 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,448 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250501@203
+
+2025-05-16 16:12:32,448 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	23
+
+2025-05-16 16:12:32,448 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250501@203
+2025-05-16 16:12:32,448 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 23
+2025-05-16 16:12:32,448 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250501@203_023.TXT
+2025-05-16 16:12:32,448 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,449 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,449 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	4.000E-10	4.200E-09	3.069E+00	1.298E+02	1.300E+02	8.000E-09	1.470E-08	2...
+2025-05-16 16:12:32,449 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	3.200E-09	3.000E-10	3.036E+00	1.291E+02	1.295E+02	7.200E-09	1.500E-08	2...
+2025-05-16 16:12:32,449 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	4.000E-10	2.400E-09	3.051E+00	1.296E+02	1.300E+02	6.700E-09	1.430E-08	3...
+2025-05-16 16:12:32,451 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,452 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 23，包含 142 个芯片数据
+2025-05-16 16:12:32,452 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,453 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,453 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250501@203
+
+2025-05-16 16:12:32,453 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	24
+
+2025-05-16 16:12:32,453 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250501@203
+2025-05-16 16:12:32,454 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 24
+2025-05-16 16:12:32,454 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250501@203_024.TXT
+2025-05-16 16:12:32,455 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,455 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,455 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	5.000E-10	1.500E-09	3.038E+00	1.293E+02	1.296E+02	9.800E-09	1.660E-08	3...
+2025-05-16 16:12:32,456 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	4.400E-09	4.200E-09	3.001E+00	1.294E+02	1.296E+02	7.600E-09	1.700E-08	1...
+2025-05-16 16:12:32,456 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	0.000E+00	5.000E-09	8.000E-10	3.072E+00	1.294E+02	1.296E+02	8.100E-09	1.700E-08	9...
+2025-05-16 16:12:32,457 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,458 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 24，包含 142 个芯片数据
+2025-05-16 16:12:32,459 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,459 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,459 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5341-327A-250501@203
+
+2025-05-16 16:12:32,459 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	25
+
+2025-05-16 16:12:32,459 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5341-327A-250501@203
+2025-05-16 16:12:32,459 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 25
+2025-05-16 16:12:32,459 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5341-327A-250501@203_025.TXT
+2025-05-16 16:12:32,459 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,459 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,459 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	1.500E-09	0.000E+00	3.081E+00	1.290E+02	1.294E+02	6.600E-09	1.530E-08	7...
+2025-05-16 16:12:32,460 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	1.000E-08	8.000E-10	1.400E-09	3.040E+00	1.294E+02	1.298E+02	6.800E-09	1.510E-08	2...
+2025-05-16 16:12:32,460 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	1.000E-10	2.800E-09	3.088E+00	1.297E+02	1.300E+02	6.100E-09	1.240E-08	1...
+2025-05-16 16:12:32,461 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,462 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 25，包含 142 个芯片数据
+2025-05-16 16:12:32,463 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,463 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,463 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,463 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	1
+
+2025-05-16 16:12:32,463 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,463 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 1
+2025-05-16 16:12:32,463 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_001.TXT
+2025-05-16 16:12:32,465 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,465 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,466 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	1.000E-08	3.700E-09	1.900E-09	3.012E+00	1.299E+02	1.303E+02	7.200E-09	1.480E-08	5...
+2025-05-16 16:12:32,466 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	1.000E-08	3.900E-09	5.400E-09	2.987E+00	1.296E+02	1.299E+02	9.700E-09	1.930E-08	1...
+2025-05-16 16:12:32,466 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	1.400E-09	3.000E-10	3.006E+00	1.299E+02	1.302E+02	7.700E-09	1.910E-08	3...
+2025-05-16 16:12:32,468 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,469 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 1，包含 142 个芯片数据
+2025-05-16 16:12:32,469 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,469 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,469 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,469 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	2
+
+2025-05-16 16:12:32,470 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,470 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 2
+2025-05-16 16:12:32,470 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_002.TXT
+2025-05-16 16:12:32,470 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,470 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,470 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	3.500E-09	4.600E-09	3.107E+00	1.292E+02	1.296E+02	8.900E-09	1.850E-08	1...
+2025-05-16 16:12:32,470 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	0.000E+00	1.500E-09	5.400E-09	3.025E+00	1.294E+02	1.297E+02	1.020E-08	2.010E-08	3...
+2025-05-16 16:12:32,471 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	8.000E-10	2.000E-09	3.060E+00	1.296E+02	1.298E+02	1.050E-08	2.130E-08	4...
+2025-05-16 16:12:32,473 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,474 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 2，包含 142 个芯片数据
+2025-05-16 16:12:32,474 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,474 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,475 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,475 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	3
+
+2025-05-16 16:12:32,475 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,476 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 3
+2025-05-16 16:12:32,476 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_003.TXT
+2025-05-16 16:12:32,477 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,477 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,477 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	1.300E-09	3.000E-09	3.026E+00	1.301E+02	1.303E+02	7.700E-09	1.570E-08	1...
+2025-05-16 16:12:32,477 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	0.000E+00	2.000E-10	2.800E-09	2.964E+00	1.299E+02	1.301E+02	9.000E-09	1.780E-08	7...
+2025-05-16 16:12:32,477 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	1.000E-08	1.900E-09	3.000E-10	2.993E+00	1.302E+02	1.304E+02	9.300E-09	1.730E-08	4...
+2025-05-16 16:12:32,479 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,480 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 3，包含 142 个芯片数据
+2025-05-16 16:12:32,481 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,481 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,481 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,481 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	4
+
+2025-05-16 16:12:32,481 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,481 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 4
+2025-05-16 16:12:32,482 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_004.TXT
+2025-05-16 16:12:32,482 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,482 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,482 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	2.000E-08	1.600E-09	2.200E-09	3.099E+00	1.299E+02	1.302E+02	1.080E-08	1.910E-08	2...
+2025-05-16 16:12:32,482 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	1.000E-08	8.000E-10	4.000E-09	3.012E+00	1.296E+02	1.299E+02	1.090E-08	2.130E-08	4...
+2025-05-16 16:12:32,482 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	2.000E-03	1.000E-08	1.000E-10	5.000E-10	3.024E+00	1.299E+02	1.302E+02	9.000E-09	1.930E-08	4...
+2025-05-16 16:12:32,484 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,485 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 4，包含 142 个芯片数据
+2025-05-16 16:12:32,485 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,485 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,486 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,486 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	5
+
+2025-05-16 16:12:32,486 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,486 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 5
+2025-05-16 16:12:32,487 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_005.TXT
+2025-05-16 16:12:32,487 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,488 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,488 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	2.000E-03	0.000E+00	4.000E-10	2.100E-09	3.062E+00	1.291E+02	1.295E+02	8.300E-09	1.590E-08	9...
+2025-05-16 16:12:32,488 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	2.000E-03	0.000E+00	5.700E-09	2.200E-09	2.980E+00	1.295E+02	1.297E+02	8.600E-09	1.930E-08	5...
+2025-05-16 16:12:32,488 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	3.000E-08	1.400E-09	3.000E-09	3.023E+00	1.297E+02	1.299E+02	8.400E-09	1.880E-08	1...
+2025-05-16 16:12:32,490 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,492 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 5，包含 142 个芯片数据
+2025-05-16 16:12:32,492 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,492 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,492 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,493 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	6
+
+2025-05-16 16:12:32,493 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,493 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 6
+2025-05-16 16:12:32,493 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_006.TXT
+2025-05-16 16:12:32,493 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,493 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,493 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	3.000E-03	0.000E+00	1.000E-10	2.800E-09	3.140E+00	1.298E+02	1.301E+02	8.700E-09	1.640E-08	4...
+2025-05-16 16:12:32,494 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	3	2.000E-03	99.99										...
+2025-05-16 16:12:32,494 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	1.800E-09	3.800E-09	3.082E+00	1.301E+02	1.305E+02	8.600E-09	1.810E-08	4...
+2025-05-16 16:12:32,495 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,496 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 6，包含 142 个芯片数据
+2025-05-16 16:12:32,497 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,497 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,497 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,497 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	7
+
+2025-05-16 16:12:32,497 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,497 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 7
+2025-05-16 16:12:32,498 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_007.TXT
+2025-05-16 16:12:32,498 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,498 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,499 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	2.000E-03	0.000E+00	2.300E-09	3.100E-09	3.063E+00	1.299E+02	1.302E+02	9.600E-09	1.600E-08	2...
+2025-05-16 16:12:32,499 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	3.000E-08	2.100E-09	2.900E-09	2.982E+00	1.296E+02	1.300E+02	8.100E-09	1.750E-08	3...
+2025-05-16 16:12:32,500 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	4.000E-08	1.400E-09	1.800E-09	2.990E+00	1.299E+02	1.302E+02	9.400E-09	1.660E-08	2...
+2025-05-16 16:12:32,501 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,502 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 7，包含 142 个芯片数据
+2025-05-16 16:12:32,502 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,502 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,503 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,503 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	8
+
+2025-05-16 16:12:32,503 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,503 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 8
+2025-05-16 16:12:32,503 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_008.TXT
+2025-05-16 16:12:32,503 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,504 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,504 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	2.000E-03	2.000E-08	3.900E-09	3.000E-10	3.138E+00	1.292E+02	1.296E+02	1.120E-08	1.830E-08	2...
+2025-05-16 16:12:32,504 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	3.000E-03	0.000E+00	3.700E-09	3.000E-10	3.044E+00	1.296E+02	1.298E+02	9.800E-09	2.020E-08	5...
+2025-05-16 16:12:32,504 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	2.000E-03	2.000E-08	0.000E+00	2.300E-09	3.085E+00	1.297E+02	1.300E+02	9.300E-09	1.830E-08	3...
+2025-05-16 16:12:32,505 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,506 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 8，包含 142 个芯片数据
+2025-05-16 16:12:32,507 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,507 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,507 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,508 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	9
+
+2025-05-16 16:12:32,508 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,508 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 9
+2025-05-16 16:12:32,508 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_009.TXT
+2025-05-16 16:12:32,508 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,508 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,509 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	1.000E-08	8.000E-10	7.000E-09	3.056E+00	1.300E+02	1.303E+02	1.160E-08	1.760E-08	3...
+2025-05-16 16:12:32,511 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	1.000E-08	3.600E-09	4.200E-09	2.968E+00	1.300E+02	1.302E+02	9.300E-09	1.790E-08	2...
+2025-05-16 16:12:32,511 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	1.000E-08	3.100E-09	2.900E-09	3.040E+00	1.302E+02	1.305E+02	1.010E-08	1.740E-08	4...
+2025-05-16 16:12:32,513 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,514 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 9，包含 142 个芯片数据
+2025-05-16 16:12:32,514 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,515 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,515 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,515 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	10
+
+2025-05-16 16:12:32,515 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,515 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 10
+2025-05-16 16:12:32,515 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_010.TXT
+2025-05-16 16:12:32,516 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,516 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,516 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	5.500E-09	2.000E-09	3.097E+00	1.300E+02	1.302E+02	1.140E-08	1.930E-08	5...
+2025-05-16 16:12:32,516 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	1.000E-08	1.100E-09	4.000E-09	3.036E+00	1.296E+02	1.299E+02	1.000E-08	1.820E-08	8...
+2025-05-16 16:12:32,516 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	2.000E-03	0.000E+00	6.000E-10	1.500E-09	3.044E+00	1.300E+02	1.303E+02	9.200E-09	1.820E-08	4...
+2025-05-16 16:12:32,517 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,518 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 10，包含 142 个芯片数据
+2025-05-16 16:12:32,519 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,519 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,519 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,519 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	11
+
+2025-05-16 16:12:32,519 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,520 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 11
+2025-05-16 16:12:32,520 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_011.TXT
+2025-05-16 16:12:32,520 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,521 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,521 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	11	1.000E-03	1.000E-08	0.000E+00	2.700E-09	3.108E+00	1.293E+02	1.296E+02	9.800E-09	1.630E-08	...
+2025-05-16 16:12:32,521 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	1.000E-08	5.400E-09	5.200E-09	3.032E+00	1.296E+02	1.298E+02	1.030E-08	1.880E-08	8...
+2025-05-16 16:12:32,521 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	5.000E-10	2.100E-09	3.055E+00	1.297E+02	1.299E+02	8.900E-09	2.010E-08	2...
+2025-05-16 16:12:32,523 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,524 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 11，包含 142 个芯片数据
+2025-05-16 16:12:32,524 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,524 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,524 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,524 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	12
+
+2025-05-16 16:12:32,524 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,525 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 12
+2025-05-16 16:12:32,525 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_012.TXT
+2025-05-16 16:12:32,525 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,525 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,526 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	7.000E-08	3.200E-09	4.000E-09	3.153E+00	1.299E+02	1.302E+02	1.240E-08	2.020E-08	1...
+2025-05-16 16:12:32,526 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	3.000E-08	7.000E-10	1.170E-08	3.121E+00	1.298E+02	1.301E+02	9.900E-09	1.960E-08	8...
+2025-05-16 16:12:32,526 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	1.000E-08	2.700E-09	2.100E-09	3.130E+00	1.300E+02	1.304E+02	1.010E-08	1.810E-08	2...
+2025-05-16 16:12:32,527 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,528 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 12，包含 142 个芯片数据
+2025-05-16 16:12:32,529 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,529 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,529 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,529 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	13
+
+2025-05-16 16:12:32,529 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,530 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 13
+2025-05-16 16:12:32,530 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_013.TXT
+2025-05-16 16:12:32,530 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,530 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,530 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	2.000E-03	0.000E+00	1.800E-09	1.100E-09	3.128E+00	1.298E+02	1.301E+02	7.700E-09	1.650E-08	1...
+2025-05-16 16:12:32,531 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	2.000E-03	0.000E+00	3.000E-10	1.000E-09	3.025E+00	1.294E+02	1.298E+02	1.000E-08	1.910E-08	1...
+2025-05-16 16:12:32,531 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	2.000E-03	1.000E-08	1.700E-09	2.000E-09	3.094E+00	1.297E+02	1.301E+02	8.800E-09	1.670E-08	4...
+2025-05-16 16:12:32,534 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,535 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 13，包含 142 个芯片数据
+2025-05-16 16:12:32,535 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,535 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,535 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,536 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	14
+
+2025-05-16 16:12:32,536 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,536 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 14
+2025-05-16 16:12:32,536 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_014.TXT
+2025-05-16 16:12:32,536 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,536 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,537 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	3	1.000E-03	99.99										...
+2025-05-16 16:12:32,537 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	2.000E-03	1.000E-08	3.200E-09	1.000E-10	3.003E+00	1.290E+02	1.294E+02	1.000E-08	2.230E-08	5...
+2025-05-16 16:12:32,537 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	2.000E-08	3.000E-10	3.000E-09	3.056E+00	1.293E+02	1.298E+02	8.600E-09	1.910E-08	6...
+2025-05-16 16:12:32,538 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,539 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 14，包含 142 个芯片数据
+2025-05-16 16:12:32,540 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,540 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,540 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,540 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	15
+
+2025-05-16 16:12:32,540 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,540 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 15
+2025-05-16 16:12:32,540 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_015.TXT
+2025-05-16 16:12:32,542 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,542 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,542 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	3.600E-09	2.900E-09	3.039E+00	1.297E+02	1.301E+02	8.000E-09	1.600E-08	5...
+2025-05-16 16:12:32,543 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	0.000E+00	3.500E-09	1.000E-09	2.977E+00	1.298E+02	1.300E+02	7.500E-09	1.800E-08	1...
+2025-05-16 16:12:32,543 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	2.000E-08	7.000E-10	0.000E+00	3.037E+00	1.299E+02	1.302E+02	9.400E-09	1.680E-08	0...
+2025-05-16 16:12:32,546 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,547 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 15，包含 142 个芯片数据
+2025-05-16 16:12:32,547 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,547 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,548 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,548 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	16
+
+2025-05-16 16:12:32,548 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,548 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 16
+2025-05-16 16:12:32,548 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_016.TXT
+2025-05-16 16:12:32,548 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,549 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,549 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	0.000E+00	1.000E-10	2.000E-10	3.175E+00	1.299E+02	1.302E+02	9.700E-09	2.010E-08	3...
+2025-05-16 16:12:32,549 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	2.000E-08	1.100E-09	5.400E-09	3.107E+00	1.294E+02	1.297E+02	9.600E-09	1.820E-08	5...
+2025-05-16 16:12:32,549 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	1.000E-08	2.000E-10	2.000E-10	3.106E+00	1.297E+02	1.301E+02	7.500E-09	1.700E-08	6...
+2025-05-16 16:12:32,550 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,551 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 16，包含 142 个芯片数据
+2025-05-16 16:12:32,551 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,551 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,551 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,551 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	17
+
+2025-05-16 16:12:32,552 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,552 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 17
+2025-05-16 16:12:32,552 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_017.TXT
+2025-05-16 16:12:32,552 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,552 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,553 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	2.200E-09	3.200E-09	3.091E+00	1.285E+02	1.290E+02	8.500E-09	1.650E-08	3...
+2025-05-16 16:12:32,553 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	6.000E-08	2.000E-09	2.100E-09	2.998E+00	1.287E+02	1.292E+02	8.300E-09	1.980E-08	3...
+2025-05-16 16:12:32,553 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	2.000E-10	9.000E-10	3.032E+00	1.293E+02	1.296E+02	9.100E-09	1.880E-08	1...
+2025-05-16 16:12:32,556 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,557 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 17，包含 142 个芯片数据
+2025-05-16 16:12:32,558 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,558 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,558 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,558 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	18
+
+2025-05-16 16:12:32,558 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,559 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 18
+2025-05-16 16:12:32,559 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_018.TXT
+2025-05-16 16:12:32,559 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,559 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,559 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	2.000E-03	0.000E+00	1.700E-09	1.700E-09	3.119E+00	1.298E+02	1.302E+02	8.500E-09	1.610E-08	2...
+2025-05-16 16:12:32,559 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	3.000E-03	0.000E+00	1.300E-09	1.900E-09	3.036E+00	1.298E+02	1.301E+02	9.600E-09	2.010E-08	3...
+2025-05-16 16:12:32,559 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	2.000E-03	0.000E+00	4.600E-09	1.700E-09	3.118E+00	1.300E+02	1.303E+02	8.700E-09	1.730E-08	2...
+2025-05-16 16:12:32,561 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,562 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 18，包含 142 个芯片数据
+2025-05-16 16:12:32,562 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,562 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,563 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,563 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	19
+
+2025-05-16 16:12:32,563 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,563 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 19
+2025-05-16 16:12:32,563 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_019.TXT
+2025-05-16 16:12:32,563 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,564 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,564 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	3.000E-10	6.700E-09	3.082E+00	1.299E+02	1.302E+02	9.100E-09	1.640E-08	2...
+2025-05-16 16:12:32,564 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	3.000E-08	1.100E-09	6.000E-10	2.979E+00	1.297E+02	1.298E+02	9.700E-09	1.800E-08	6...
+2025-05-16 16:12:32,564 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	0.000E+00	2.000E-08	7.000E-10	1.700E-09	3.032E+00	1.298E+02	1.301E+02	9.500E-09	1.820E-08	4...
+2025-05-16 16:12:32,566 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,567 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 19，包含 142 个芯片数据
+2025-05-16 16:12:32,568 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,568 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,568 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,568 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	20
+
+2025-05-16 16:12:32,568 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,569 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 20
+2025-05-16 16:12:32,569 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_020.TXT
+2025-05-16 16:12:32,569 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,569 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,569 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	0.000E+00	6.400E-09	2.000E-10	3.178E+00	1.288E+02	1.292E+02	9.200E-09	1.820E-08	4...
+2025-05-16 16:12:32,569 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	2.000E-03	3.000E-08	3.000E-10	4.900E-09	3.090E+00	1.291E+02	1.294E+02	9.500E-09	1.880E-08	2...
+2025-05-16 16:12:32,569 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	3.000E-08	4.000E-10	9.000E-10	3.100E+00	1.294E+02	1.298E+02	8.900E-09	1.820E-08	3...
+2025-05-16 16:12:32,570 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,571 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 20，包含 142 个芯片数据
+2025-05-16 16:12:32,571 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,572 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,572 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,572 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	21
+
+2025-05-16 16:12:32,572 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,572 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 21
+2025-05-16 16:12:32,572 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_021.TXT
+2025-05-16 16:12:32,573 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,573 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,573 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	0.000E+00	1.000E-08	1.900E-09	1.600E-09	3.247E+00	1.299E+02	1.303E+02	8.700E-09	1.350E-08	1...
+2025-05-16 16:12:32,573 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	2.000E-03	1.000E-08	1.000E-10	1.000E-10	3.106E+00	1.300E+02	1.303E+02	8.200E-09	1.550E-08	2...
+2025-05-16 16:12:32,574 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	0.000E+00	1.000E-10	2.100E-09	3.177E+00	1.301E+02	1.305E+02	6.500E-09	1.310E-08	5...
+2025-05-16 16:12:32,575 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,576 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 21，包含 142 个芯片数据
+2025-05-16 16:12:32,577 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,577 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,577 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,578 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	22
+
+2025-05-16 16:12:32,578 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,578 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 22
+2025-05-16 16:12:32,578 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_022.TXT
+2025-05-16 16:12:32,578 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,578 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,579 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	2.000E-03	1.000E-08	5.000E-10	5.500E-09	3.172E+00	1.295E+02	1.299E+02	1.090E-08	1.900E-08	4...
+2025-05-16 16:12:32,579 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	2.000E-03	4.000E-08	4.200E-09	6.000E-10	3.064E+00	1.291E+02	1.294E+02	1.140E-08	1.950E-08	1...
+2025-05-16 16:12:32,579 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	2.000E-08	6.000E-10	2.600E-09	3.077E+00	1.295E+02	1.297E+02	8.300E-09	1.890E-08	1...
+2025-05-16 16:12:32,581 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,582 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 22，包含 142 个芯片数据
+2025-05-16 16:12:32,582 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,582 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,582 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,583 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	23
+
+2025-05-16 16:12:32,583 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,583 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 23
+2025-05-16 16:12:32,583 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_023.TXT
+2025-05-16 16:12:32,583 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,584 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,584 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	1.000E-03	2.000E-08	1.100E-09	5.300E-09	3.108E+00	1.295E+02	1.298E+02	1.370E-08	2.270E-08	3...
+2025-05-16 16:12:32,584 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	0.000E+00	0.000E+00	7.000E-10	1.800E-09	3.001E+00	1.294E+02	1.297E+02	9.300E-09	1.970E-08	4...
+2025-05-16 16:12:32,584 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	2.000E-08	1.600E-09	1.000E-10	3.025E+00	1.298E+02	1.301E+02	9.300E-09	1.740E-08	2...
+2025-05-16 16:12:32,585 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,586 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 23，包含 142 个芯片数据
+2025-05-16 16:12:32,586 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,587 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,587 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,587 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	24
+
+2025-05-16 16:12:32,588 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,588 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 24
+2025-05-16 16:12:32,588 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_024.TXT
+2025-05-16 16:12:32,589 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,589 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,589 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	2.000E-03	0.000E+00	3.300E-09	3.900E-09	3.171E+00	1.293E+02	1.296E+02	1.350E-08	2.100E-08	4...
+2025-05-16 16:12:32,589 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	2.000E-03	0.000E+00	2.500E-09	1.200E-09	3.106E+00	1.296E+02	1.298E+02	9.700E-09	1.950E-08	3...
+2025-05-16 16:12:32,589 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	1.000E-08	2.300E-09	2.000E-10	3.131E+00	1.298E+02	1.301E+02	1.030E-08	1.980E-08	1...
+2025-05-16 16:12:32,591 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,592 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 24，包含 142 个芯片数据
+2025-05-16 16:12:32,592 - cp_data_processor.readers.dcp_reader - DEBUG - 文件的前三行内容：
+2025-05-16 16:12:32,593 - cp_data_processor.readers.dcp_reader - DEBUG - 行 1: Program name	ME58XX1_G00Z2AB.jtf
+
+2025-05-16 16:12:32,593 - cp_data_processor.readers.dcp_reader - DEBUG - 行 2: Lot number	FA54-5342-325A-250501@203
+
+2025-05-16 16:12:32,593 - cp_data_processor.readers.dcp_reader - DEBUG - 行 3: Wafer number	25
+
+2025-05-16 16:12:32,593 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R2C2提取到LotID: FA54-5342-325A-250501@203
+2025-05-16 16:12:32,593 - cp_data_processor.readers.dcp_reader - DEBUG - 使用分隔符 '	' 从R3C2提取到WaferID: 25
+2025-05-16 16:12:32,593 - cp_data_processor.readers.dcp_reader - INFO - 开始处理文件: FA54-5342-325A-250501@203_025.TXT
+2025-05-16 16:12:32,594 - cp_data_processor.readers.dcp_reader - INFO - 成功使用 utf-8 解码
+2025-05-16 16:12:32,594 - cp_data_processor.readers.dcp_reader - DEBUG - 表头行: No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2...
+2025-05-16 16:12:32,594 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 1: 1	11	5	1	2.000E-03	0.000E+00	2.800E-09	1.600E-09	3.039E+00	1.292E+02	1.296E+02	7.300E-09	1.700E-08	2...
+2025-05-16 16:12:32,594 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 2: 2	14	6	1	1.000E-03	1.000E-08	1.100E-09	2.700E-09	3.031E+00	1.290E+02	1.293E+02	9.500E-09	1.760E-08	2...
+2025-05-16 16:12:32,594 - cp_data_processor.readers.dcp_reader - DEBUG - 数据行 3: 3	13	6	1	1.000E-03	1.000E-08	1.100E-09	3.000E-09	3.020E+00	1.294E+02	1.296E+02	8.800E-09	1.820E-08	6...
+2025-05-16 16:12:32,595 - cp_data_processor.readers.dcp_reader - INFO - 成功读取数据，形状: (142, 15)
+2025-05-16 16:12:32,597 - cp_data_processor.readers.dcp_reader - INFO - 成功添加晶圆 25，包含 142 个芯片数据
+2025-05-16 16:12:32,666 - __main__ - INFO - 已应用iqr方法处理异常值
+2025-05-16 16:12:32,811 - __main__ - INFO - 原始数据已保存到: D:\cp_data_ansys\output\FA54-5339-327A-250501@203_20250516_161232.csv
+2025-05-16 16:12:32,995 - __main__ - INFO - 清洗后的数据已保存到: FA54-5339-327A-250501@203_20250516_161232_cleaned_20250516_161232.csv
