@@ -14,6 +14,7 @@ def clean_csv_data(input_file, output_file=None):
     """
     清洗CSV数据，按照指定顺序重排字段：
     Lot_ID, Wafer_ID, Seq, Bin, X, Y, CONT, [优先参数], [其他参数]
+    (No.U 列将被移除)
     
     Args:
         input_file: 输入CSV文件路径
@@ -42,8 +43,8 @@ def clean_csv_data(input_file, output_file=None):
     if 'Seq' not in df.columns:
         df['Seq'] = df.index + 1 if df.index.is_numeric() else range(1, len(df) + 1)
     
-    # 确保必需的列存在
-    required_base_cols = ['Bin', 'X', 'Y', 'No.U'] 
+    # 确保必需的列存在 (No.U is no longer a required base col here)
+    required_base_cols = ['Bin', 'X', 'Y'] 
     for col in required_base_cols:
         if col not in df.columns:
             print(f"Warning: Column '{col}' not found, adding with default value 0 or 1.")
@@ -56,6 +57,11 @@ def clean_csv_data(input_file, output_file=None):
         print(f"Warning: Column 'CONT' not found, adding with default value (blank).")
         df['CONT'] = ""  # 默认值为空字符串
     
+    # 显式移除 No.U 列（如果存在）
+    if 'No.U' in df.columns:
+        df = df.drop(columns=['No.U'])
+        print(f"Debug: Explicitly dropped 'No.U' column. Current columns: {df.columns.tolist()}")
+
     # 确保 Lot_ID 列存在 (通常由 clean_dcp_data.py 提供)
     if 'Lot_ID' not in df.columns:
         print(f"Warning: Column 'Lot_ID' not found, attempting to extract from filename or defaulting.")

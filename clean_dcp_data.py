@@ -60,8 +60,8 @@ def collect_wafer_data(lot: CPLot) -> pd.DataFrame:
             # 确保CONT和No.U列存在
             if 'CONT' not in df.columns:
                 df['CONT'] = ''
-            if 'No.U' not in df.columns:
-                df['No.U'] = 1
+            # if 'No.U' not in df.columns: # No longer ensuring No.U here
+            #     df['No.U'] = 1
                 
             # 添加Lot_ID作为参考
             if hasattr(wafer, 'source_lot_id') and wafer.source_lot_id is not None:
