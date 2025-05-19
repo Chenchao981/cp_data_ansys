@@ -40,44 +40,28 @@ def generate_yield_report_from_dataframe(cleaned_df: pd.DataFrame, output_filepa
     wafer_reports_data: List[Dict[str, Any]] = []
     all_wafer_numerical_yields: List[float] = [] # 用于计算批次平均良率
 
-    # 假设批次内所有晶圆的Lot_ID是相同的，取第一个作为代表（如果后续有ALL行，它会被覆盖）
-    # 如果每个晶圆Lot_ID可能不同，则需要在分组内处理
-    # batch_lot_id = cleaned_df['Lot_ID'].iloc[0] if not cleaned_df.empty else "UNKNOWN_LOT"
-
-    grouped_by_wafer = cleaned_df.groupby('Wafer_ID', sort=False) # sort=False 保持原始顺序
+    # 修改分组方式，支持多批次同名晶圆
+    grouped_by_wafer = cleaned_df.groupby(['Lot_ID', 'Wafer_ID'], sort=False) # sort=False 保持原始顺序
 
     if grouped_by_wafer.ngroups == 0:
-        logger.warning("DataFrame中没有找到任何Wafer_ID分组，无法生成良率报告。")
+        logger.warning("DataFrame中没有找到任何Lot_ID+Wafer_ID分组，无法生成良率报告。")
         return False
         
-    for wafer_id, wafer_data in grouped_by_wafer:
+    for (lot_id, wafer_id), wafer_data in grouped_by_wafer:
         wafer_report: Dict[str, Any] = {}
-
-        # Lot_ID 通常对于一个批次内的所有晶圆是相同的
-        # 如果cleaned_df可能包含多个Lot的数据，且需要为每个Lot生成独立的yield报告，
-        # 那么调用此函数前应先按Lot_ID拆分df。
-        # 此处我们假设传入的cleaned_df对应一个Lot，或者Lot_ID在wafer_data中是一致的。
-        current_lot_id = wafer_data['Lot_ID'].iloc[0]
-        
-        wafer_report['Lot_ID'] = str(current_lot_id)
+        wafer_report['Lot_ID'] = str(lot_id)
         wafer_report['Wafer_ID'] = str(wafer_id)
-
         total_die = len(wafer_data)
         wafer_report['Total'] = total_die
-
         pass_die = wafer_data[wafer_data['Bin'] == 1].shape[0]
         wafer_report['Pass'] = pass_die
-
         for bin_val in TARGET_BINS:
             wafer_report[f'Bin{bin_val}'] = wafer_data[wafer_data['Bin'] == bin_val].shape[0]
-
         numerical_yield = 0.0
         if total_die > 0:
             numerical_yield = (pass_die / total_die) * 100
-        
         all_wafer_numerical_yields.append(numerical_yield)
         wafer_report['Yield'] = f"{numerical_yield:.2f}%"
-        
         wafer_reports_data.append(wafer_report)
 
     # 计算 "ALL" 汇总行
