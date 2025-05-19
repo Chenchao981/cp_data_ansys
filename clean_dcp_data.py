@@ -34,6 +34,7 @@ from cp_data_processor.readers.dcp_reader import DCPReader
 from cp_data_processor.processing.data_transformer import DataTransformer
 from cp_data_processor.data_models.cp_data import CPLot
 from clean_csv_data import clean_csv_data, format_number
+from python_cp.yield_processor import generate_yield_report_from_dataframe
 
 def collect_wafer_data(lot: CPLot) -> pd.DataFrame:
     """从lot对象的晶圆中收集数据"""
@@ -122,6 +123,41 @@ def process_lot_data(lot: CPLot, output_dir: str, apply_clean: bool = True, outl
             if cleaned_file:
                 logger.info(f"清洗后的数据已保存到: {cleaned_file}")
                 print(f"清洗后的数据已保存到: {cleaned_file}")
+
+                # --- 开始添加良率报告生成逻辑 ---
+                try:
+                    logger.info(f"开始为 {cleaned_file} 生成良率报告...")
+                    # 1. 读取清洗后的CSV文件到DataFrame
+                    cleaned_df = pd.read_csv(cleaned_file)
+
+                    # 2. 构建良率报告的输出文件名
+                    #    例如: LOTID_timestamp_cleaned_othertimestamp.csv -> LOTID_timestamp_yield_othertimestamp.csv
+                    #    或者如果 cleaned_file 的格式是 LOTID_cleaned_timestamp.csv -> LOTID_yield_timestamp.csv
+                    #    我们需要一个稳健的方式来替换 "_cleaned_" 为 "_yield_"
+                    
+                    cleaned_file_path = Path(cleaned_file)
+                    yield_report_filename = cleaned_file_path.name.replace("_cleaned_", "_yield_")
+                    if "_cleaned_" not in cleaned_file_path.name: # 备用方案，如果命名不含_cleaned_
+                        base, ext = os.path.splitext(cleaned_file_path.name)
+                        yield_report_filename = f"{base}_yield{ext}"
+
+                    yield_report_filepath = cleaned_file_path.parent / yield_report_filename
+                    
+                    # 3. 调用良率报告生成函数
+                    success_yield = generate_yield_report_from_dataframe(cleaned_df, str(yield_report_filepath))
+                    
+                    if success_yield:
+                        logger.info(f"良率报告已成功生成: {yield_report_filepath}")
+                        print(f"良率报告已成功生成: {yield_report_filepath}")
+                    else:
+                        logger.warning(f"良率报告生成失败: {yield_report_filepath}")
+                        print(f"警告: 良率报告生成失败: {yield_report_filepath}")
+                
+                except Exception as e_yield:
+                    logger.error(f"生成良率报告时发生意外错误: {e_yield}")
+                    print(f"错误: 生成良率报告时发生意外错误: {e_yield}")
+                # --- 结束添加良率报告生成逻辑 ---
+                
                 return cleaned_file
             else:
                 logger.warning("CSV数据清洗失败")
