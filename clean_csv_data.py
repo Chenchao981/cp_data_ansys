@@ -9,137 +9,102 @@ import sys
 import pandas as pd
 import argparse
 from datetime import datetime
+from typing import Optional
 
-def clean_csv_data(input_file, output_file=None):
+def clean_csv_data(data_df: pd.DataFrame, output_dir: str, base_filename_part: str) -> Optional[str]:
     """
-    清洗CSV数据，按照指定顺序重排字段：
+    清洗DataFrame数据，按照指定顺序重排字段，并保存到CSV。
     Lot_ID, Wafer_ID, Seq, Bin, X, Y, CONT, [优先参数], [其他参数]
     (No.U 列将被移除)
     
     Args:
-        input_file: 输入CSV文件路径
-        output_file: 输出CSV文件路径（如果不指定，则自动生成）
+        data_df: 输入的Pandas DataFrame
+        output_dir: 输出目录路径
+        base_filename_part: 用于构建输出文件名的基础部分 (如 Lot_ID)
     
     Returns:
-        str: 输出文件路径
+        str: 输出文件路径, 或 None 如果失败或无数据.
     """
-    print(f"开始处理文件: {input_file}")
-    
-    # 读取CSV文件
-    try:
-        df = pd.read_csv(input_file)
-        print(f"成功读取CSV文件，形状: {df.shape}")
-        print(f"Debug: df.columns after initial read: {df.columns.tolist()}") # DEBUG
-    except Exception as e:
-        print(f"读取文件时出错: {str(e)}")
+    if not isinstance(data_df, pd.DataFrame):
+        print("输入不是有效的Pandas DataFrame。")
         return None
+        
+    if data_df.empty:
+        print("输入的DataFrame为空，不进行保存。")
+        return None
+
+    df = data_df.copy()
+    print(f"开始处理传入的DataFrame，原始形状: {df.shape}")
     
-    # 移除可能存在的 'Unnamed: 0' 列，如果它是由之前的索引写入产生的
+    # 移除可能存在的 'Unnamed: 0' 列
     if 'Unnamed: 0' in df.columns:
         df = df.drop(columns=['Unnamed: 0'])
-        print(f"Debug: Dropped 'Unnamed: 0' column. New columns: {df.columns.tolist()}") # DEBUG
-
-    # 创建或确保序号列（Seq）存在
+    
+    # 确保 Seq 列存在 (通常由上游处理，但保留作为健壮性检查)
     if 'Seq' not in df.columns:
+        print("Warning: Column 'Seq' not found in DataFrame, adding default index-based sequence.")
         df['Seq'] = df.index + 1 if df.index.is_numeric() else range(1, len(df) + 1)
     
-    # 确保必需的列存在 (No.U is no longer a required base col here)
-    required_base_cols = ['Bin', 'X', 'Y'] 
-    for col in required_base_cols:
-        if col not in df.columns:
-            print(f"Warning: Column '{col}' not found, adding with default value 0 or 1.")
-            if col == 'No.U':
-                df[col] = 1  # 默认值为1
-            else:
-                df[col] = 0  # 默认值为0
-                
-    if 'CONT' not in df.columns:
-        print(f"Warning: Column 'CONT' not found, adding with default value (blank).")
-        df['CONT'] = ""  # 默认值为空字符串
-    
-    # 显式移除 No.U 列（如果存在）
+    # 显式移除 No.U 列（如果仍然存在）
     if 'No.U' in df.columns:
         df = df.drop(columns=['No.U'])
-        print(f"Debug: Explicitly dropped 'No.U' column. Current columns: {df.columns.tolist()}")
-
-    # 确保 Lot_ID 列存在 (通常由 clean_dcp_data.py 提供)
-    if 'Lot_ID' not in df.columns:
-        print(f"Warning: Column 'Lot_ID' not found, attempting to extract from filename or defaulting.")
-        # 尝试从文件名提取，或设置默认值
-        filename_parts = os.path.basename(input_file).split('_')
-        df['Lot_ID'] = filename_parts[0] if filename_parts else "Unknown_Lot"
-
-    # 重命名旧的Wafer列为Wafer_ID（如果存在且Wafer_ID不存在）
-    if 'Wafer' in df.columns and 'Wafer_ID' not in df.columns:
-        df = df.rename(columns={'Wafer': 'Wafer_ID'})
-    # 确保Wafer_ID列存在
-    elif 'Wafer_ID' not in df.columns and df.index.name == 'WaferID': # 兼容旧的WaferID索引名
-        df = df.reset_index()
-        df = df.rename(columns={'WaferID': 'Wafer_ID'})
-    elif 'Wafer_ID' not in df.columns:
-        print("Warning: Wafer_ID column not found, trying to extract from file name.")
-        filename = os.path.basename(input_file)
-        # 尝试从文件名提取，例如 FA53-5465-305A-250303@203_001_someotherpart.csv -> 001
-        # 这部分逻辑可能需要根据实际文件名格式调整
-        wafer_id_from_filename = "Unknown_Wafer"
-        parts = filename.split('_')
-        if len(parts) > 1 and '@' in parts[0]: # 假设格式如 Lot@Wafer_...
-            lot_wafer_part = parts[0].split('@')
-            if len(lot_wafer_part) > 1:
-                wafer_id_from_filename = lot_wafer_part[1]
-        elif len(parts) > 1 : # 备用逻辑，如果文件名是 Wafer_...
-             wafer_id_from_filename = parts[0]
-
-        df['Wafer_ID'] = wafer_id_from_filename
     
-    # 确定列的新顺序
+    # 验证关键列是否存在 (这些列应由调用者在DataFrame中提供)
+    essential_cols_from_dcp = ['Lot_ID', 'Wafer_ID', 'Seq', 'Bin', 'X', 'Y', 'CONT']
+    missing_cols = [col for col in essential_cols_from_dcp if col not in df.columns]
+    if missing_cols:
+        print(f"Critical Error: Columns {missing_cols} are missing in the DataFrame passed to clean_csv_data. These should be provided by the caller.")
+        return None 
+            
+    # 列重排逻辑
     fixed_columns = ['Lot_ID', 'Wafer_ID', 'Seq', 'Bin', 'X', 'Y', 'CONT']
-    print(f"Debug: fixed_columns: {fixed_columns}") # DEBUG
+    # 获取 df 中实际存在的列，再进行排序和筛选
+    current_df_columns = df.columns.tolist()
     
-    # 获取其他所有列（除了固定列）并按字母排序
-    other_columns = sorted([col for col in df.columns if col not in fixed_columns])
-    print(f"Debug: df.columns: {df.columns.tolist()}") # DEBUG
-    print(f"Debug: other_columns: {other_columns}") # DEBUG
+    other_columns = sorted([col for col in current_df_columns if col not in fixed_columns])
     
-    # 新的列顺序
     new_column_order = fixed_columns.copy()
-    
-    # 添加优先参数列
+    # 确保 fixed_columns 中的列实际存在于 df 中，避免KeyError
+    new_column_order = [col for col in new_column_order if col in current_df_columns]
+
     priority_params = ['IGSS0', 'IGSS1', 'IGSSR1', 'VTH', 'BVDSS1', 'BVDSS2', 'IDSS1', 'IDSS2', 'IGSS2', 'IGSSR2']
     for param in priority_params:
-        if param in df.columns and param not in new_column_order:
+        if param in current_df_columns and param not in new_column_order:
             new_column_order.append(param)
     
-    # 添加其他列
-    for col in other_columns:
-        if col not in new_column_order:
+    for col in other_columns: # other_columns 已经是从 current_df_columns 筛选和排序得到的
+        if col not in new_column_order: # 确保不重复添加
             new_column_order.append(col)
     
-    print(f"Debug: new_column_order after additions: {new_column_order}") # DEBUG
-    # 只保留存在的列
-    final_columns = [col for col in new_column_order if col in df.columns]
-    print(f"Debug: final_columns: {final_columns}") # DEBUG
+    # 最终列顺序应该是 df 中实际存在的列，并按照 new_column_order 排序
+    # 有些列可能在 new_column_order 中但不在 df.columns 中（例如，如果原始df就没有某些优先参数）
+    final_columns = [col for col in new_column_order if col in current_df_columns]
     
-    # 重排列
-    df = df[final_columns]
-    
-    # 格式化数值型数据，特别是科学计数法的数据
+    try:
+        df = df[final_columns]
+    except KeyError as e:
+        print(f"Error during column reordering: {e}. Columns in df: {current_df_columns}. Attempted order: {final_columns}")
+        return None
+
+    # 格式化数值型数据
     for col in df.columns:
         if df[col].dtype in ['float64', 'float32']:
-            # 尝试保留原始格式
             df[col] = df[col].apply(lambda x: format_number(x))
     
-    # 生成输出文件路径（如果未指定）
-    if output_file is None:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        basename = os.path.splitext(os.path.basename(input_file))[0]
-        output_file = f"{basename}_cleaned_{timestamp}.csv"
+    # 生成输出文件路径
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    cleaned_filename = f"{base_filename_part}_cleaned_{timestamp}.csv"
+    # 确保 output_dir 存在
+    os.makedirs(output_dir, exist_ok=True)
+    output_filepath = os.path.join(output_dir, cleaned_filename)
     
-    # 保存到CSV文件
-    df.to_csv(output_file, index=False)
-    print(f"数据清洗完成，已保存到: {output_file}")
-    
-    return output_file
+    try:
+        df.to_csv(output_filepath, index=False)
+        print(f"数据清洗完成，已保存到: {output_filepath}")
+        return output_filepath
+    except Exception as e:
+        print(f"保存清洗后的CSV时出错: {str(e)}")
+        return None
 
 def format_number(value):
     """
@@ -163,20 +128,31 @@ def format_number(value):
         return value
 
 def main():
-    """主函数"""
-    parser = argparse.ArgumentParser(description='CSV数据清洗工具 - 重排字段顺序')
-    parser.add_argument('input_file', help='输入CSV文件路径')
-    parser.add_argument('-o', '--output_file', help='输出CSV文件路径（可选）')
+    parser = argparse.ArgumentParser(description='CSV数据清洗工具 - (DataFrame input mode for testing)')
+    parser.add_argument('-od', '--output_dir_test', help='Output directory for test', default="test_output_clean_csv")
+    parser.add_argument('-bfn', '--base_filename_test', help='Base filename part for test', default="TEST_LOT_DF")
     
     args = parser.parse_args()
+
+    sample_input_data = {
+        'Lot_ID': ['TEST_LOT_DF'] * 5, 'Wafer_ID': ['W_DF_1'] * 5, 
+        'Seq': range(1,6), 'Bin': [1,2,1,3,1],
+        'X': [10,11,12,13,14], 'Y': [20,21,22,23,24], 'CONT': ['TypeA']*5, 
+        'No.U': [101,102,103,104,105], # No.U 应该被移除
+        'IGSS0': [0.1, 0.2, 0.15, 0.18, 0.12], 
+        'VTH': [3.0, 3.1, 2.9, 3.05, 3.12],
+        'ParamX': [10.0, 10.1, 10.2, 10.3, 10.4],
+        'ParamA': [1,2,3,4,5]
+    }
+    test_df = pd.DataFrame(sample_input_data)
     
-    # 处理文件
-    clean_csv_data(args.input_file, args.output_file)
+    print(f"独立测试: 使用示例DataFrame...")
+    output_path = clean_csv_data(test_df, args.output_dir_test, args.base_filename_test)
+    if output_path:
+        print(f"独立测试成功，输出到: {output_path}")
+    else:
+        print(f"独立测试失败。")
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        main()
-    else:
-        # 如果没有命令行参数，使用默认文件
-        input_file = "output/FA53_20250513_164637.csv"
-        clean_csv_data(input_file) 
+    print("clean_csv_data.py - DataFrame input mode test.")
+    main() 

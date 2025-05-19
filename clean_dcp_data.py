@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 from cp_data_processor.readers.dcp_reader import DCPReader
 from cp_data_processor.processing.data_transformer import DataTransformer
 from cp_data_processor.data_models.cp_data import CPLot
-from clean_csv_data import clean_csv_data, format_number
+from clean_csv_data import clean_csv_data
 from python_cp.yield_processor import generate_yield_report_from_dataframe
 
 def collect_wafer_data(lot: CPLot) -> pd.DataFrame:
@@ -111,40 +111,29 @@ def process_lot_data(lot: CPLot, output_dir: str, apply_clean: bool = True, outl
         combined_data = collect_wafer_data(lot)
         
         if combined_data is not None and not combined_data.empty:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            raw_output_file = os.path.join(output_dir, f"{lot.lot_id}_{timestamp}.csv")
-            # Ensure index is not written to the CSV
-            combined_data.to_csv(raw_output_file, index=False)
-            logger.info(f"原始数据已保存到: {raw_output_file}")
-            print(f"原始数据已保存到: {raw_output_file}")
+            # 调用修改后的 clean_csv_data，直接传递 DataFrame
+            # 文件名将是 LOTID_cleaned_TIMESTAMP.csv
+            cleaned_file_path_str = clean_csv_data(combined_data, output_dir, lot.lot_id)
             
-            # 应用CSV清洗
-            cleaned_file = clean_csv_data(raw_output_file)
-            if cleaned_file:
-                logger.info(f"清洗后的数据已保存到: {cleaned_file}")
-                print(f"清洗后的数据已保存到: {cleaned_file}")
+            if cleaned_file_path_str: 
+                logger.info(f"清洗后的数据已保存到: {cleaned_file_path_str}")
+                print(f"清洗后的数据已保存到: {cleaned_file_path_str}")
 
                 # --- 开始添加良率报告生成逻辑 ---
                 try:
-                    logger.info(f"开始为 {cleaned_file} 生成良率报告...")
-                    # 1. 读取清洗后的CSV文件到DataFrame
-                    cleaned_df = pd.read_csv(cleaned_file)
+                    logger.info(f"开始为 {cleaned_file_path_str} 生成良率报告...")
+                    cleaned_df_for_yield = pd.read_csv(cleaned_file_path_str)
 
-                    # 2. 构建良率报告的输出文件名
-                    #    例如: LOTID_timestamp_cleaned_othertimestamp.csv -> LOTID_timestamp_yield_othertimestamp.csv
-                    #    或者如果 cleaned_file 的格式是 LOTID_cleaned_timestamp.csv -> LOTID_yield_timestamp.csv
-                    #    我们需要一个稳健的方式来替换 "_cleaned_" 为 "_yield_"
+                    cleaned_file_path_obj = Path(cleaned_file_path_str)
+                    yield_report_filename = cleaned_file_path_obj.name.replace("_cleaned_", "_yield_")
                     
-                    cleaned_file_path = Path(cleaned_file)
-                    yield_report_filename = cleaned_file_path.name.replace("_cleaned_", "_yield_")
-                    if "_cleaned_" not in cleaned_file_path.name: # 备用方案，如果命名不含_cleaned_
-                        base, ext = os.path.splitext(cleaned_file_path.name)
+                    if "_cleaned_" not in cleaned_file_path_obj.name: 
+                        base, ext = os.path.splitext(cleaned_file_path_obj.name)
                         yield_report_filename = f"{base}_yield{ext}"
 
-                    yield_report_filepath = cleaned_file_path.parent / yield_report_filename
+                    yield_report_filepath = cleaned_file_path_obj.parent / yield_report_filename
                     
-                    # 3. 调用良率报告生成函数
-                    success_yield = generate_yield_report_from_dataframe(cleaned_df, str(yield_report_filepath))
+                    success_yield = generate_yield_report_from_dataframe(cleaned_df_for_yield, str(yield_report_filepath))
                     
                     if success_yield:
                         logger.info(f"良率报告已成功生成: {yield_report_filepath}")
@@ -158,12 +147,12 @@ def process_lot_data(lot: CPLot, output_dir: str, apply_clean: bool = True, outl
                     print(f"错误: 生成良率报告时发生意外错误: {e_yield}")
                 # --- 结束添加良率报告生成逻辑 ---
                 
-                return cleaned_file
+                return cleaned_file_path_str 
             else:
-                logger.warning("CSV数据清洗失败")
-                return raw_output_file
+                logger.warning("CSV数据清洗失败或未生成数据 (可能DataFrame为空或保存失败)")
+                return None
         else:
-            logger.warning("未生成有效数据")
+            logger.warning("未生成有效数据 (combined_data is None or empty)")
             return None
     except Exception as e:
         logger.exception(f"处理批次数据时出错: {str(e)}")
@@ -183,10 +172,10 @@ def find_dcp_files(directory_path):
                     if not ExcelTXTReader.is_excel_format(file_path):
                         dcp_files.append(file_path)
                         logger.info(f"找到DCP文件: {file}")
-                except:
+                except Exception:
                     # 如果检查出错，默认当作DCP格式
                     dcp_files.append(file_path)
-                    logger.info(f"假定为DCP文件: {file}")
+                    logger.info(f"假定为DCP文件 (excel_txt_reader check failed or not available): {file}")
     
     return dcp_files
 

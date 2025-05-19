@@ -333,35 +333,89 @@ class DCPReader(BaseReader):
         
         # 提取基本数据：序号、Bin、X坐标、Y坐标
         try:
+            # 优先使用 'SITE' (如果存在且大小写匹配)
             if 'SITE' in wafer_df.columns:
                 wafer.seq = np.array(wafer_df['SITE'])
-            else:
-                wafer.seq = np.array(range(1, len(wafer_df) + 1))
+            else: 
+                # 备选方案：不区分大小写查找 'NO.U'
+                no_u_col_name = None
+                for col in wafer_df.columns:
+                    if col.strip().upper() == 'NO.U': 
+                        no_u_col_name = col
+                        break
+                if no_u_col_name:
+                     wafer.seq = np.array(wafer_df[no_u_col_name])
+                else: # 如果 'SITE' 和 'No.U' 都不存在，则使用行号作为序号
+                    logger.warning(f"在晶圆 {wafer_id} 的数据中未找到 'SITE' 或 'NO.U' 列，将使用行号作为序号。可用列: {wafer_df.columns.tolist()}")
+                    wafer.seq = np.array(range(1, len(wafer_df) + 1))
+
+            # 修改Bin列的提取逻辑，使其不区分大小写
+            bin_col_name = None
+            for col in wafer_df.columns:
+                col_upper = col.strip().upper() 
+                if col_upper == 'BIN':
+                    bin_col_name = col
+                    break
+                elif col_upper == 'HARDBIN':
+                    bin_col_name = col
+                    break
             
-            if 'BIN' in wafer_df.columns:
-                wafer.bin = np.array(wafer_df['BIN'])
-            elif 'HARDBIN' in wafer_df.columns:
-                wafer.bin = np.array(wafer_df['HARDBIN'])
+            if bin_col_name:
+                wafer.bin = np.array(wafer_df[bin_col_name])
             else:
+                logger.warning(f"在晶圆 {wafer_id} 的数据中未找到 'BIN' 或 'HARDBIN' 列，将默认设置为1。可用列: {wafer_df.columns.tolist()}")
                 wafer.bin = np.ones(len(wafer_df))
-            
-            if 'X' in wafer_df.columns:
-                wafer.x = np.array(wafer_df['X'])
+
+            # 修改X列的提取逻辑，使其不区分大小写
+            x_col_name = None
+            for col in wafer_df.columns:
+                if col.strip().upper() == 'X':
+                    x_col_name = col
+                    break
+            if x_col_name:
+                wafer.x = np.array(wafer_df[x_col_name])
             else:
+                logger.warning(f"在晶圆 {wafer_id} 的数据中未找到 'X' 列，将默认设置为0。可用列: {wafer_df.columns.tolist()}")
                 wafer.x = np.zeros(len(wafer_df))
-            
-            if 'Y' in wafer_df.columns:
-                wafer.y = np.array(wafer_df['Y'])
+
+            # 修改Y列的提取逻辑，使其不区分大小写
+            y_col_name = None
+            for col in wafer_df.columns:
+                if col.strip().upper() == 'Y':
+                    y_col_name = col
+                    break
+            if y_col_name:
+                wafer.y = np.array(wafer_df[y_col_name])
             else:
+                logger.warning(f"在晶圆 {wafer_id} 的数据中未找到 'Y' 列，将默认设置为0。可用列: {wafer_df.columns.tolist()}")
                 wafer.y = np.zeros(len(wafer_df))
             
             # 计算晶圆尺寸
-            if len(wafer.x) > 0:
-                wafer.width = int(np.max(wafer.x) - np.min(wafer.x) + 2)
-                wafer.height = int(np.max(wafer.y) - np.min(wafer.y) + 1)
-            
+            if wafer.x is not None and len(wafer.x) > 0 and np.any(wafer.x) and \
+               wafer.y is not None and len(wafer.y) > 0 and np.any(wafer.y):
+                min_x, max_x = np.min(wafer.x), np.max(wafer.x)
+                min_y, max_y = np.min(wafer.y), np.max(wafer.y)
+                wafer.width = int(max_x - min_x + 1) 
+                wafer.height = int(max_y - min_y + 1)
+            else:
+                wafer.width = 0
+                wafer.height = 0
+        except KeyError as e:
+            logger.error(f"在晶圆 {wafer_id} 提取基本数据时发生KeyError: {e} - 检查列名是否存在于 {wafer_df.columns.tolist()}")
+            wafer.seq = getattr(wafer, 'seq', np.array([]))
+            wafer.bin = getattr(wafer, 'bin', np.array([]))
+            wafer.x = getattr(wafer, 'x', np.array([]))
+            wafer.y = getattr(wafer, 'y', np.array([]))
+            wafer.width = 0
+            wafer.height = 0
         except Exception as e:
-            print(f"提取基本数据时出错: {e}")
+            logger.error(f"在晶圆 {wafer_id} 提取基本数据时发生未知错误: {e}")
+            if not hasattr(wafer, 'seq') or wafer.seq is None: wafer.seq = np.array([])
+            if not hasattr(wafer, 'bin') or wafer.bin is None: wafer.bin = np.array([])
+            if not hasattr(wafer, 'x') or wafer.x is None: wafer.x = np.array([])
+            if not hasattr(wafer, 'y') or wafer.y is None: wafer.y = np.array([])
+            wafer.width = 0
+            wafer.height = 0
         
         # 创建参数数据 DataFrame
         param_data = {}
