@@ -30,8 +30,15 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-def _export_spec_sheet(cp_lot: CPLot, writer: pd.ExcelWriter):
-    """将参数规格信息导出到 Spec Sheet。模拟 VBA FillSpec。"""
+def _export_spec_sheet(cp_lot: CPLot, writer: pd.ExcelWriter, convert_limits: bool = True):
+    """
+    将参数规格信息导出到 Spec Sheet。模拟 VBA FillSpec。
+    
+    Args:
+        cp_lot (CPLot): CP测试数据对象
+        writer (pd.ExcelWriter): Excel写入器
+        convert_limits (bool): 是否将上下限转换为标准单位值（默认为True）
+    """
     logger.info("正在导出 Spec Sheet...")
     if not cp_lot.params:
         logger.warning("CPLot 对象中没有参数信息，无法导出 Spec Sheet。")
@@ -40,19 +47,50 @@ def _export_spec_sheet(cp_lot: CPLot, writer: pd.ExcelWriter):
         df_spec.to_excel(writer, sheet_name='Spec', index=False)
         return
 
+    # 如果需要转换单位，创建单位转换器
+    converter = None
+    if convert_limits:
+        try:
+            from cp_data_processor.processing.unit_converter import UnitConverter
+            converter = UnitConverter()
+            logger.info("已启用上下限单位转换功能")
+        except ImportError:
+            logger.warning("无法导入单位转换器，将使用原始上下限值")
+
     spec_data = []
     max_test_cond_len = 0
     for param in cp_lot.params:
+        # 处理上下限值，如果需要则转换为标准单位
+        sl = param.sl
+        su = param.su
+        
+        if converter and sl is not None and sl != "" and not pd.isna(sl):
+            if isinstance(sl, str):
+                # 如果上下限是字符串格式，尝试提取值和单位
+                converted_sl = converter.convert_to_standard(sl)
+                if converted_sl is not None:
+                    sl = converted_sl
+            
+        if converter and su is not None and su != "" and not pd.isna(su):
+            if isinstance(su, str):
+                # 如果上下限是字符串格式，尝试提取值和单位
+                converted_su = converter.convert_to_standard(su)
+                if converted_su is not None:
+                    su = converted_su
+            
         row = {
             'Param': param.id,
             'Unit': param.unit,
-            'SL': param.sl,
-            'SU': param.su
+            'SL': sl,
+            'SU': su
         }
+        
+        # 测试条件保持原样
         if param.test_cond:
              max_test_cond_len = max(max_test_cond_len, len(param.test_cond))
              for i, cond in enumerate(param.test_cond):
                  row[f'TestCond{i+1}'] = cond # 使用 TestCond1, TestCond2 ... 作为列名
+        
         spec_data.append(row)
 
     df_spec = pd.DataFrame(spec_data)
@@ -141,6 +179,7 @@ def export_analysis_to_excel(
     export_data: bool = True,
     export_yield: bool = True,
     export_summary: bool = True,
+    convert_limits: bool = True,  # 新增参数：是否转换上下限
     summary_options: Optional[Dict] = None
 ):
     """
@@ -153,6 +192,7 @@ def export_analysis_to_excel(
         export_data (bool): 是否导出 Data Sheet (合并后的原始数据)。
         export_yield (bool): 是否导出 Yield Sheet (良率汇总)。
         export_summary (bool): 是否导出 Summary Sheet (参数统计汇总)。
+        convert_limits (bool): 是否将规格上下限转换为标准单位值。
         summary_options (Optional[Dict]): 传递给 calculate_parameter_summary 的选项。
     """
     logger.info(f"准备将分析结果导出到 Excel 文件: {output_excel_path}")
@@ -163,7 +203,7 @@ def export_analysis_to_excel(
         with pd.ExcelWriter(output_excel_path, engine='xlsxwriter') as writer:
             
             if export_spec:
-                _export_spec_sheet(cp_lot, writer)
+                _export_spec_sheet(cp_lot, writer, convert_limits=convert_limits)
                 
             if export_data:
                 _export_data_sheet(cp_lot, writer)
@@ -262,6 +302,7 @@ if __name__ == '__main__':
                              export_data=True,
                              export_yield=True,
                              export_summary=True,
+                             convert_limits=True,
                              summary_options={'filter_by_spec': False} # 示例统计选项
                             )
     logger.info("Excel 导出完成。")

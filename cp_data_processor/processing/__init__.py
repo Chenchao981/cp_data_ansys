@@ -3,5 +3,6 @@
 """
 
 from cp_data_processor.processing.data_transformer import DataTransformer
+from cp_data_processor.processing.unit_converter import UnitConverter
 
-__all__ = ['DataTransformer'] 
+__all__ = ['DataTransformer', 'UnitConverter'] 

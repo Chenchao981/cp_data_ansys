@@ -35,6 +35,9 @@ from cp_data_processor.processing.data_transformer import DataTransformer
 from cp_data_processor.data_models.cp_data import CPLot
 from clean_csv_data import clean_csv_data
 from python_cp.yield_processor import generate_yield_report_from_dataframe
+from dcp_spec_extractor import generate_spec_file
+# 导入单位转换模块
+from cp_unit_converter import process_excel_file as convert_units_in_file
 
 def collect_wafer_data(lot: CPLot) -> pd.DataFrame:
     """从lot对象的晶圆中收集数据"""
@@ -80,7 +83,10 @@ def collect_wafer_data(lot: CPLot) -> pd.DataFrame:
         return combined_df
     return pd.DataFrame()
 
-def process_lot_data(lot: CPLot, output_dir: str, apply_clean: bool = True, outlier_method: str = 'iqr'):
+def process_lot_data(lot: CPLot, output_dir: str, apply_clean: bool = True, 
+                    outlier_method: str = 'iqr', 
+                    source_dcp_file_for_spec: str | None = None,
+                    convert_units: bool = True):
     """处理批次数据并保存"""
     if not lot or not lot.wafers:
         logger.warning("没有有效的晶圆数据，无法处理")
@@ -95,6 +101,46 @@ def process_lot_data(lot: CPLot, output_dir: str, apply_clean: bool = True, outl
         
         # 确保输出目录存在
         os.makedirs(output_dir, exist_ok=True)
+        
+        # --- 新增：生成Spec文件 --- 
+        spec_file_path = None
+        if source_dcp_file_for_spec:
+            logger.info(f"开始为批次 {lot.lot_id} (源文件: {source_dcp_file_for_spec}) 生成规格文件...")
+            spec_file_path = generate_spec_file(source_dcp_file_for_spec, output_dir)
+            if spec_file_path:
+                logger.info(f"规格文件已成功生成: {spec_file_path}")
+                print(f"规格文件已成功生成: {spec_file_path}")
+                
+                # --- 新增：对生成的规格文件进行单位转换 ---
+                if convert_units and spec_file_path.endswith('.csv'):
+                    try:
+                        logger.info(f"开始对规格文件进行单位转换: {spec_file_path}")
+                        # 转换文件名: xxx_spec_yyyymmddhhmmss.csv -> xxx_spec_converted_yyyymmddhhmmss.csv
+                        base_name, ext = os.path.splitext(spec_file_path)
+                        converted_spec_file = f"{base_name}_converted{ext}"
+                        
+                        # 调用单位转换工具处理规格文件
+                        success = convert_units_in_file(spec_file_path, converted_spec_file, sheet_name=None)
+                        
+                        if success:
+                            logger.info(f"规格文件单位转换成功，已保存到: {converted_spec_file}")
+                            print(f"规格文件单位转换成功，已保存到: {converted_spec_file}")
+                            # 更新规格文件路径为转换后的文件
+                            spec_file_path = converted_spec_file
+                        else:
+                            logger.warning(f"规格文件单位转换失败: {spec_file_path}")
+                            print(f"警告: 规格文件单位转换失败: {spec_file_path}")
+                    except Exception as e:
+                        logger.error(f"处理规格文件单位转换时出错: {e}")
+                        print(f"错误: 处理规格文件单位转换时出错: {e}")
+                # --- 结束：对生成的规格文件进行单位转换 ---
+                
+            else:
+                logger.warning(f"为批次 {lot.lot_id} 生成规格文件失败。")
+                print(f"警告: 为批次 {lot.lot_id} 生成规格文件失败。")
+        else:
+            logger.info("未提供用于生成规格文件的源DCP文件路径，跳过生成规格文件步骤。")
+        # --- 结束：生成Spec文件 --- 
         
         # 确保CPLot对象有combined_data属性
         if not hasattr(lot, 'combined_data') or lot.combined_data is None:
@@ -179,7 +225,7 @@ def find_dcp_files(directory_path):
     
     return dcp_files
 
-def process_directory(directory_path, output_dir=None, outlier_method='iqr'):
+def process_directory(directory_path, output_dir=None, outlier_method='iqr', convert_units=True):
     """处理指定目录中的所有DCP文件"""
     logger.info(f"开始处理目录: {directory_path}")
     
@@ -194,15 +240,18 @@ def process_directory(directory_path, output_dir=None, outlier_method='iqr'):
         logger.warning(f"在 {directory_path} 中没有找到DCP格式文件")
         return None
     
-    logger.info(f"找到 {len(dcp_files)} 个DCP文件")
+    logger.info(f"找到 {len(dcp_files)} 个DCP文件: {', '.join(dcp_files)}") # 打印找到的所有文件
     
     # 创建DCPReader处理文件
     try:
         reader = DCPReader(dcp_files)
         lot = reader.read()
         
-        # 处理批次数据
-        return process_lot_data(lot, output_dir, True, outlier_method)
+        # 处理批次数据，并传递第一个DCP文件用于生成spec
+        first_dcp_file_for_spec = dcp_files[0] if dcp_files else None
+        return process_lot_data(lot, output_dir, True, outlier_method, 
+                              source_dcp_file_for_spec=first_dcp_file_for_spec,
+                              convert_units=convert_units)
     except Exception as e:
         logger.exception(f"处理DCP文件时出错: {str(e)}")
         return None
@@ -213,6 +262,7 @@ def main():
     parser.add_argument('--dir', '-d', help='包含DCP文件的目录路径', default=os.path.join(current_dir, "data"))
     parser.add_argument('--output', '-o', help='输出目录路径', default=os.path.join(current_dir, "output"))
     parser.add_argument('--method', '-m', help='异常值处理方法 (std_dev或iqr)', default='iqr', choices=['std_dev', 'iqr'])
+    parser.add_argument('--no-convert', action='store_true', help='禁用单位转换（默认启用）')
     
     args = parser.parse_args()
     
@@ -223,7 +273,7 @@ def main():
         sys.exit(1)
     
     # 处理目录
-    output_file = process_directory(args.dir, args.output, args.method)
+    output_file = process_directory(args.dir, args.output, args.method, not args.no_convert)
     
     if output_file:
         print(f"处理完成！最终输出文件: {output_file}")
