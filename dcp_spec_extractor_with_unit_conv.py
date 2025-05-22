@@ -14,60 +14,6 @@ from datetime import datetime
 from pathlib import Path
 import logging
 
-try:
-    from cp_unit_converter import UnitConverter  # 导入UnitConverter类
-except ImportError:
-    logger = logging.getLogger(__name__)
-    logger.error("无法导入UnitConverter类，请确保cp_unit_converter.py文件存在且在Python路径中")
-    # 创建一个简单的备用转换器类
-    class UnitConverter:
-        """如果cp_unit_converter.py不可用，提供基本功能的备用单位转换器"""
-        
-        def __init__(self):
-            self.prefix_map = {
-                'f': 1e-15, 'p': 1e-12, 'n': 1e-9, 'u': 1e-6, 'μ': 1e-6, 
-                'm': 1e-3, 'k': 1e3, 'M': 1e6, 'G': 1e9, 'T': 1e12
-            }
-        
-        def extract_value_and_unit(self, value_str):
-            """从带单位的字符串中提取数值和单位"""
-            if not isinstance(value_str, str):
-                return None, ""
-            
-            # 尝试使用正则表达式匹配数值和单位
-            match = re.search(r'^([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*([a-zA-ZμΩ/]*)', value_str.strip())
-            if match:
-                try:
-                    value = float(match.group(1))
-                    unit = match.group(2)
-                    return value, unit
-                except (ValueError, TypeError):
-                    pass
-                    
-            return None, ""
-        
-        def convert_to_standard(self, value_str):
-            """将带单位的值转换为标准单位的值"""
-            if isinstance(value_str, (int, float)):
-                return float(value_str)
-                
-            value, unit = self.extract_value_and_unit(str(value_str))
-            if value is None:
-                return None
-                
-            # 如果没有单位，假设已经是标准单位
-            if not unit:
-                return value
-                
-            # 处理单位前缀
-            unit_lower = unit.lower()
-            for prefix, factor in self.prefix_map.items():
-                if unit_lower.startswith(prefix.lower()):
-                    return value * factor
-            
-            # 没有找到前缀，返回原值
-            return value
-
 # # 配置基本日志 (注释掉或删除这行，避免冲突)
 # logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -97,48 +43,6 @@ def _extract_unit(value_str: str) -> str:
         return 'ohm'
     return ""
 
-def _format_value_for_csv(value: float | None) -> str:
-    """
-    将浮点数格式化为CSV所需的字符串格式。
-    
-    参数:
-        value: 要格式化的浮点数，或者None（如果转换失败）
-        
-    返回:
-        格式化后的字符串:
-        - 科学计数法用于非常小或非常大的数字 (例如 "1E-07", "9.90E-05")
-        - 普通数字格式用于其他情况 (例如 "0.5", "140", "0")
-        - 空字符串，如果输入为None
-    """
-    if value is None:
-        return ""
-    
-    # 对于0，直接返回"0"
-    if value == 0:
-        return "0"
-    
-    # 对于非常小的数值，使用科学计数法
-    if abs(value) < 1e-3 and value != 0:
-        return f"{value:.2E}"  # 例如 1E-07, 9.90E-05
-    
-    # 对于非常大的数值，使用科学计数法
-    elif abs(value) >= 1e5:
-        return f"{value:.2E}"
-    
-    # 对于浮点数，尝试保留合理的精度
-    elif isinstance(value, float) and not value.is_integer():
-        # 如果四舍五入到5位小数与原值非常接近
-        if abs(value - round(value, 5)) < 1e-9:
-            # 移除尾部的0和小数点
-            return str(round(value, 5)).rstrip('0').rstrip('.')
-        else:
-            # 否则使用通用格式，可能会有较多小数
-            return f"{value:g}"  # g会自动选择合适的表示
-    
-    # 整数或可以精确表示为整数的浮点数
-    else:
-        return str(int(value))
-
 def generate_spec_file(dcp_file_path: str, output_dir: str) -> str | None:
     """
     解析DCP文件的头部，提取规格数据，
@@ -156,9 +60,6 @@ def generate_spec_file(dcp_file_path: str, output_dir: str) -> str | None:
         if not dcp_file.exists() or not dcp_file.is_file():
             logger.error(f"DCP文件未找到或不是一个文件: {dcp_file_path}")
             return None
-        
-        # 创建单位转换器实例
-        converter = UnitConverter()
 
         # 读取文件的前约20行，这应该包含头部信息
         header_lines = []
@@ -208,54 +109,35 @@ def generate_spec_file(dcp_file_path: str, output_dir: str) -> str | None:
         parameters = [p.strip().strip('"') for p in param_line[4:]]
         num_params = len(parameters)
         
-        # 提取原始的上限值字符串 (从第5列开始，即索引4)
-        limit_u_values_original = []
+        # 提取上限值 (从第5列开始，即索引4)
+        limit_u_values = []
         if len(limit_u_line) > 4:
-            limit_u_values_original = [val.strip().strip('"') for val in limit_u_line[4:]]
+            limit_u_values = [val.strip().strip('"') for val in limit_u_line[4:]]
             # 确保与参数列表长度一致
-            if len(limit_u_values_original) < num_params:
-                limit_u_values_original.extend([''] * (num_params - len(limit_u_values_original)))
-            elif len(limit_u_values_original) > num_params:
-                limit_u_values_original = limit_u_values_original[:num_params]
+            if len(limit_u_values) < num_params:
+                limit_u_values.extend([''] * (num_params - len(limit_u_values)))
+            elif len(limit_u_values) > num_params:
+                limit_u_values = limit_u_values[:num_params]
         else:
-            limit_u_values_original = [''] * num_params
+            limit_u_values = [''] * num_params
         
-        # 提取原始的下限值字符串 (从第5列开始，即索引4)
-        limit_l_values_original = []
+        # 提取下限值 (从第5列开始，即索引4)
+        limit_l_values = []
         if len(limit_l_line) > 4:
-            limit_l_values_original = [val.strip().strip('"') for val in limit_l_line[4:]]
+            limit_l_values = [val.strip().strip('"') for val in limit_l_line[4:]]
             # 确保与参数列表长度一致
-            if len(limit_l_values_original) < num_params:
-                limit_l_values_original.extend([''] * (num_params - len(limit_l_values_original)))
-            elif len(limit_l_values_original) > num_params:
-                limit_l_values_original = limit_l_values_original[:num_params]
+            if len(limit_l_values) < num_params:
+                limit_l_values.extend([''] * (num_params - len(limit_l_values)))
+            elif len(limit_l_values) > num_params:
+                limit_l_values = limit_l_values[:num_params]
         else:
-            limit_l_values_original = [''] * num_params
+            limit_l_values = [''] * num_params
         
-        # 提取单位 (从limit_u_values_original中提取)
+        # 提取单位 (从limit_u_values中提取)
         units = []
-        for value in limit_u_values_original:
+        for value in limit_u_values:
             unit = _extract_unit(value)
             units.append(unit)
-        
-        # 转换LimitU和LimitL为标准单位下的纯数值字符串
-        limit_u_values_converted = []
-        for i, val_str in enumerate(limit_u_values_original):
-            # 转换为标准单位的浮点数
-            standard_val_float = converter.convert_to_standard(val_str)
-            # 格式化为CSV所需的字符串格式
-            formatted_val = _format_value_for_csv(standard_val_float)
-            limit_u_values_converted.append(formatted_val)
-            logger.debug(f"LimitU转换: '{val_str}' -> {standard_val_float} -> '{formatted_val}'")
-
-        limit_l_values_converted = []
-        for i, val_str in enumerate(limit_l_values_original):
-            # 转换为标准单位的浮点数
-            standard_val_float = converter.convert_to_standard(val_str)
-            # 格式化为CSV所需的字符串格式
-            formatted_val = _format_value_for_csv(standard_val_float)
-            limit_l_values_converted.append(formatted_val)
-            logger.debug(f"LimitL转换: '{val_str}' -> {standard_val_float} -> '{formatted_val}'")
         
         # 准备输出数据
         output_data = []
@@ -266,11 +148,11 @@ def generate_spec_file(dcp_file_path: str, output_dir: str) -> str | None:
         # 第2行: 单位
         output_data.append(["Unit"] + units)
         
-        # 第3行: 上限 (使用转换后的纯数值)
-        output_data.append(["LimitU"] + limit_u_values_converted)
+        # 第3行: 上限
+        output_data.append(["LimitU"] + limit_u_values)
         
-        # 第4行: 下限 (使用转换后的纯数值)
-        output_data.append(["LimitL"] + limit_l_values_converted)
+        # 第4行: 下限
+        output_data.append(["LimitL"] + limit_l_values)
 
         # --- 处理Bias行，直接从源文件提取 ---
         # 创建对应Bias数据的行
@@ -377,10 +259,10 @@ Bias 6
         logger.info(f"测试生成的规格文件: {generated_file}")
         logger.info("请验证其内容。")
         # 可选: 打印内容以便快速检查
-        with open(generated_file, 'r', encoding='utf-8') as f_check:
-            print("--- 生成的规格文件内容 ---")
-            print(f_check.read())
-            print("------------------------------------")
+        # with open(generated_file, 'r', encoding='utf-8') as f_check:
+        #     print("--- 生成的规格文件内容 ---")
+        #     print(f_check.read())
+        #     print("------------------------------------")
     else:
         logger.error("测试规格文件生成失败。")
 
