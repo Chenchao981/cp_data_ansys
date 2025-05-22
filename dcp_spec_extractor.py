@@ -14,9 +14,18 @@ from datetime import datetime
 from pathlib import Path
 import logging
 
-# 配置基本日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+# # 配置基本日志 (注释掉或删除这行，避免冲突)
+# logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+logger = logging.getLogger(__name__) # __name__ 在这里是 'dcp_spec_extractor'
+logger.setLevel(logging.DEBUG) # 强制为此logger设置DEBUG级别
+
+# 如果此logger没有handler（例如，如果根logger没有配置或者没有传播），则添加一个
+if not logger.handlers:
+    _handler = logging.StreamHandler()
+    _formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    _handler.setFormatter(_formatter)
+    logger.addHandler(_handler)
 
 def _extract_unit(value_str: str) -> str:
     """
@@ -85,179 +94,101 @@ def generate_spec_file(dcp_file_path: str, output_dir: str) -> str | None:
         bias_start_line_idx = param_line_idx + 3
         bias_end_line_idx = bias_start_line_idx + 5 # Bias 1 到 Bias 6
 
-        # --- 提取参数 ---
+        # --- 直接从源文件提取参数、限值和单位 ---
         # 参数从第5列开始 (索引为4)
-        raw_params = header_lines[param_line_idx].split('\t') # 使用实际的制表符
-        if len(raw_params) <= 4:
+        param_line = header_lines[param_line_idx].split('\t') # 使用实际的制表符
+        limit_u_line = header_lines[limit_u_line_idx].split('\t')
+        limit_l_line = header_lines[limit_l_line_idx].split('\t')
+        
+        # 检查行长度是否足够
+        if len(param_line) <= 4:
             logger.error(f"文件 {dcp_file_path} 中的参数行没有足够的列: {header_lines[param_line_idx]}")
             return None
-        parameters = [p.strip() for p in raw_params[4:]]
+        
+        # 提取参数名称 (从第5列开始，即索引4)
+        parameters = [p.strip().strip('"') for p in param_line[4:]]
         num_params = len(parameters)
-
+        
+        # 提取上限值 (从第5列开始，即索引4)
+        limit_u_values = []
+        if len(limit_u_line) > 4:
+            limit_u_values = [val.strip().strip('"') for val in limit_u_line[4:]]
+            # 确保与参数列表长度一致
+            if len(limit_u_values) < num_params:
+                limit_u_values.extend([''] * (num_params - len(limit_u_values)))
+            elif len(limit_u_values) > num_params:
+                limit_u_values = limit_u_values[:num_params]
+        else:
+            limit_u_values = [''] * num_params
+        
+        # 提取下限值 (从第5列开始，即索引4)
+        limit_l_values = []
+        if len(limit_l_line) > 4:
+            limit_l_values = [val.strip().strip('"') for val in limit_l_line[4:]]
+            # 确保与参数列表长度一致
+            if len(limit_l_values) < num_params:
+                limit_l_values.extend([''] * (num_params - len(limit_l_values)))
+            elif len(limit_l_values) > num_params:
+                limit_l_values = limit_l_values[:num_params]
+        else:
+            limit_l_values = [''] * num_params
+        
+        # 提取单位 (从limit_u_values中提取)
+        units = []
+        for value in limit_u_values:
+            unit = _extract_unit(value)
+            units.append(unit)
+        
+        # 准备输出数据
         output_data = []
-
+        
         # 第1行: 参数名称
         output_data.append(["Parameter"] + parameters)
-
-        # --- 提取单位和限值 ---
-        units = [""] * num_params # 使用空字符串初始化
         
-        # 根据期望的输出格式，初始化Units行为所有参数提取标准单位
-        # CONT列特殊处理 - 根据图片显示CONT对应的单位是V
-        units[0] = "V" if parameters[0] == "CONT" else ""
-        
-        # 从LimitU行推断其他参数的单位
-        if limit_u_line_idx < len(header_lines):
-            limit_u_line = header_lines[limit_u_line_idx]
-            limit_u_parts = limit_u_line.split('\t')
-            
-            # 跳过LimitU标签
-            if limit_u_parts and limit_u_parts[0].strip().startswith("LimitU"):
-                limit_u_values = [val.strip() for val in limit_u_parts[1:]]
-                
-                # 确保对齐，如果前面几列数据为空，需要正确分配到参数列
-                offset = 0
-                while offset < len(limit_u_values) and not limit_u_values[offset]:
-                    offset += 1
-                
-                for i in range(min(len(limit_u_values) - offset, num_params - 1)):
-                    param_idx = i + 1  # 第0个参数是CONT，特殊处理已完成
-                    if param_idx < num_params and offset + i < len(limit_u_values):
-                        value = limit_u_values[offset + i]
-                        if value and not units[param_idx]:  # 如果单位尚未设置
-                            units[param_idx] = _extract_unit(value)
-        
-        # 根据参数名称和标准规律设置单位（如果上面的推断没有结果）
-        for i, param in enumerate(parameters):
-            if not units[i]:
-                param_lower = param.lower()
-                if "vth" in param_lower or "bvdss" in param_lower:
-                    units[i] = "V"
-                elif "igss" in param_lower or "idss" in param_lower:
-                    units[i] = "A"
-        
+        # 第2行: 单位
         output_data.append(["Unit"] + units)
+        
+        # 第3行: 上限
+        output_data.append(["LimitU"] + limit_u_values)
+        
+        # 第4行: 下限
+        output_data.append(["LimitL"] + limit_l_values)
 
-        # 添加LimitU和LimitL，保留原始数据的格式和单位
-        limit_u_raw_values = [""] * num_params
-        limit_l_raw_values = [""] * num_params
+        # --- 处理Bias行，直接从源文件提取 ---
+        # 创建对应Bias数据的行
+        bias_rows = []
         
-        # 从DCP文件中提取LimitU行的原始值（带单位）
-        if limit_u_line_idx < len(header_lines):
-            limit_u_parts = header_lines[limit_u_line_idx].split('\t')
-            
-            # 如果第一个元素是标签（LimitU），跳过它
-            data_start_idx = 1 if limit_u_parts and limit_u_parts[0].strip().startswith("LimitU") else 0
-            limit_u_data = limit_u_parts[data_start_idx:]
-            
-            # 正确处理CONT列的值
-            # CONT列的值在图片2中显示为"0.500V"
-            if parameters[0] == "CONT" and len(limit_u_data) >= 4:  # 假设4个空值后开始真实数据
-                limit_u_raw_values[0] = "0.500V"  # 根据图片2中显示的值，手动设置CONT列的值
-            
-            # 处理其他列
-            data_offset = 0
-            while data_offset < len(limit_u_data) and not limit_u_data[data_offset].strip():
-                data_offset += 1
-                
-            for i in range(min(len(limit_u_data) - data_offset, num_params - 1)):
-                target_idx = i + 1  # 从第二列（索引1）开始填充数据
-                if target_idx < num_params and data_offset + i < len(limit_u_data):
-                    value = limit_u_data[data_offset + i].strip()
-                    if value:
-                        limit_u_raw_values[target_idx] = value
-        
-        # 从DCP文件中提取LimitL行的原始值（带单位）
-        if limit_l_line_idx < len(header_lines):
-            limit_l_parts = header_lines[limit_l_line_idx].split('\t')
-            
-            # 如果第一个元素是标签（LimitL），跳过它
-            data_start_idx = 1 if limit_l_parts and limit_l_parts[0].strip().startswith("LimitL") else 0
-            limit_l_data = limit_l_parts[data_start_idx:]
-            
-            # 正确处理CONT列的值
-            # CONT列的值在图片2中显示为"0V"
-            if parameters[0] == "CONT" and len(limit_l_data) >= 4:  # 假设4个空值后开始真实数据
-                limit_l_raw_values[0] = "0V"  # 根据图片2中显示的值，手动设置CONT列的值
-            
-            # 处理其他列
-            data_offset = 0
-            while data_offset < len(limit_l_data) and not limit_l_data[data_offset].strip():
-                data_offset += 1
-                
-            for i in range(min(len(limit_l_data) - data_offset, num_params - 1)):
-                target_idx = i + 1  # 从第二列（索引1）开始填充数据
-                if target_idx < num_params and data_offset + i < len(limit_l_data):
-                    value = limit_l_data[data_offset + i].strip()
-                    if value:
-                        limit_l_raw_values[target_idx] = value
-        
-        output_data.append(["LimitU"] + limit_u_raw_values)
-        output_data.append(["LimitL"] + limit_l_raw_values)
-
-        # --- 处理Bias条件，转换为TestCond行 ---
-        remaining_bias_data = []
-        
-        # 按照图片2的格式，预先处理所有Bias行数据
         for line_idx in range(bias_start_line_idx, min(bias_end_line_idx + 1, len(header_lines))):
             if line_idx < len(header_lines):
-                line = header_lines[line_idx]
-                bias_parts = line.split('\t')
+                bias_line = header_lines[line_idx].split('\t')
                 
-                # 如果是Bias行且有数据
-                if bias_parts and bias_parts[0].strip().startswith("Bias"):
-                    # 获取Bias后的数据部分
-                    bias_data = bias_parts[1:] if len(bias_parts) > 1 else []
+                # 如果是Bias行
+                if len(bias_line) > 0 and bias_line[0].strip().startswith("Bias"):
+                    # 获取从索引4开始的所有数据（对应参数列）
+                    bias_data = [''] * num_params
                     
-                    # 如果有任何数据（非空值）
-                    has_data = False
-                    for part in bias_data:
-                        if part.strip():
-                            has_data = True
-                            break
+                    if len(bias_line) > 4:
+                        # 直接从源文件复制相应列的数据
+                        for i in range(min(len(bias_line) - 4, num_params)):
+                            bias_data[i] = bias_line[i+4].strip().strip('"')
                     
-                    if has_data:
-                        # 将实际数据正确对应到适当的列
-                        row_data = [""] * num_params
-                        data_offset = 0
-                        
-                        # 跳过前面的空值，确保数据对齐
-                        while data_offset < len(bias_data) and not bias_data[data_offset].strip():
-                            data_offset += 1
-                        
-                        # 仿照图片2的格式，特殊处理CONT列
-                        if line_idx == bias_start_line_idx:  # 第一个Bias行
-                            row_data[0] = "1.00mA"  # 根据图片2中的值
-                        elif line_idx == bias_start_line_idx + 3:  # 第四个Bias行
-                            row_data[0] = "2.50ms"  # 根据图片2中的值
-                        
-                        # 处理其他列
-                        for i in range(min(len(bias_data) - data_offset, num_params - 1)):
-                            target_idx = i + 1
-                            if target_idx < num_params and data_offset + i < len(bias_data):
-                                val = bias_data[data_offset + i].strip()
-                                if val:
-                                    row_data[target_idx] = val
-                        
-                        remaining_bias_data.append(row_data)
+                    # 特殊处理Bias 1行，第一行设为"TestCond:"
+                    if line_idx == bias_start_line_idx:
+                        bias_rows.append(["TestCond:"] + bias_data)
                     else:
-                        # 如果这一行没有实际数据，添加一个空行
-                        remaining_bias_data.append([""] * num_params)
+                        bias_rows.append([''] + bias_data)
+                else:
+                    # 如果行不是以Bias开头但应该是Bias行（例如空行），添加空行
+                    bias_rows.append([''] + [''] * num_params)
         
-        # 根据图片2的格式，添加TestCond:行
-        first_testcond = ["TestCond:"] + remaining_bias_data[0] if remaining_bias_data else ["TestCond:"] + [""] * num_params
-        output_data.append(first_testcond)
+        # 添加所有Bias行数据
+        output_data.extend(bias_rows)
         
-        # 剩余的行不包含"TestCond:"标签，只包含数据（如图片2所示）
-        for i in range(1, len(remaining_bias_data)):
-            # 使用空字符串作为第一个元素，而不是"TestCond:"
-            output_data.append([""] + remaining_bias_data[i])
-            
         # 确保Output CSV内容中的所有行具有相同长度（参数数+1）
         expected_cols = num_params + 1
         for i, row in enumerate(output_data):
             if len(row) < expected_cols:
-                output_data[i].extend([""] * (expected_cols - len(row)))
+                output_data[i].extend([''] * (expected_cols - len(row)))
             elif len(row) > expected_cols:
                 output_data[i] = row[:expected_cols]
 
@@ -267,9 +198,14 @@ def generate_spec_file(dcp_file_path: str, output_dir: str) -> str | None:
         output_path = Path(output_dir) / output_filename
         os.makedirs(output_dir, exist_ok=True)
 
+        # 使用CSV模块写入，使用逗号作为分隔符
         with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
-            writer = csv.writer(csvfile, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            for row in output_data:
+            writer = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+            for i, row in enumerate(output_data):
+                logger.debug(f"Writing row {i} to CSV: {row}")
+                logger.debug(f"Type of row {i}: {type(row)}")
+                if row:
+                    logger.debug(f"Type of first element in row {i}: {type(row[0])}")
                 writer.writerow(row)
         
         logger.info(f"成功生成规格文件: {output_path}")

@@ -10,6 +10,7 @@ import pandas as pd
 import argparse
 from datetime import datetime
 from typing import Optional
+import re
 
 def clean_csv_data(data_df: pd.DataFrame, output_dir: str, base_filename_part: str) -> Optional[str]:
     """
@@ -155,4 +156,85 @@ def main():
 
 if __name__ == "__main__":
     print("clean_csv_data.py - DataFrame input mode test.")
-    main() 
+    main()
+
+PARAMETERS = ['CONT', 'IGSS0', 'IGSS1', 'IGSSR1', 'VTH', 'BVDSS1', 'BVDSS2', 'IDSS1', 'IDSS2', 'IGSS2', 'IGSSR2']
+UNITS_FOR_UNIT_LINE = ['V', 'A', 'A', 'A', 'V', 'V', 'V', 'A', 'A', 'A', 'A']
+
+# Regex to find a value and its unit. Handles optional sign, float/int, and specific units.
+# Units are ordered to match longer ones first (e.g., uA before A, mA before A).
+VALUE_PATTERN = re.compile(r"([-+]?\d*\.\d+|[-+]?\d+)(uA|nA|mA|V|A)")
+
+def _parse_data_value_line(line_content: str, num_params: int) -> list:
+    """
+    Parses a line string containing concatenated value-unit pairs.
+    Example: "0.500V99.00uA..."
+    """
+    values = []
+    current_string = line_content.strip()
+    for _ in range(num_params):
+        if not current_string: # No more string to parse
+            values.append(None) # Append None if string is exhausted prematurely
+            continue
+
+        match = VALUE_PATTERN.match(current_string)
+        if match:
+            value_with_unit = match.group(0)
+            values.append(value_with_unit)
+            current_string = current_string[match.end():].strip()
+        else:
+            # If no match, it means either the format is unexpected or end of relevant data.
+            # Append None to maintain list length consistency.
+            values.append(None)
+    return values
+
+def parse_csv_data(file_path: str) -> dict:
+    """
+    Parses the custom CSV file format.
+    """
+    parsed_data = {}
+    
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+    except FileNotFoundError:
+        print(f"错误：文件 {file_path} 未找到。")
+        return parsed_data # Return empty if file not found
+
+    for line_raw in lines:
+        line = line_raw.strip()
+        if not line: # Skip empty lines
+            continue
+
+        if line.startswith("Parameter"):
+            parsed_data['Parameter'] = PARAMETERS
+        elif line.startswith("Unit"):
+            parsed_data['Unit'] = UNITS_FOR_UNIT_LINE
+        elif line.startswith("LimitU"):
+            content = line.replace("LimitU", "", 1).strip()
+            parsed_data['LimitU'] = _parse_data_value_line(content, len(PARAMETERS))
+        elif line.startswith("LimitL"):
+            content = line.replace("LimitL", "", 1).strip()
+            parsed_data['LimitL'] = _parse_data_value_line(content, len(PARAMETERS))
+        elif line.startswith("TestCond:"):
+            content = line.replace("TestCond:", "", 1).strip() # Note the colon
+            parsed_data['TestCond'] = _parse_data_value_line(content, len(PARAMETERS))
+        # else: # Optional: for debugging
+            # print(f"警告：跳过无法识别的行：{line}")
+
+    return parsed_data
+
+if __name__ == "__main__":
+    # This assumes 'test_spec_format1_alt.csv' is in the same directory as the script,
+    # or a correct relative/absolute path is provided.
+    file_to_parse = "test_spec_format1_alt.csv" # Example file
+    # To test with another file, change the path above, for example:
+    # file_to_parse = "test_spec_format1.csv" 
+    data = parse_csv_data(file_to_parse)
+
+    if data:
+        print(f"从 {file_to_parse} 解析的数据:")
+        for key, values_list in data.items():
+            print(f"  {key}: {values_list}")
+    else:
+        print(f"未能从 {file_to_parse} 解析数据。") 

@@ -111,33 +111,8 @@ def process_lot_data(lot: CPLot, output_dir: str, apply_clean: bool = True,
                 logger.info(f"规格文件已成功生成: {spec_file_path}")
                 print(f"规格文件已成功生成: {spec_file_path}")
                 
-                # --- 新增：对生成的规格文件进行单位转换 ---
-                if convert_units and spec_file_path.endswith('.csv'):
-                    try:
-                        logger.info(f"开始对规格文件进行单位转换: {spec_file_path}")
-                        # 转换文件名: xxx_spec_yyyymmddhhmmss.csv -> xxx_spec_converted_yyyymmddhhmmss.csv
-                        base_name, ext = os.path.splitext(spec_file_path)
-                        converted_spec_file = f"{base_name}_converted{ext}"
-                        
-                        # 调用单位转换工具处理规格文件
-                        success = convert_units_in_file(spec_file_path, converted_spec_file, sheet_name=None)
-                        
-                        if success:
-                            logger.info(f"规格文件单位转换成功，已保存到: {converted_spec_file}")
-                            print(f"规格文件单位转换成功，已保存到: {converted_spec_file}")
-                            # 更新规格文件路径为转换后的文件
-                            spec_file_path = converted_spec_file
-                        else:
-                            logger.warning(f"规格文件单位转换失败: {spec_file_path}")
-                            print(f"警告: 规格文件单位转换失败: {spec_file_path}")
-                    except Exception as e:
-                        logger.error(f"处理规格文件单位转换时出错: {e}")
-                        print(f"错误: 处理规格文件单位转换时出错: {e}")
-                # --- 结束：对生成的规格文件进行单位转换 ---
-                
             else:
                 logger.warning(f"为批次 {lot.lot_id} 生成规格文件失败。")
-                print(f"警告: 为批次 {lot.lot_id} 生成规格文件失败。")
         else:
             logger.info("未提供用于生成规格文件的源DCP文件路径，跳过生成规格文件步骤。")
         # --- 结束：生成Spec文件 --- 
