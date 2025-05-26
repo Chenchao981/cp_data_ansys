@@ -43,11 +43,21 @@ class DataManager:
     def _init_adapters(self):
         """延迟初始化适配器"""
         if self.file_adapter is None:
-            from ..data_sources.file_adapter import FileAdapter
+            try:
+                from ..data_sources.file_adapter import FileAdapter
+            except ImportError:
+                # 如果相对导入失败，尝试绝对导入
+                sys.path.insert(0, str(Path(__file__).parent.parent))
+                from data_sources.file_adapter import FileAdapter
             self.file_adapter = FileAdapter(self.data_dir)
         
         if self.memory_adapter is None:
-            from ..data_sources.memory_adapter import MemoryAdapter
+            try:
+                from ..data_sources.memory_adapter import MemoryAdapter
+            except ImportError:
+                # 如果相对导入失败，尝试绝对导入
+                sys.path.insert(0, str(Path(__file__).parent.parent))
+                from data_sources.memory_adapter import MemoryAdapter
             self.memory_adapter = MemoryAdapter()
     
     def get_data(self, data_type: str, lot_id: Optional[str] = None, **kwargs) -> Optional[pd.DataFrame]:

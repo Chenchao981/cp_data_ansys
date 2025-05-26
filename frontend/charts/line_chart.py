@@ -128,7 +128,7 @@ if __name__ == "__main__":
     print("测试折线图生成...")
     
     # 创建数据管理器
-    dm = DataManager(data_source="auto", cache_enabled=True, data_dir="../output")
+    dm = DataManager(data_source="auto", cache_enabled=True, data_dir="output")
     
     # 创建折线图
     line_chart = LineChart(
