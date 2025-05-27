@@ -231,3 +231,527 @@ python cp_data_processor/examples/map_formatter_example.py
 ### 更多文档
 
 有关详细的开发文档和模块说明，请参阅 [readme-main.md](./readme-main.md)。
+
+## 📊 数据分析操作手册
+
+本章节详细介绍如何使用新的图表生成功能分析CP测试数据，包括数据清洗、良率分析和交互式图表生成。
+
+### 🚀 快速开始
+
+#### 环境要求
+
+确保已安装必要的Python包：
+
+```bash
+pip install pandas numpy plotly matplotlib seaborn openpyxl
+```
+
+#### 数据准备
+
+系统支持三种数据文件类型：
+- **Yield数据**: `*_yield_*.csv` - 包含良率信息
+- **Spec数据**: `*_spec_*.csv` - 包含参数规格、单位、上下限
+- **Cleaned数据**: `*_cleaned_*.csv` - 包含清洗后的测试参数数据
+
+### 📋 完整操作流程
+
+#### 第一步：数据清洗和准备
+
+1. **清洗原始DCP数据**
+   ```bash
+   python clean_dcp_data.py
+   ```
+   
+2. **清洗原始CSV数据**（如果有）
+   ```bash
+   python clean_csv_data.py
+   ```
+
+3. **提取规格信息**
+   ```bash
+   python dcp_spec_extractor.py
+   ```
+
+完成后，在`output/`目录下会生成：
+- `NCETSG7120BAA_yield_20240101.csv` - 良率数据
+- `NCETSG7120BAA_spec_20240101.csv` - 规格数据  
+- `NCETSG7120BAA_cleaned_20240101.csv` - 清洗数据
+
+#### 第二步：生成交互式图表
+
+##### 🏭 良率分析图表（推荐）
+
+生成完整的良率分析HTML图表：
+
+```bash
+# 快速演示
+python demo_yield_chart.py
+
+# 详细测试
+python test_yield_chart.py
+```
+
+**输出内容：**
+- 📈 Wafer良率趋势分析
+- 📊 批次良率对比分析
+- 📊 良率分布统计
+- 🔍 失效类型分析
+- 🔬 参数折线图（支持CONT、IGSS0、IGSS1、BVDSS1等所有参数）
+
+**特色功能：**
+- ✅ 交互式HTML图表，可缩放、悬停查看详情
+- ✅ 双层X轴：上层显示Wafer编号，下层显示批次信息
+- ✅ 自动规格限制线：显示参数上下限
+- ✅ 参数化标题：格式为`参数[单位]@测试条件_yield_line_chart`
+- ✅ 批次分组显示，不同颜色区分
+
+##### 📦 箱体图+散点图分析
+
+生成参数统计分析图表：
+
+```bash
+# 快速演示
+python test_boxplot.py
+```
+
+**输出内容：**
+- 📊 参数箱体图+散点图组合
+- 📈 参数分布统计分析
+- 🔍 异常值检测和标注
+
+#### 第三步：图表文件管理
+
+生成的HTML图表保存在以下目录：
+
+```
+demo_output/              # 演示输出目录
+├── all_charts/          # 所有图表
+│   ├── Wafer良率趋势分析_yield_chart.html
+│   ├── 批次良率对比分析_yield_chart.html
+│   ├── BVDSS1[V]@250uA_yield_line_chart.html
+│   └── ...
+└── detailed_analysis/   # 详细分析
+
+test_charts/             # 测试输出目录
+├── yield/              # 良率图表
+├── yield_batch/        # 批量生成
+└── yield_detailed/     # 详细分析
+```
+
+### 🎯 专业级图表生成
+
+#### 自定义参数分析
+
+```python
+from frontend.charts.yield_chart import YieldChart
+
+# 创建分析实例
+chart = YieldChart(data_dir="output")
+chart.load_data()
+
+# 获取可用参数
+params = chart.get_available_parameters()
+print(f"可用参数: {params}")
+
+# 分析特定参数
+param_info = chart.get_parameter_info("BVDSS1")
+print(f"参数信息: {param_info}")
+
+# 生成特定参数图表
+chart_type = "param_BVDSS1"
+fig = chart.get_chart(chart_type)
+chart.save_chart(chart_type, output_dir="custom_analysis")
+```
+
+#### 批量分析多个批次
+
+```python
+# 批量生成所有图表
+saved_paths = chart.save_all_charts(output_dir="batch_analysis")
+print(f"成功生成 {len(saved_paths)} 个图表")
+```
+
+#### 箱体图详细分析
+
+```python
+from frontend.charts.boxplot_chart import BoxplotChart
+
+# 创建箱体图分析
+chart = BoxplotChart(data_dir="output")
+chart.load_data()
+
+# 获取可用参数
+params = chart.get_available_parameters()
+
+# 生成特定参数的箱体图
+fig = chart.create_boxplot_scatter_chart("BVDSS1")
+chart.save_chart("BVDSS1", output_dir="boxplot_analysis")
+```
+
+### 📊 图表类型详解
+
+#### 良率分析图表
+
+| 图表类型 | 功能说明 | 适用场景 |
+|---------|----------|----------|
+| Wafer良率趋势图 | 显示各批次wafer良率随wafer编号变化 | 监控生产稳定性 |
+| 批次良率对比图 | 对比不同批次的平均良率和标准差 | 批次间质量对比 |
+| 良率分布统计 | 显示所有wafer良率的分布直方图 | 良率分布分析 |
+| 失效类型分析 | 分析各种失效bin的分布情况 | 失效模式分析 |
+| 参数折线图 | 基于cleaned数据的参数测试结果 | 参数趋势分析 |
+
+#### 参数统计图表
+
+| 图表类型 | 功能说明 | 适用场景 |
+|---------|----------|----------|
+| 箱体图+散点图 | 显示参数分布特征和异常值 | 参数质量分析 |
+| 双层X轴设计 | 上层Wafer编号，下层批次信息 | 多维度数据查看 |
+| 规格限制线 | 自动显示参数上下限 | 规格符合性检查 |
+
+### 🔧 高级配置
+
+#### 自定义图表样式
+
+```python
+# 修改图表配置
+chart.chart_config.update({
+    'height': 800,                    # 图表高度
+    'font_size': 14,                  # 字体大小
+    'colors': ['#FF6B6B', '#4ECDC4', '#45B7D1'],  # 自定义颜色
+    'min_chart_width': 1400,          # 最小图表宽度
+    'pixels_per_wafer': 50,           # 每个wafer分配的像素
+})
+```
+
+#### 数据过滤和筛选
+
+```python
+# 过滤特定批次
+chart_data = chart.wafer_data[chart.wafer_data['Lot_Short'] == 'FA54-5339']
+
+# 过滤特定良率范围
+high_yield_data = chart.wafer_data[chart.wafer_data['Yield_Numeric'] > 98.0]
+```
+
+### 🐛 常见问题解决
+
+#### 数据加载失败
+
+**问题**: 提示"数据加载失败"
+**解决方案**:
+1. 检查`output/`目录是否存在数据文件
+2. 确认文件命名格式正确：`*_yield_*.csv`, `*_spec_*.csv`, `*_cleaned_*.csv`
+3. 验证CSV文件编码为UTF-8
+
+#### 参数图表生成失败
+
+**问题**: 参数折线图不显示或显示异常
+**解决方案**:
+1. 确认存在spec数据文件
+2. 检查参数名在spec和cleaned数据中都存在
+3. 验证规格数据格式正确
+
+#### 图表显示问题
+
+**问题**: HTML图表在浏览器中显示异常
+**解决方案**:
+1. 使用现代浏览器（Chrome、Firefox、Edge）
+2. 检查网络连接（Plotly可能需要加载在线资源）
+3. 确认HTML文件完整且未损坏
+
+### 📈 性能优化建议
+
+#### 大数据集处理
+
+```python
+# 对于大数据集，建议分批处理
+chart_types = chart.get_available_chart_types()
+basic_charts = [ct for ct in chart_types if not ct.startswith('param_')]
+
+# 先生成基础图表
+for chart_type in basic_charts:
+    chart.save_chart(chart_type, output_dir="output_batch1")
+
+# 再分批生成参数图表
+params = chart.get_available_parameters()
+for i in range(0, len(params), 5):  # 每次处理5个参数
+    batch_params = params[i:i+5]
+    for param in batch_params:
+        chart_type = f"param_{param}"
+        chart.save_chart(chart_type, output_dir=f"output_batch_{i//5+2}")
+```
+
+#### 内存管理
+
+```python
+# 清理缓存
+chart.all_charts_cache.clear()
+
+# 重新加载数据
+chart.load_data()
+```
+
+### 🎉 最佳实践
+
+1. **数据组织**: 保持数据文件命名规范，统一存放在`output/`目录
+2. **图表管理**: 按批次或日期创建不同的输出目录
+3. **质量检查**: 生成图表后及时检查数据完整性和图表正确性
+4. **文档记录**: 保存关键参数的分析结果和异常发现
+5. **版本控制**: 对重要的数据分析结果进行版本备份
+
+### 📞 技术支持
+
+如需更多帮助，请参考：
+- 详细API文档：`frontend/charts/yield_chart.md`
+- 测试示例：运行`python test_yield_chart.py`
+- 问题反馈：通过项目Issue系统报告问题
+
+---
+
+> 💡 **提示**: 建议先运行`python demo_yield_chart.py`快速体验功能，然后根据具体需求进行定制化分析。
+
+## 使用 YieldChart 和 Plotly Express 生成和分析图表
+
+本节将指导您如何使用 `frontend.charts.yield_chart.YieldChart` 类结合 `plotly.express` 来加载数据、生成各种分析图表并保存为 HTML 文件。
+
+### 1. 准备数据
+
+在进行分析之前，您需要准备以下三种类型的 CSV 文件，并将它们放置在同一个数据目录中（例如，项目根目录下的 `input_data` 文件夹，您可以自行创建）：
+
+*   **良率数据 (Yield Data)**：
+    *   文件名应包含 `_yield_`，例如 `YOUR_BATCH_ID_yield_summary.csv`。
+    *   此文件应包含每个晶圆 (Wafer) 的良率信息以及可能的批次 (Lot) 汇总信息。
+    *   关键列（列名需精确匹配）：
+        *   `Lot_ID`: 批次和晶圆的唯一标识符（例如，`NCETXXX_FA54-1234@203_W01` 表示批次 `NCETXXX_FA54-1234@203` 中的 `W01` 晶圆；汇总行可以用 `ALL` 表示 `Lot_ID`）。
+        *   `Wafer_ID`: 晶圆编号（例如 `1`, `2`, `01`, `25`）。
+        *   `Yield`: 良率百分比，字符串格式，带 `%` 号（例如 `98.5%`）。
+        *   `Bin3`, `Bin4`, `Bin6`, `Bin7`, `Bin8`, `Bin9`: (可选) 不同失效类型的芯片数量，用于生成失效分析图。
+    *   示例 (`NCETXXX_FA54-1234_yield_summary.csv`):
+        ```csv
+        Lot_ID,Wafer_ID,Site,Yield,Bin3,Bin4,Bin5,Bin6,Bin7,Bin8,Bin9
+        NCETXXX_FA54-1234@203_W01,1,1,99.8%,0,1,0,0,0,0,0
+        NCETXXX_FA54-1234@203_W02,2,1,99.5%,1,0,0,0,0,0,0
+        ...
+        ALL,ALL,1,99.65%,10,5,0,2,0,0,0
+        ```
+
+*   **规格数据 (Spec Data)**：
+    *   文件名应包含 `_spec_`，例如 `YOUR_BATCH_ID_spec_limits.csv`。
+    *   此文件定义了各个测试参数的规格信息，如单位、上下限、测试条件等。
+    *   第一列通常是参数属性的描述（例如 `Parameter`, `Unit`, `LimitU`, `LimitL`, `TestCond:`），后续列是具体的参数名。
+    *   `YieldChart` 会读取此文件以获取参数的额外信息，并用于参数折线图的标题和规格线。
+    *   示例 (`NCETXXX_FA54-1234_spec_limits.csv`):
+        ```csv
+        Parameter,ParamA,ParamB,ParamC
+        Unit,mV,uA,Ohm
+        LimitU,100,50,10
+        LimitL,90,40,8
+        TestCond:,Vcc=3.3V,Temp=25C,Iload=1mA
+        ```
+
+*   **清洗后的参数数据 (Cleaned Data)**：
+    *   文件名应包含 `_cleaned_`，例如 `YOUR_BATCH_ID_cleaned_data.csv`。
+    *   此文件包含每个芯片的详细测试参数值，经过了初步清洗。
+    *   `YieldChart` 使用此数据生成参数折线图。`plotly.express` 也将使用此数据生成箱体图和散点图。
+    *   关键列（列名需精确匹配）：
+        *   `Lot_ID`: 批次和晶圆的唯一标识符 (格式同良率数据)。
+        *   `Wafer_ID`: 晶圆编号。
+        *   `X`, `Y`: (可选) 芯片在晶圆上的坐标。
+        *   `Bin`: (可选) 芯片的 Bin 值。
+        *   其他列：每个测试参数的名称及其对应的数值 (例如 `ParamA`, `ParamB`, ...)。
+    *   示例 (`NCETXXX_FA54-1234_cleaned_data.csv`):
+        ```csv
+        Lot_ID,Wafer_ID,X,Y,Bin,ParamA,ParamB,ParamC
+        NCETXXX_FA54-1234@203_W01,1,0,0,1,95.5,45.1,8.8
+        NCETXXX_FA54-1234@203_W01,1,0,1,1,96.0,45.3,8.9
+        ...
+        NCETXXX_FA54-1234@203_W25,25,10,10,3,105.0,55.0,10.5
+        ```
+
+将这三类文件准备好并放入您指定的数据目录。
+
+### 2. 运行示例脚本生成图表
+
+我们提供一个示例脚本 `generate_custom_charts.py` (您可以创建此文件)，它演示了如何使用 `YieldChart` 和 `plotly.express`。
+
+**`generate_custom_charts.py` 内容如下：**
+
+```python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+import logging
+from pathlib import Path
+import plotly.express as px
+import pandas as pd
+
+# 导入 YieldChart 类 - 确保您的 PYTHONPATH 包含项目根目录
+# 或者根据您的项目结构调整导入路径
+from frontend.charts.yield_chart import YieldChart
+
+# 配置日志记录
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+def main():
+    # 1. 配置数据目录和输出目录
+    #    请确保将 "your_data_directory" 替换为您实际存放CSV文件的目录路径。
+    #    例如：data_input_dir = Path("cp_data_ansys/data/NCETSG7120BAA_FA54-5339@203")
+    #    或者在项目根目录创建 "input_data" 文件夹并放入数据文件。
+    data_input_dir = Path("input_data") # <<--- 修改这里：指向您的CSV数据文件夹
+    charts_output_dir = Path("demo_output/generated_charts") # 所有图表将保存在这里
+    charts_output_dir.mkdir(parents=True, exist_ok=True)
+
+    logger.info(f"数据输入目录: {data_input_dir.resolve()}")
+    logger.info(f"图表输出目录: {charts_output_dir.resolve()}")
+
+    # 2. 初始化 YieldChart 并加载数据
+    #    YieldChart 会自动从 data_input_dir 查找 *_yield_*.csv, *_spec_*.csv, *_cleaned_*.csv 文件
+    yield_analyzer = YieldChart(data_dir=str(data_input_dir))
+    
+    if not yield_analyzer.load_data():
+        logger.error("数据加载失败，请检查数据文件是否存在且格式正确。")
+        return
+
+    logger.info("数据加载成功。")
+
+    # 3. 生成并保存 YieldChart 内置的图表
+    logger.info("开始生成并保存 YieldChart 内置图表...")
+    saved_yield_charts = yield_analyzer.save_all_charts(output_dir=str(charts_output_dir / "yield_chart_outputs"))
+    if saved_yield_charts:
+        logger.info(f"YieldChart 内置图表已保存到: {charts_output_dir / 'yield_chart_outputs'}")
+        for chart_path in saved_yield_charts:
+            logger.info(f"  - {chart_path.name}")
+    else:
+        logger.warning("未能保存任何 YieldChart 内置图表。")
+
+    # 4. 使用 Plotly Express 生成额外的参数箱体图和散点图
+    #    我们将使用从 YieldChart 加载的 cleaned_data。
+    cleaned_df = yield_analyzer.cleaned_data
+    
+    if cleaned_df is None or cleaned_df.empty:
+        logger.warning("Cleaned data 未加载或为空，无法生成箱体图和散点图。")
+    else:
+        logger.info("开始生成自定义箱体图和散点图...")
+        custom_charts_output_dir = charts_output_dir / "custom_plotly_express_charts"
+        custom_charts_output_dir.mkdir(parents=True, exist_ok=True)
+
+        # 获取可用于绘图的参数列表 (排除非数值或标识列)
+        # YieldChart 的 get_available_parameters() 也可以获取参数列，这里我们直接从 cleaned_df 推断
+        potential_params = [
+            col for col in cleaned_df.columns 
+            if col not in ['Lot_ID', 'Wafer_ID', 'Seq', 'Bin', 'X', 'Y', 'True_Lot_ID', 'x_position', 'lot_id', 'wafer_id', 'value'] 
+            and cleaned_df[col].dtype in ['int64', 'float64']
+        ]
+        
+        # 如果 YieldChart 加载了 spec, 它有更精确的参数列表
+        params_from_yield_chart = yield_analyzer.get_available_parameters()
+        if params_from_yield_chart: # 优先使用 YieldChart 提供的参数列表
+             plot_params = [p for p in params_from_yield_chart if p in cleaned_df.columns and cleaned_df[p].dtype in ['int64', 'float64']]
+        else:
+             plot_params = potential_params
+
+        if not plot_params:
+            logger.warning("未能从 cleaned_data 中找到合适的数值参数列来生成箱体图/散点图。")
+        else:
+            logger.info(f"将为以下参数生成图表: {plot_params}")
+
+            for param in plot_params:
+                try:
+                    # a. 生成并保存箱体图 (按 Lot_ID 分组)
+                    #    提取简化的 Lot_ID 用于图例，假设 Lot_ID 格式为 PREFIX_FAXX-YYYY@ZZZ_WNN
+                    #    我们仅提取 FAXX-YYYY 部分作为分组依据
+                    if 'Lot_ID' in cleaned_df.columns:
+                        cleaned_df['Short_Lot_ID'] = cleaned_df['Lot_ID'].str.extract(r'(FA\d{2}-\d+)', expand=False).fillna('Unknown')
+                        color_group = 'Short_Lot_ID'
+                    else:
+                        color_group = None
+
+                    fig_box = px.box(
+                        cleaned_df, 
+                        y=param, 
+                        color=color_group,
+                        title=f"参数 {param} 箱体图 (按批次)",
+                        labels={param: f"{param} ({yield_analyzer.get_parameter_info(param).get('unit','')})"},
+                        points="all" #显示所有数据点
+                    )
+                    box_filename = custom_charts_output_dir / f"{param}_boxplot.html"
+                    fig_box.write_html(str(box_filename))
+                    logger.info(f"  - 已保存箱体图: {box_filename.name}")
+
+                    # b. 生成并保存散点图 (示例：对比两个参数，如果多于一个参数)
+                    #    这里仅为第一个参数和（如果存在）第二个参数生成散点图
+                    #    您可以根据需要扩展此逻辑
+                    if len(plot_params) > 1 and param == plot_params[0]:
+                        param2 = plot_params[1]
+                        fig_scatter = px.scatter(
+                            cleaned_df, 
+                            x=param, 
+                            y=param2, 
+                            color=color_group,
+                            title=f"参数 {param} vs {param2} 散点图",
+                            labels={
+                                param: f"{param} ({yield_analyzer.get_parameter_info(param).get('unit','')})",
+                                param2: f"{param2} ({yield_analyzer.get_parameter_info(param2).get('unit','')})"
+                            },
+                            hover_data=['Wafer_ID']
+                        )
+                        scatter_filename = custom_charts_output_dir / f"{param}_vs_{param2}_scatter.html"
+                        fig_scatter.write_html(str(scatter_filename))
+                        logger.info(f"  - 已保存散点图: {scatter_filename.name}")
+                
+                except Exception as e:
+                    logger.error(f"为参数 {param} 生成自定义图表时出错: {e}")
+            
+            logger.info(f"自定义箱体图/散点图已保存到: {custom_charts_output_dir}")
+
+    logger.info("图表生成流程结束。")
+
+if __name__ == "__main__":
+    main()
+```
+
+**如何运行 `generate_custom_charts.py`:**
+
+1.  **创建数据目录**：
+    在您的项目根目录下创建一个名为 `input_data` 的文件夹（或者您在脚本中指定的其他路径）。
+2.  **放入数据文件**：
+    将您的 `_yield_*.csv`, `_spec_*.csv`, 和 `_cleaned_*.csv` 文件复制到 `input_data` 文件夹中。
+    *   **重要**: 确保文件名中的批次标识部分（例如 `YOUR_BATCH_ID`）对于这三个文件是相同的，`YieldChart` 会根据这个共同的前缀来匹配文件。
+3.  **修改脚本中的 `data_input_dir`**：
+    打开 `generate_custom_charts.py` 文件，找到以下行：
+    ```python
+    data_input_dir = Path("input_data") # <<--- 修改这里：指向您的CSV数据文件夹
+    ```
+    如果您的数据文件夹不是项目根目录下的 `input_data`，请修改此路径使其指向正确的位置。
+4.  **执行脚本**：
+    打开终端或命令提示符，导航到您的项目根目录 (`cp_data_ansys`)，然后运行脚本：
+    ```bash
+    python generate_custom_charts.py
+    ```
+    或者，如果您在 IDE (如 VS Code, PyCharm) 中，可以直接运行该文件。
+
+    *注意：* 确保您的 Python 环境已安装必要的库 (`pandas`, `plotly`）。如果 `frontend.charts.yield_chart` 导入失败，请检查您的 `PYTHONPATH` 是否已将项目根目录（`cp_data_ansys`）包括在内，或者 `generate_custom_charts.py` 是否相对于 `frontend` 目录放置正确。如果 `generate_custom_charts.py` 放在项目根目录，导入路径应为 `from frontend.charts.yield_chart import YieldChart`。
+
+### 3. 查看生成的 HTML 图表
+
+脚本执行完毕后，所有生成的 HTML 图表文件将保存在您脚本中 `charts_output_dir` 指定的目录下（默认为项目根目录下的 `demo_output/generated_charts`）。
+
+*   `YieldChart` 生成的图表会位于子目录 `yield_chart_outputs` 中。
+*   使用 `plotly.express` 生成的箱体图和散点图会位于子目录 `custom_plotly_express_charts` 中。
+
+您可以直接用网页浏览器（如 Chrome, Firefox, Edge）打开这些 `.html` 文件来查看交互式图表。
+
+### 4. 图表说明
+
+*   **YieldChart 内置图表 (位于 `yield_chart_outputs`)**:
+    *   `Wafer良率趋势分析_yield_chart.html`: 显示每个批次内各个 Wafer 的良率变化趋势。
+    *   `批次良率对比分析_yield_chart.html`: 对比不同批次的平均良率（柱状图形式，可能带误差棒）。
+    *   `良率分布统计_yield_chart.html`: 显示所有 Wafer 良率的分布情况（直方图）。
+    *   `失效类型分析_yield_chart.html`: (如果提供了 Bin 数据) 显示不同失效类型的占比（饼图）。
+    *   `参数名_[单位]_@测试条件_yield_line_chart.html`: 针对 `cleaned_data` 和 `spec_data` 中定义的每个参数，生成参数值随 Wafer 变化的折线图，并标出规格上下限。
+
+*   **自定义 Plotly Express 图表 (位于 `custom_plotly_express_charts`)**:
+    *   `参数名_boxplot.html`: 为 `cleaned_data` 中的每个数值参数生成箱体图，按批次（从 `Lot_ID` 提取的简称）进行颜色区分，显示数据的分布、中位数、四分位数和异常点。
+    *   `参数1_vs_参数2_scatter.html`: (示例) 如果有两个或更多参数，会生成第一个参数与第二个参数的散点图，用于观察它们之间的相关性，按批次进行颜色区分。
+
+通过以上步骤，您可以方便地对新的 CP 测试数据进行处理、可视化分析，并获得可交互的 HTML 报告。

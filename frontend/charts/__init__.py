@@ -4,8 +4,8 @@
 """
 
 from .base_chart import BaseChart
-from .line_chart import LineChart
+# from .line_chart import LineChart  # 已被frontend/charts/yield_chart.py替代
 from .scatter_chart import ScatterChart
 # 注意：box_chart, normal_chart 尚未实现
 
-__all__ = ['BaseChart', 'LineChart', 'ScatterChart'] 
+__all__ = ['BaseChart', 'ScatterChart']  # 移除LineChart 

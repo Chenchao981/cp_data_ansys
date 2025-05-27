@@ -1,0 +1,15 @@
+Program name	ME58XX1_G00Z2AB.jtf													
+Lot number	FA54-5339-327A-250501@203													
+Wafer number	1													
+Date	5/1/2025													
+Time	0:49:13													
+														
+No.U	X	Y	Bin	CONT	IGSS0	IGSS1	IGSSR1	VTH	BVDSS1	BVDSS2	IDSS1	IDSS2	IGSS2	IGSSR2
+LimitU				0.500V	99.00uA	100.0nA	100.0nA	3.900V	140.0V	140.0V	100.0nA	200.0nA	200.0nA	200.0nA
+LimitL				0V	0A	0A	0A	2.400V	120.0V	120.0V	0A	0A	0A	0A
+Bias 1				1.00mA	1.00V	10.0V	10.0V	250uA	250uA	10.0mA	110V	120V	18.0V	18.0V
+Bias 2														
+Bias 3									400V	400V				
+Bias 4				2.50ms	10.0ms	40.0ms	40.0ms	2.00ms	20.0ms	10.0ms	20.0ms	20.0ms	40.0ms	40.0ms
+Bias 5														
+Bias 6														

@@ -78,17 +78,17 @@ def test_boxplot_functionality():
     if params:
         print(f"\n🎨 测试图表生成...")
         try:
-            fig = chart.create_boxplot_scatter_chart(params[0])
+            fig = chart.get_chart(params[0])
             if fig:
-                print(f"✅ {params[0]} 图表生成成功")
+                print(f"✅ {params[0]} 图表获取成功")
                 
                 # 检查图表属性
                 print(f"   数据轨迹数: {len(fig.data)}")
                 print(f"   图表标题: {fig.layout.title.text if fig.layout.title else 'N/A'}")
             else:
-                print(f"❌ {params[0]} 图表生成失败")
+                print(f"❌ {params[0]} 图表获取失败")
         except Exception as e:
-            print(f"❌ 图表生成失败: {e}")
+            print(f"❌ 图表获取失败: {e}")
     
     # 8. 测试保存功能
     if params:
@@ -139,14 +139,20 @@ def test_specific_parameter():
             value_range = f"{lot_data['value'].min():.2f} ~ {lot_data['value'].max():.2f}"
             print(f"     {lot_id}: {wafer_count}片晶圆, 范围 {value_range}")
         
-        # 生成并保存图表
-        fig = chart.create_boxplot_scatter_chart(param)
-        saved_path = chart.save_chart(param, output_dir="test_charts")
-        print(f"   图表已保存: {saved_path}")
-        
-        # 标题
-        title = chart.generate_chart_title(param)
-        print(f"   图表标题: {title}")
+        # 从缓存获取图表
+        fig = chart.get_chart(param)
+        if fig:
+            print(f"   成功获取参数 {param} 的图表")
+            
+            # 保存图表
+            saved_path = chart.save_chart(param, output_dir="test_charts")
+            print(f"   图表已保存: {saved_path}")
+            
+            # 标题
+            title = chart.generate_chart_title(param)
+            print(f"   图表标题: {title}")
+        else:
+            print(f"   未能获取参数 {param} 的图表")
     else:
         print("❌ 未找到 BVDSS1 参数")
 
