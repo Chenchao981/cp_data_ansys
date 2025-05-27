@@ -128,7 +128,7 @@ class DataTransformer:
             
             # 从 combined_data 中提取对应晶圆的参数值
             wafer_data = self.cp_lot.combined_data[
-                self.cp_lot.combined_data['Wafer'] == wafer.wafer_id
+                self.cp_lot.combined_data['Wafer_ID'] == wafer.wafer_id
             ]
             
             if not wafer_data.empty:
@@ -155,7 +155,7 @@ class DataTransformer:
                 # 定义计算函数
                 def calc_delta(df):
                     # 按晶圆分组计算最大值和最小值的差
-                    result = df.groupby('Wafer')[param_id].transform(
+                    result = df.groupby('Wafer_ID')[param_id].transform(
                         lambda x: x.max() - x.min()
                     )
                     return result
