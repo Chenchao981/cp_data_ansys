@@ -29,13 +29,13 @@
 pip install pandas numpy plotly matplotlib seaborn openpyxl
 
 # 2. 快速体验 - 生成交互式图表
-python demo_yield_chart.py
+python yield_chart_generator.py
 
 # 3. GUI 界面
-python cp_data_processor_gui.py
+python app/gui.py
 
 # 4. 命令行使用
-python cp_data_processor_cli.py data.txt result.xlsx --format dcp --boxplot
+python app/cli.py data.txt result.xlsx --format dcp --boxplot
 ```
 
 ### 方式二：VBA 宏版本
@@ -157,7 +157,7 @@ CP数据处理器
 
 负责从不同格式的文件中提取 CP 测试数据，采用工厂模式设计，支持：
 - **CW 格式**: 从 CSV 文件读取 CW 格式数据
-- **DCP 格式**: 从文本文件读取 DCP 格式数据 
+- **DCP 格式**: 从文本文件读取 DCP 格式数据
 - **MEX 格式**: 从 Excel 文件读取 MEX 格式数据
 
 #### 2. 数据模型模块 (data_models)
@@ -228,7 +228,7 @@ python cp_data_processor_cli.py data.csv result.xlsx --format cw --boxplot --sca
 **常用参数:**
 - `--format {dcp,cw,mex}`: 输入文件格式
 - `--boxplot`: 生成箱形图
-- `--scatter`: 生成散点图  
+- `--scatter`: 生成散点图
 - `--bin-map`: 生成晶圆图
 - `--data-map`: 生成数据颜色图
 
@@ -331,7 +331,7 @@ chart.save_all_charts(output_dir="custom_output")
    ```bash
    python clean_dcp_data.py
    ```
-   
+
 2. **清洗原始CSV数据**（如果有）
    ```bash
    python clean_csv_data.py
@@ -344,7 +344,7 @@ chart.save_all_charts(output_dir="custom_output")
 
 完成后，在`output/`目录下会生成：
 - `NCETSG7120BAA_yield_20240101.csv` - 良率数据
-- `NCETSG7120BAA_spec_20240101.csv` - 规格数据  
+- `NCETSG7120BAA_spec_20240101.csv` - 规格数据
 - `NCETSG7120BAA_cleaned_20240101.csv` - 清洗数据
 
 #### 第二步：生成交互式图表
@@ -610,7 +610,7 @@ python generate_custom_charts.py
 
 **YieldChart 内置图表:**
 - 📈 `Wafer良率趋势分析_yield_chart.html` - 良率趋势
-- 📊 `批次良率对比分析_yield_chart.html` - 批次对比  
+- 📊 `批次良率对比分析_yield_chart.html` - 批次对比
 - 🔍 `参数[单位]@测试条件_yield_line_chart.html` - 参数折线图
 - 📦 `良率分布统计_yield_chart.html` - 良率分布
 - 🥧 `失效类型分析_yield_chart.html` - 失效分析
