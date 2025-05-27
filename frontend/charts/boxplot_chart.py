@@ -64,6 +64,10 @@ class BoxplotChart:
             self.cleaned_data = pd.read_csv(cleaned_file)
             logger.info(f"加载cleaned数据: {cleaned_file.name}")
             
+            # 记录加载的cleaned_data的总行数
+            if self.cleaned_data is not None:
+                logger.info(f"[DATA_CHECK] Total rows in loaded self.cleaned_data: {len(self.cleaned_data)}")
+            
             # 查找spec文件
             spec_files = list(self.data_dir.glob("*_spec_*.csv"))
             if not spec_files:
@@ -201,11 +205,23 @@ class BoxplotChart:
         param_info = self.get_parameter_info(parameter)
         
         # 过滤有效数据（非空且为数值）
-        valid_data = self.cleaned_data.dropna(subset=[parameter])
-        valid_data = valid_data[pd.to_numeric(valid_data[parameter], errors='coerce').notna()].copy() # Use .copy() to avoid SettingWithCopyWarning
+        logger.info(f"[DATA_CHECK] Processing parameter: '{parameter}'")
+        if self.cleaned_data is None:
+            logger.error("[DATA_CHECK] self.cleaned_data is None. Cannot proceed.")
+            return pd.DataFrame(), [], param_info, {}
+
+        # 1. 初始时，该参数列有多少非NaN值
+        initial_not_null_count = self.cleaned_data[parameter].notna().sum()
+        logger.info(f"[DATA_CHECK] '{parameter}' - Initial non-NaN count in self.cleaned_data: {initial_not_null_count}")
+
+        valid_data_step1 = self.cleaned_data.dropna(subset=[parameter])
+        logger.info(f"[DATA_CHECK] '{parameter}' - Rows after self.cleaned_data.dropna(subset=['{parameter}']): {len(valid_data_step1)}")
+        
+        valid_data = valid_data_step1[pd.to_numeric(valid_data_step1[parameter], errors='coerce').notna()].copy() 
+        logger.info(f"[DATA_CHECK] '{parameter}' - Rows after pd.to_numeric filtering (final valid_data): {len(valid_data)}")
         
         if valid_data.empty:
-            logger.warning(f"参数 {parameter} 没有有效数据")
+            logger.warning(f"参数 {parameter} 没有有效数据 após filtragem completa") # Added more context to warning
             return pd.DataFrame(), [], param_info, {}
 
         # 定义提取真实Lot ID的函数
@@ -229,6 +245,35 @@ class BoxplotChart:
         
         # 按True_Lot_ID和Wafer_ID排序
         valid_data = valid_data.sort_values(['True_Lot_ID', 'Wafer_ID'])
+
+        # 针对用户查询：检查BVDSS1参数，第一个批次的第一个晶圆的数据点数量 (MOVED HERE)
+        if parameter == 'BVDSS1':
+            if not valid_data.empty and 'True_Lot_ID' in valid_data.columns and 'Wafer_ID' in valid_data.columns:
+                # unique_true_lots_for_bvdss1 已经基于排序后的 valid_data 的 True_Lot_ID 列
+                # 因此 unique_true_lots_for_bvdss1[0] 就是排序后的第一个 True_Lot_ID
+                first_lot_id_for_bvdss1 = unique_true_lots[0] # unique_true_lots is already available and correct
+                data_for_first_lot_bvdss1 = valid_data[valid_data['True_Lot_ID'] == first_lot_id_for_bvdss1]
+                
+                if not data_for_first_lot_bvdss1.empty:
+                    # Wafer_ID 已经和 True_Lot_ID 一起排序了，所以第一个 wafer 就是 data_for_first_lot_bvdss1['Wafer_ID'].unique()[0]
+                    # 不过为了保险，还是取 unique 再排序选第一个
+                    unique_wafers_in_first_lot_bvdss1 = data_for_first_lot_bvdss1['Wafer_ID'].unique()
+                    sorted_wafers = sorted(list(unique_wafers_in_first_lot_bvdss1))
+                    if len(sorted_wafers) > 0:
+                        first_wafer_id_for_bvdss1 = sorted_wafers[0]
+                        
+                        specific_wafer_data = data_for_first_lot_bvdss1[
+                            data_for_first_lot_bvdss1['Wafer_ID'] == first_wafer_id_for_bvdss1
+                        ]
+                        point_count = len(specific_wafer_data)
+                        points_values = specific_wafer_data[parameter].tolist() if parameter in specific_wafer_data else []
+                        
+                        logger.info(f"[USER_QUERY_CHECK - BVDSS1] First True_Lot ID (after sort): {first_lot_id_for_bvdss1}")
+                        logger.info(f"[USER_QUERY_CHECK - BVDSS1] First Wafer ID in this Lot (after sort): {first_wafer_id_for_bvdss1}")
+                        logger.info(f"[USER_QUERY_CHECK - BVDSS1] Number of data points for this wafer: {point_count}")
+                        logger.info(f"[USER_QUERY_CHECK - BVDSS1] Values for '{parameter}': {points_values}")
+            else:
+                logger.info(f"[USER_QUERY_CHECK - BVDSS1] Could not perform detailed check; valid_data for BVDSS1 is empty or crucial columns missing.")
         
         # 生成X轴位置和标签
         chart_data = []
@@ -267,6 +312,7 @@ class BoxplotChart:
             lot_positions[true_lot_id_val]['end'] = x_position - 1
         
         chart_df = pd.DataFrame(chart_data)
+        logger.info(f"[DATA_CHECK] '{parameter}' - Total scatter points prepared in chart_df: {len(chart_df)}")
         
         return chart_df, x_labels, param_info, lot_positions
     
@@ -297,14 +343,25 @@ class BoxplotChart:
         # 创建图表
         fig = go.Figure()
         
-        # 为每个Lot_ID添加箱体图和散点图
-        colors = px.colors.qualitative.Set3
+        # Material Design 配色方案 - 现代且专业
+        material_design_colors = [
+            '#1976D2',  # Blue 700 - 主蓝色
+            '#388E3C',  # Green 700 - 绿色
+            '#F57C00',  # Orange 700 - 橙色
+            '#7B1FA2',  # Purple 700 - 紫色
+            '#D32F2F',  # Red 700 - 红色
+            '#0097A7',  # Cyan 700 - 青色
+            '#5D4037',  # Brown 700 - 棕色
+            '#616161',  # Grey 700 - 灰色
+            '#303F9F',  # Indigo 700 - 靛蓝
+            '#E64A19'   # Deep Orange 700 - 深橙
+        ]
         
         for i, lot_id_val in enumerate(chart_data['lot_id'].unique()): # lot_id 现在是 True_Lot_ID
             lot_data = chart_data[chart_data['lot_id'] == lot_id_val]
-            color = colors[i % len(colors)]
+            color = material_design_colors[i % len(material_design_colors)]
             
-            # 添加散点图
+            # 添加散点图 - 使用更现代的样式
             fig.add_trace(go.Scatter(
                 x=lot_data['x_position'],
                 y=lot_data['value'],
@@ -314,7 +371,8 @@ class BoxplotChart:
                     size=self.chart_config['scatter_size'],
                     opacity=self.chart_config['scatter_opacity'],
                     color=color,
-                    line=dict(width=1, color='white')
+                    line=dict(width=0.5, color='white'),  # 更细的白色边框
+                    symbol='circle'  # 明确指定圆形标记
                 ),
                 hovertemplate=f'<b>{lot_id_val}</b><br>' +
                              'Wafer: %{customdata[0]}<br>' +
@@ -323,19 +381,30 @@ class BoxplotChart:
                 customdata=[[row['wafer_id']] for _, row in lot_data.iterrows()]
             ))
             
-            # 为每个wafer添加箱体图
+            # 为每个wafer添加箱体图 - 使用相同颜色但调整透明度
             for wafer_id in lot_data['wafer_id'].unique():
                 wafer_data = lot_data[lot_data['wafer_id'] == wafer_id]
                 if len(wafer_data) > 1:  # 只有多个数据点才显示箱体图
                     x_pos = wafer_data['x_position'].iloc[0]
+                    
+                    # 将十六进制颜色转换为RGB以便设置透明度
+                    hex_color = color.lstrip('#')
+                    rgb = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+                    
                     fig.add_trace(go.Box(
                         y=wafer_data['value'],
                         x=[x_pos] * len(wafer_data),
                         name=f'{lot_id_val}-W{wafer_id}', # Box name also uses True_Lot_ID
-                        marker_color=color,
+                        marker=dict(
+                            color=color,
+                            line=dict(width=1.5, color=color)  # 箱体边框使用相同颜色
+                        ),
+                        fillcolor=f'rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, 0.3)',  # 半透明填充
                         opacity=self.chart_config['box_opacity'],
                         showlegend=False,
-                        width=0.6
+                        width=0.6,
+                        boxpoints=False,  # 不显示箱体图的点，避免与散点图重复
+                        line=dict(width=1.5)  # 箱体线条宽度
                     ))
         
         # 添加上下限线
