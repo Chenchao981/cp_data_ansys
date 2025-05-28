@@ -36,13 +36,14 @@ class BoxplotChart:
             'min_chart_width': 1200, # 最小图表宽度
             'pixels_per_wafer': 40,  # 每个wafer在X轴上分配的像素
             'height': 600,
-            'scatter_size': 3,  # 点大小减少50%
+            'scatter_size': 2,  # 散点大小从3改为2
             'scatter_opacity': 0.7,
             'box_opacity': 0.7,
             'limit_line_color': '#FF0000',  # 红色虚线
             'limit_line_width': 2,
             'font_size': 12,
-            'title_font_size': 16
+            'title_font_size': 16,
+            'jitter_amount': 0.15  # 散点抖动幅度
         }
         
     def load_data(self) -> bool:
@@ -361,9 +362,16 @@ class BoxplotChart:
             lot_data = chart_data[chart_data['lot_id'] == lot_id_val]
             color = material_design_colors[i % len(material_design_colors)]
             
-            # 添加散点图 - 使用更现代的样式
+            # 为散点添加抖动效果，提高可视化效果
+            np.random.seed(42)  # 设置随机种子确保一致性
+            jitter = np.random.uniform(-self.chart_config['jitter_amount'], 
+                                     self.chart_config['jitter_amount'], 
+                                     len(lot_data))
+            jittered_x = lot_data['x_position'] + jitter
+            
+            # 添加散点图 - 使用更现代的样式和抖动效果
             fig.add_trace(go.Scatter(
-                x=lot_data['x_position'],
+                x=jittered_x,  # 使用抖动后的X坐标
                 y=lot_data['value'],
                 mode='markers',
                 name=f'{lot_id_val}', # Legend name will be True_Lot_ID
@@ -381,31 +389,103 @@ class BoxplotChart:
                 customdata=[[row['wafer_id']] for _, row in lot_data.iterrows()]
             ))
             
-            # 为每个wafer添加箱体图 - 使用相同颜色但调整透明度
+            # 为每个wafer添加箱体图 - 使用标准四分位数方法和自定义异常值检测
             for wafer_id in lot_data['wafer_id'].unique():
                 wafer_data = lot_data[lot_data['wafer_id'] == wafer_id]
-                if len(wafer_data) > 1:  # 只有多个数据点才显示箱体图
+                
+                # 修改条件：支持单个数据点显示（显示为中位线）
+                if len(wafer_data) >= 1:  # 改为>=1，支持单个数据点
                     x_pos = wafer_data['x_position'].iloc[0]
+                    values = wafer_data['value'].values
                     
-                    # 将十六进制颜色转换为RGB以便设置透明度
-                    hex_color = color.lstrip('#')
-                    rgb = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-                    
-                    fig.add_trace(go.Box(
-                        y=wafer_data['value'],
-                        x=[x_pos] * len(wafer_data),
-                        name=f'{lot_id_val}-W{wafer_id}', # Box name also uses True_Lot_ID
-                        marker=dict(
-                            color=color,
-                            line=dict(width=1.5, color=color)  # 箱体边框使用相同颜色
-                        ),
-                        fillcolor=f'rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, 0.3)',  # 半透明填充
-                        opacity=self.chart_config['box_opacity'],
-                        showlegend=False,
-                        width=0.6,
-                        boxpoints=False,  # 不显示箱体图的点，避免与散点图重复
-                        line=dict(width=1.5)  # 箱体线条宽度
-                    ))
+                    if len(values) == 1:
+                        # 单个数据点：只显示中位线
+                        single_value = values[0]
+                        fig.add_trace(go.Scatter(
+                            x=[x_pos - 0.2, x_pos + 0.2],  # 横线的起点和终点
+                            y=[single_value, single_value],  # 水平线
+                            mode='lines',
+                            line=dict(color=color, width=3),
+                            name=f'{lot_id_val}-W{wafer_id}-中位线',
+                            showlegend=False,
+                            hovertemplate=f'<b>单点中位线</b><br>' +
+                                         f'Lot: {lot_id_val}<br>' +
+                                         f'Wafer: {wafer_id}<br>' +
+                                         f'{parameter}: {single_value}<br>' +
+                                         '<extra></extra>'
+                        ))
+                    else:
+                        # 多个数据点：显示完整箱体图
+                        # 计算标准箱体图统计量
+                        Q1 = np.percentile(values, 25)  # 下四分位数 (25%分位点)
+                        Q2 = np.percentile(values, 50)  # 中位数 (50%分位点)  
+                        Q3 = np.percentile(values, 75)  # 上四分位数 (75%分位点)
+                        IQR = Q3 - Q1  # 四分位距
+                        
+                        # 计算须线边界
+                        lower_whisker = Q1 - 1.5 * IQR  # 下须
+                        upper_whisker = Q3 + 1.5 * IQR  # 上须
+                        
+                        # 分离正常值和异常值
+                        normal_mask = (values >= lower_whisker) & (values <= upper_whisker)
+                        normal_values = values[normal_mask]
+                        outlier_values = values[~normal_mask]
+                        
+                        # 须线的实际端点（数据中在须线范围内的最大/最小值）
+                        if len(normal_values) > 0:
+                            actual_lower_whisker = normal_values.min()
+                            actual_upper_whisker = normal_values.max()
+                        else:
+                            # 如果没有正常值，须线就是Q1和Q3
+                            actual_lower_whisker = Q1
+                            actual_upper_whisker = Q3
+                        
+                        # 将十六进制颜色转换为RGB以便设置透明度
+                        hex_color = color.lstrip('#')
+                        rgb = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+                        
+                        # 创建自定义箱体图 - 使用预计算的统计量
+                        fig.add_trace(go.Box(
+                            x=[x_pos],  # X位置
+                            name=f'{lot_id_val}-W{wafer_id}', # Box name also uses True_Lot_ID
+                            marker=dict(
+                                color=color,
+                                line=dict(width=1.5, color=color)  # 箱体边框使用相同颜色
+                            ),
+                            fillcolor=f'rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, 0.3)',  # 半透明填充
+                            opacity=self.chart_config['box_opacity'],
+                            showlegend=False,
+                            width=0.6,
+                            boxpoints=False,  # 不显示箱体图的点，避免与散点图重复
+                            line=dict(width=1.5),  # 箱体线条宽度
+                            # 使用预计算的统计量
+                            q1=[Q1],
+                            median=[Q2], 
+                            q3=[Q3],
+                            lowerfence=[actual_lower_whisker],
+                            upperfence=[actual_upper_whisker]
+                        ))
+                        
+                        # 单独添加异常值散点 - 大小与散点一致
+                        if len(outlier_values) > 0:
+                            fig.add_trace(go.Scatter(
+                                x=[x_pos] * len(outlier_values),
+                                y=outlier_values,
+                                mode='markers',
+                                marker=dict(
+                                    size=self.chart_config['scatter_size'],  # 与散点大小一致
+                                    color=color,
+                                    symbol='circle-open',  # 空心圆圈表示异常值
+                                    line=dict(width=1, color=color)
+                                ),
+                                name=f'异常值-{lot_id_val}-W{wafer_id}',
+                                showlegend=False,
+                                hovertemplate=f'<b>异常值</b><br>' +
+                                             f'Lot: {lot_id_val}<br>' +
+                                             f'Wafer: {wafer_id}<br>' +
+                                             f'{parameter}: %{{y}}<br>' +
+                                             '<extra></extra>'
+                            ))
         
         # 添加上下限线
         if param_info.get('limit_upper') is not None:
