@@ -126,7 +126,11 @@ def generate_custom_plotly_charts(cleaned_df, yield_analyzer, output_base_dir):
             )
 
             box_filename = custom_output_dir / f"{param}_boxplot.html"
-            fig_box.write_html(str(box_filename))
+            # 使用unpkg CDN减少文件大小（延迟最低）
+            fig_box.write_html(
+                str(box_filename),
+                include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js'
+            )
             logger.info(f"  ✅ [{i}/{len(plot_params)}] 箱体图: {box_filename.name}")
 
         except Exception as e:
@@ -169,7 +173,11 @@ def generate_custom_plotly_charts(cleaned_df, yield_analyzer, output_base_dir):
                     )
 
                     scatter_filename = custom_output_dir / f"{param1}_vs_{param2}_scatter.html"
-                    fig_scatter.write_html(str(scatter_filename))
+                    # 使用unpkg CDN减少文件大小（延迟最低）
+                    fig_scatter.write_html(
+                        str(scatter_filename),
+                        include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js'
+                    )
                     logger.info(f"  ✅ 散点图: {scatter_filename.name}")
 
         except Exception as e:

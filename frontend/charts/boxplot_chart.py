@@ -686,7 +686,11 @@ class BoxplotChart:
             filename = f"{title}.html" # 保持原文件名格式
             file_path = output_path / filename
             
-            figure_to_save.write_html(str(file_path))
+            # 使用unpkg CDN减少文件大小（延迟最低）
+            figure_to_save.write_html(
+                str(file_path),
+                include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js'
+            )
             logger.info(f"图表已保存: {file_path}")
             
             return file_path
@@ -721,7 +725,11 @@ class BoxplotChart:
                 filename = f"{title}.html"
                 file_path = output_path / filename
                 
-                figure.write_html(str(file_path))
+                # 使用unpkg CDN减少文件大小（延迟最低）
+                figure.write_html(
+                    str(file_path),
+                    include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js'
+                )
                 logger.info(f"图表 '{parameter}' 已保存: {file_path}")
                 saved_paths.append(file_path)
             except Exception as e:
