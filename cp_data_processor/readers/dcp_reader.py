@@ -47,10 +47,11 @@ class DCPReader(BaseReader):
         Returns:
             CPLot: 包含所有读取数据的 CPLot 对象
         """
-        # 从第一个文件路径提取批次ID（使用文件夹名称）
-        batch_id = self._extract_batch_id_from_folder(self.file_paths[0]) if self.file_paths else "UnknownLot"
+        # 从第一个文件的R2C2提取批次ID（使用文件内容，不是文件夹名称）
+        first_lot_id, _ = self._extract_ids_from_r2c2_r2c3(self.file_paths[0]) if self.file_paths else (None, None)
+        batch_id = first_lot_id if first_lot_id else "UnknownLot"
         
-        # 创建新的 CPLot 对象，使用文件夹名称作为批次ID
+        # 创建新的 CPLot 对象，使用文件内容的批次ID
         self.lot = CPLot(lot_id=batch_id, pass_bin=self.pass_bin) 
         
         for file_path in self.file_paths:

@@ -96,8 +96,14 @@ class YieldChart:
         if 'Yield' in self.wafer_data.columns:
             self.wafer_data['Yield_Numeric'] = self.wafer_data['Yield'].str.rstrip('%').astype(float)
         
-        # 提取批次简称（直接使用Lot_ID，因为现在Lot_ID就是文件夹名称）
+        # 提取批次简称（通用方式处理各种批次格式）
+        # 方案1：直接使用Lot_ID作为批次名称（最简单可靠）
         self.wafer_data['Lot_Short'] = self.wafer_data['Lot_ID']
+        
+        # 方案2：如果需要简化显示，可以提取批次的核心部分（去掉后缀）
+        # 例如：FA55-4307-327A-250501@203 -> FA55-4307-327A-250501
+        # 或者：C11200-325A-250502@203 -> C11200-325A-250502
+        # self.wafer_data['Lot_Short'] = self.wafer_data['Lot_ID'].str.split('@').str[0]
         
         # 计算失效总数
         failure_columns = ['Bin3', 'Bin4', 'Bin6', 'Bin7', 'Bin8', 'Bin9']
