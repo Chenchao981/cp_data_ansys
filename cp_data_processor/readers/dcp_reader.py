@@ -47,29 +47,45 @@ class DCPReader(BaseReader):
         Returns:
             CPLot: 包含所有读取数据的 CPLot 对象
         """
-        # 创建新的 CPLot 对象
-        # lot_id 的初始化将推迟到第一个文件被解析时，基于其R2C2内容
-        self.lot = CPLot(lot_id="UnknownLot_Initial", pass_bin=self.pass_bin) 
+        # 从第一个文件路径提取批次ID（使用文件夹名称）
+        batch_id = self._extract_batch_id_from_folder(self.file_paths[0]) if self.file_paths else "UnknownLot"
         
-        first_file_processed = False
+        # 创建新的 CPLot 对象，使用文件夹名称作为批次ID
+        self.lot = CPLot(lot_id=batch_id, pass_bin=self.pass_bin) 
+        
         for file_path in self.file_paths:
             lot_id_from_r2c2, wafer_id_from_r3c2 = self._extract_ids_from_r2c2_r2c3(file_path)
-            
-            if not first_file_processed and lot_id_from_r2c2:
-                # 使用第一个文件的R2C2 LotID作为整个批次的ID
-                self.lot.lot_id = lot_id_from_r2c2
-                first_file_processed = True
-
             self._extract_from_file(file_path, self.lot, lot_id_from_r2c2, wafer_id_from_r3c2)
-        
-        if not first_file_processed: # 如果没有成功处理任何文件以设置lot_id
-             self.lot.lot_id = self.extract_lot_id(self.file_paths[0]) if self.file_paths else "UnknownLot_Fallback"
 
         # 更新计数并合并数据
         self.lot.update_counts()
         self.lot.combine_data_from_wafers()
         
         return self.lot
+    
+    def _extract_batch_id_from_folder(self, file_path: str) -> str:
+        """
+        从文件路径中提取批次ID（文件夹名称）
+        
+        Args:
+            file_path: 文件路径
+            
+        Returns:
+            str: 批次ID（文件夹名称）
+        """
+        try:
+            # 获取文件的父目录名称作为批次ID
+            folder_name = os.path.basename(os.path.dirname(file_path))
+            if folder_name and folder_name != '.' and folder_name != '':
+                logger.info(f"从文件夹名称提取批次ID: {folder_name}")
+                return folder_name
+            else:
+                # 如果无法获取文件夹名称，使用默认方式
+                logger.warning(f"无法从文件路径获取文件夹名称，使用默认提取方式")
+                return self.extract_lot_id(file_path)
+        except Exception as e:
+            logger.error(f"从文件夹提取批次ID时出错: {e}")
+            return "UnknownLot_Fallback"
     
     def _extract_ids_from_r2c2_r2c3(self, file_path: str) -> Tuple[Optional[str], Optional[str]]:
         """

@@ -1,0 +1,16 @@
+# CP数据分析工具GUI版本依赖包
+# GUI框架
+PyQt5>=5.15.0
+
+# 数据处理
+pandas>=1.3.0
+numpy>=1.21.0
+
+# 图表生成
+plotly>=5.0.0
+
+# Excel文件支持
+openpyxl>=3.0.0
+
+# 日志和路径处理
+pathlib2>=2.3.0  # Python 3.4+兼容性 

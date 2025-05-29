@@ -1,5 +1,0 @@
-Parameter,TEST_PARAM
-Unit,V
-LimitU,120
-LimitL,80
-TestCond:,@100V

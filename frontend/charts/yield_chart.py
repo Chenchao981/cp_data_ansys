@@ -30,8 +30,7 @@ class YieldChart:
         """
         self.data_dir = Path(data_dir)
         self.yield_data = None
-        self.spec_data = None  # 新增spec数据支持
-        self.cleaned_data = None  # 新增cleaned数据支持
+        # 移除spec_data和cleaned_data，不再需要
         self.all_charts_cache: Dict[str, go.Figure] = {}  # 图表缓存
         
         # 图表样式配置
@@ -43,20 +42,14 @@ class YieldChart:
             'trend_line_color': '#FF0000',
             'mean_line_color': '#FF6347',
             'std_line_color': '#FFA500',
-            'min_chart_width': 1200,  # 最小图表宽度
-            'pixels_per_wafer': 40,   # 每个wafer在X轴上分配的像素
         }
         
-        # 支持的图表类型
+        # 支持的图表类型 - 只保留3个核心图表
         self.chart_types = [
             'wafer_trend',      # Wafer良率趋势图
             'lot_comparison',   # 批次对比图  
-            'yield_distribution', # 良率分布直方图
             'failure_analysis'  # 失效类型分析饼图
         ]
-        
-        # 新增：参数折线图类型（动态生成）
-        self.parameter_chart_types = []
         
     def load_data(self) -> bool:
         """
@@ -76,29 +69,8 @@ class YieldChart:
             self.yield_data = pd.read_csv(yield_file)
             logger.info(f"加载yield数据: {yield_file.name}")
             
-            # 2. 加载spec数据
-            spec_files = list(self.data_dir.glob("*_spec_*.csv"))
-            if spec_files:
-                spec_file = spec_files[0]
-                self.spec_data = pd.read_csv(spec_file)
-                logger.info(f"加载spec数据: {spec_file.name}")
-            else:
-                logger.warning("未找到spec数据文件，参数折线图功能将受限")
-            
-            # 3. 加载cleaned数据
-            cleaned_files = list(self.data_dir.glob("*_cleaned_*.csv"))
-            if cleaned_files:
-                cleaned_file = cleaned_files[0]
-                self.cleaned_data = pd.read_csv(cleaned_file)
-                logger.info(f"加载cleaned数据: {cleaned_file.name}")
-            else:
-                logger.warning("未找到cleaned数据文件，参数折线图功能将受限")
-            
             # 数据预处理
             self._preprocess_data()
-            
-            # 获取可用参数并生成参数图表类型
-            self._setup_parameter_charts()
             
             # 数据加载成功后，预生成并缓存所有图表
             self._populate_charts_cache()
@@ -108,8 +80,6 @@ class YieldChart:
         except Exception as e:
             logger.error(f"数据加载或图表预生成失败: {e}")
             self.yield_data = None
-            self.spec_data = None
-            self.cleaned_data = None
             self.all_charts_cache = {}
             return False
     
@@ -126,32 +96,14 @@ class YieldChart:
         if 'Yield' in self.wafer_data.columns:
             self.wafer_data['Yield_Numeric'] = self.wafer_data['Yield'].str.rstrip('%').astype(float)
         
-        # 提取批次简称
-        self.wafer_data['Lot_Short'] = self.wafer_data['Lot_ID'].str.extract(r'(FA54-\d+)')
+        # 提取批次简称（直接使用Lot_ID，因为现在Lot_ID就是文件夹名称）
+        self.wafer_data['Lot_Short'] = self.wafer_data['Lot_ID']
         
         # 计算失效总数
         failure_columns = ['Bin3', 'Bin4', 'Bin6', 'Bin7', 'Bin8', 'Bin9']
         self.wafer_data['Total_Failures'] = self.wafer_data[failure_columns].sum(axis=1)
         
         logger.info(f"预处理完成: {len(self.wafer_data)} 个wafer, {self.wafer_data['Lot_Short'].nunique()} 个批次")
-    
-    def _setup_parameter_charts(self):
-        """设置参数图表类型"""
-        if self.spec_data is None or self.cleaned_data is None:
-            logger.warning("缺少spec或cleaned数据，无法生成参数折线图")
-            return
-        
-        # 获取可用参数
-        exclude_cols = ['Lot_ID', 'Wafer_ID', 'Seq', 'Bin', 'X', 'Y']
-        available_params = [col for col in self.cleaned_data.columns if col not in exclude_cols]
-        
-        # 过滤在spec中存在的参数
-        if 'Parameter' in self.spec_data.columns:
-            spec_params = self.spec_data.columns[1:].tolist()  # 排除第一列'Parameter'
-            available_params = [param for param in available_params if param in spec_params]
-        
-        self.parameter_chart_types = [f"param_{param}" for param in available_params]
-        logger.info(f"设置参数图表类型: {len(self.parameter_chart_types)} 个参数")
     
     def get_available_chart_types(self) -> List[str]:
         """
@@ -160,7 +112,7 @@ class YieldChart:
         Returns:
             List[str]: 图表类型列表
         """
-        return self.chart_types.copy() + self.parameter_chart_types.copy()
+        return self.chart_types.copy()
     
     def get_available_parameters(self) -> List[str]:
         """
@@ -169,16 +121,11 @@ class YieldChart:
         Returns:
             List[str]: 参数列表
         """
-        if self.cleaned_data is None:
+        if self.yield_data is None:
             return []
         
         exclude_cols = ['Lot_ID', 'Wafer_ID', 'Seq', 'Bin', 'X', 'Y']
-        params = [col for col in self.cleaned_data.columns if col not in exclude_cols]
-        
-        # 过滤在spec中存在的参数
-        if self.spec_data is not None and 'Parameter' in self.spec_data.columns:
-            spec_params = self.spec_data.columns[1:].tolist()
-            params = [param for param in params if param in spec_params]
+        params = [col for col in self.yield_data.columns if col not in exclude_cols]
         
         return params
     
@@ -192,19 +139,19 @@ class YieldChart:
         Returns:
             Dict: 参数信息字典
         """
-        if self.spec_data is None:
+        if self.yield_data is None:
             return {}
         
         try:
-            if parameter not in self.spec_data.columns:
-                logger.warning(f"参数 {parameter} 不在spec数据中")
+            if parameter not in self.yield_data.columns:
+                logger.warning(f"参数 {parameter} 不在yield数据中")
                 return {}
             
             # 提取信息 - 根据行名称查找
-            unit_row = self.spec_data[self.spec_data.iloc[:, 0] == 'Unit']
-            limitu_row = self.spec_data[self.spec_data.iloc[:, 0] == 'LimitU']
-            limitl_row = self.spec_data[self.spec_data.iloc[:, 0] == 'LimitL']
-            testcond_row = self.spec_data[self.spec_data.iloc[:, 0] == 'TestCond:']
+            unit_row = self.yield_data[self.yield_data.iloc[:, 0] == 'Unit']
+            limitu_row = self.yield_data[self.yield_data.iloc[:, 0] == 'LimitU']
+            limitl_row = self.yield_data[self.yield_data.iloc[:, 0] == 'LimitL']
+            testcond_row = self.yield_data[self.yield_data.iloc[:, 0] == 'TestCond:']
             
             info = {
                 'parameter': parameter,
@@ -246,207 +193,15 @@ class YieldChart:
         Returns:
             str: 图表标题
         """
-        # 处理参数图表
-        if chart_type.startswith('param_'):
-            parameter = chart_type[6:]  # 移除'param_'前缀
-            param_info = self.get_parameter_info(parameter)
-            
-            # 构建标题：参数+[单位]+@测试条件+_yield_line_chart
-            title_parts = [parameter]
-            
-            if param_info.get('unit'):
-                title_parts.append(f"[{param_info['unit']}]")
-            
-            if param_info.get('test_condition'):
-                title_parts.append(f"@{param_info['test_condition']}")
-                
-            title_parts.append("_yield_line_chart")
-            
-            return "".join(title_parts)
-        
         # 处理基础图表类型
         title_map = {
             'wafer_trend': 'Wafer良率趋势分析_yield_chart',
             'lot_comparison': '批次良率对比分析_yield_chart',
-            'yield_distribution': '良率分布统计_yield_chart',
             'failure_analysis': '失效类型分析_yield_chart'
         }
         
         return title_map.get(chart_type, f'{chart_type}_yield_chart')
     
-    def prepare_parameter_chart_data(self, parameter: str) -> Tuple[pd.DataFrame, List[str], Dict, Dict]:
-        """
-        准备参数图表数据，按Lot_ID分组并生成X轴标签
-        
-        Args:
-            parameter: 参数名
-            
-        Returns:
-            Tuple[DataFrame, List[str], Dict, Dict]: (图表数据, X轴标签, 参数信息, 批次位置信息)
-        """
-        if self.cleaned_data is None:
-            return pd.DataFrame(), [], {}, {}
-        
-        # 获取参数信息
-        param_info = self.get_parameter_info(parameter)
-        
-        # 过滤包含该参数的数据
-        param_data = self.cleaned_data[['Lot_ID', 'Wafer_ID', parameter]].copy()
-        param_data = param_data.dropna(subset=[parameter])
-        
-        if param_data.empty:
-            return pd.DataFrame(), [], param_info, {}
-        
-        # 提取批次简称
-        def get_true_lot_id(raw_lot_id):
-            """提取真实的批次ID"""
-            if pd.isna(raw_lot_id):
-                return "Unknown"
-            lot_str = str(raw_lot_id)
-            if "FA54-" in lot_str:
-                parts = lot_str.split("FA54-")
-                if len(parts) > 1:
-                    fa_part = parts[1]
-                    if "-" in fa_part:
-                        return f"FA54-{fa_part.split('-')[0]}"
-            return lot_str
-        
-        param_data['True_Lot_ID'] = param_data['Lot_ID'].apply(get_true_lot_id)
-        
-        # 按批次分组并计算位置
-        lot_positions = {}
-        x_labels = []
-        current_pos = 0
-        
-        for lot_id in param_data['True_Lot_ID'].unique():
-            lot_data = param_data[param_data['True_Lot_ID'] == lot_id]
-            wafer_count = len(lot_data)
-            
-            lot_positions[lot_id] = {
-                'start': current_pos,
-                'end': current_pos + wafer_count - 1,
-                'center': current_pos + wafer_count / 2 - 0.5
-            }
-            
-            # 添加wafer标签
-            for _, row in lot_data.iterrows():
-                x_labels.append(f"W{row['Wafer_ID']}")
-            
-            current_pos += wafer_count
-        
-        # 准备图表数据
-        chart_data = param_data.copy()
-        chart_data['x_position'] = range(len(chart_data))
-        chart_data['lot_id'] = chart_data['True_Lot_ID']
-        chart_data['wafer_id'] = chart_data['Wafer_ID']
-        chart_data['value'] = chart_data[parameter]
-        
-        return chart_data, x_labels, param_info, lot_positions
-    
-    def _create_parameter_line_chart(self, parameter: str) -> go.Figure:
-        """创建参数折线图，参考箱体图布局"""
-        fig = go.Figure()
-        
-        if self.cleaned_data is None:
-            return fig
-        
-        # 准备数据
-        chart_data, x_labels, param_info, lot_positions = self.prepare_parameter_chart_data(parameter)
-        
-        if chart_data.empty:
-            return fig
-        
-        # 计算图表宽度
-        total_wafers = len(chart_data)
-        chart_width = max(self.chart_config['min_chart_width'], 
-                         total_wafers * self.chart_config['pixels_per_wafer'])
-        
-        # 按批次绘制折线
-        colors = self.chart_config['colors']
-        for i, (lot_id, pos_info) in enumerate(lot_positions.items()):
-            lot_data = chart_data[chart_data['lot_id'] == lot_id]
-            
-            fig.add_trace(go.Scatter(
-                x=lot_data['x_position'],
-                y=lot_data['value'],
-                mode='lines+markers',
-                name=lot_id,
-                line=dict(color=colors[i % len(colors)], width=2),
-                marker=dict(size=4, symbol='circle'),
-                hovertemplate=f'<b>{lot_id}</b><br>Wafer: W%{{customdata}}<br>{parameter}: %{{y}}<extra></extra>',
-                customdata=lot_data['wafer_id']
-            ))
-        
-        # 添加规格限制线
-        if param_info.get('limit_upper') is not None:
-            fig.add_hline(
-                y=param_info['limit_upper'],
-                line_dash="dash",
-                line_color=self.chart_config['trend_line_color'],
-                line_width=self.chart_config.get('limit_line_width', 2),
-                annotation_text=f"上限: {param_info['limit_upper']}"
-            )
-        
-        if param_info.get('limit_lower') is not None:
-            fig.add_hline(
-                y=param_info['limit_lower'],
-                line_dash="dash",
-                line_color=self.chart_config['trend_line_color'],
-                line_width=self.chart_config.get('limit_line_width', 2),
-                annotation_text=f"下限: {param_info['limit_lower']}"
-            )
-        
-        # 设置Y轴范围
-        y_min = chart_data['value'].min()
-        y_max = chart_data['value'].max()
-        y_range = y_max - y_min
-        
-        if param_info.get('limit_lower') is not None:
-            y_min = min(y_min, param_info['limit_lower'])
-        if param_info.get('limit_upper') is not None:
-            y_max = max(y_max, param_info['limit_upper'])
-        
-        # 添加一些边距
-        margin = y_range * 0.1 if y_range > 0 else 1
-        y_min -= margin
-        y_max += margin
-        
-        # 更新布局 - 双层X轴
-        fig.update_layout(
-            title=f"📈 {parameter} 良率折线图",
-            xaxis=dict(
-                title="Wafer编号",
-                tickmode='array',
-                tickvals=list(range(len(x_labels))),
-                ticktext=x_labels,
-                tickangle=45,
-                range=[-0.5, len(x_labels) - 0.5]
-            ),
-            yaxis=dict(
-                title=f"{parameter} [{param_info.get('unit', '')}]",
-                range=[y_min, y_max]
-            ),
-            width=chart_width,
-            height=self.chart_config['height'],
-            font=dict(size=self.chart_config['font_size']),
-            title_font_size=self.chart_config['title_font_size'],
-            hovermode='x unified'
-        )
-        
-        # 添加批次标注（下层X轴）
-        for lot_id, pos_info in lot_positions.items():
-            fig.add_annotation(
-                x=pos_info['center'],
-                y=-0.15,
-                text=str(lot_id),
-                showarrow=False,
-                xref="x",
-                yref="paper",
-                font=dict(size=10, color="blue")
-            )
-        
-        return fig
-
     def _create_wafer_trend_chart(self) -> go.Figure:
         """创建Wafer良率趋势图"""
         fig = go.Figure()
@@ -537,56 +292,6 @@ class YieldChart:
         
         return fig
     
-    def _create_yield_distribution_chart(self) -> go.Figure:
-        """创建良率分布图"""
-        fig = go.Figure()
-        
-        if self.wafer_data is None or self.wafer_data.empty:
-            return fig
-        
-        # 直方图
-        fig.add_trace(go.Histogram(
-            x=self.wafer_data['Yield_Numeric'],
-            nbinsx=20,
-            name='良率分布',
-            marker_color='skyblue',
-            opacity=0.7
-        ))
-        
-        # 添加统计线
-        mean_yield = self.wafer_data['Yield_Numeric'].mean()
-        std_yield = self.wafer_data['Yield_Numeric'].std()
-        
-        fig.add_vline(
-            x=mean_yield, 
-            line_dash="dash", 
-            line_color=self.chart_config['mean_line_color'],
-            annotation_text=f"平均: {mean_yield:.2f}%"
-        )
-        fig.add_vline(
-            x=mean_yield + std_yield, 
-            line_dash="dot", 
-            line_color=self.chart_config['std_line_color'],
-            annotation_text=f"+1σ: {mean_yield + std_yield:.2f}%"
-        )
-        fig.add_vline(
-            x=mean_yield - std_yield, 
-            line_dash="dot", 
-            line_color=self.chart_config['std_line_color'],
-            annotation_text=f"-1σ: {mean_yield - std_yield:.2f}%"
-        )
-        
-        fig.update_layout(
-            title="📊 良率分布直方图",
-            xaxis_title="良率 (%)",
-            yaxis_title="Wafer数量",
-            height=self.chart_config['height'],
-            font=dict(size=self.chart_config['font_size']),
-            title_font_size=self.chart_config['title_font_size']
-        )
-        
-        return fig
-    
     def _create_failure_analysis_chart(self) -> go.Figure:
         """创建失效类型分析图"""
         fig = go.Figure()
@@ -645,11 +350,10 @@ class YieldChart:
 
         self.all_charts_cache = {}  # 清空旧缓存
         
-        # 基础图表生成器
+        # 基础图表生成器 - 只保留3个核心图表
         chart_generators = {
             'wafer_trend': self._create_wafer_trend_chart,
             'lot_comparison': self._create_lot_comparison_chart,
-            'yield_distribution': self._create_yield_distribution_chart,
             'failure_analysis': self._create_failure_analysis_chart
         }
         
@@ -661,17 +365,6 @@ class YieldChart:
                 logger.info(f"已生成并缓存 {chart_type} 图表")
             except Exception as e:
                 logger.error(f"生成 {chart_type} 图表并缓存失败: {e}")
-        
-        # 生成参数图表
-        available_params = self.get_available_parameters()
-        for param in available_params:
-            chart_type = f"param_{param}"
-            try:
-                chart_fig = self._create_parameter_line_chart(param)
-                self.all_charts_cache[chart_type] = chart_fig
-                logger.info(f"已生成并缓存参数 {param} 的折线图")
-            except Exception as e:
-                logger.error(f"生成参数 {param} 的折线图并缓存失败: {e}")
         
         logger.info(f"已成功缓存 {len(self.all_charts_cache)} 个图表。")
 
