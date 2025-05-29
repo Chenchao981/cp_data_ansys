@@ -372,32 +372,30 @@ class YieldChart:
         return fig
     
     def _populate_charts_cache(self):
-        """
-        生成所有图表并存入缓存。
-        """
+        """填充图表缓存"""
         if self.yield_data is None:
-            logger.warning("数据未加载，无法生成图表缓存。")
+            logger.error("数据未加载，无法生成图表。")
             return
-
-        self.all_charts_cache = {}  # 清空旧缓存
         
-        # 基础图表生成器 - 只保留3个核心图表
-        chart_generators = {
-            'wafer_trend': self._create_wafer_trend_chart,
-            'lot_comparison': self._create_lot_comparison_chart,
-            'failure_analysis': self._create_failure_analysis_chart
-        }
+        # 性能优化：减少详细日志，只显示开始信息
+        chart_types = ['wafer_trend', 'lot_comparison', 'failure_analysis']
+        logger.info(f"开始生成 {len(chart_types)} 个良率图表...")
         
-        # 生成基础图表
-        for chart_type, generator in chart_generators.items():
+        success_count = 0
+        for chart_type in chart_types:
             try:
-                chart_fig = generator()
-                self.all_charts_cache[chart_type] = chart_fig
-                logger.info(f"已生成并缓存 {chart_type} 图表")
+                if chart_type == 'wafer_trend':
+                    self.all_charts_cache[chart_type] = self._create_wafer_trend_chart()
+                elif chart_type == 'lot_comparison':
+                    self.all_charts_cache[chart_type] = self._create_lot_comparison_chart()
+                elif chart_type == 'failure_analysis':
+                    self.all_charts_cache[chart_type] = self._create_failure_analysis_chart()
+                success_count += 1
             except Exception as e:
-                logger.error(f"生成 {chart_type} 图表并缓存失败: {e}")
+                logger.error(f"生成 {chart_type} 图表失败: {e}")
         
-        logger.info(f"已成功缓存 {len(self.all_charts_cache)} 个图表。")
+        # 性能优化：只输出摘要信息
+        logger.info(f"良率图表生成完成: {success_count}/{len(chart_types)} 个成功")
 
     def get_chart(self, chart_type: str) -> Optional[go.Figure]:
         """
@@ -464,10 +462,11 @@ class YieldChart:
             filename = f"{title}.html"
             file_path = output_path / filename
             
-            # 使用unpkg CDN减少文件大小（延迟最低）
+            # 使用unpkg CDN减小文件大小，保留完整工具栏功能
             figure_to_save.write_html(
                 str(file_path),
-                include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js'
+                include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js',
+                validate=False  # 跳过验证，提升速度
             )
             logger.info(f"图表已保存: {file_path}")
             
@@ -495,23 +494,27 @@ class YieldChart:
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"开始批量保存 {len(self.all_charts_cache)} 个图表到目录: {output_dir}")
+        # 性能优化：减少详细日志，只显示开始和结束
+        logger.info(f"开始批量保存 {len(self.all_charts_cache)} 个良率图表...")
 
+        success_count = 0
         for chart_type, figure in self.all_charts_cache.items():
             try:
                 title = self.generate_chart_title(chart_type)
                 filename = f"{title}.html"
                 file_path = output_path / filename
                 
-                # 使用unpkg CDN减少文件大小（延迟最低）
+                # 使用unpkg CDN减小文件大小，保留完整工具栏功能
                 figure.write_html(
                     str(file_path),
-                    include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js'
+                    include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js',
+                    validate=False  # 跳过验证，提升速度
                 )
-                logger.info(f"图表 '{chart_type}' 已保存: {file_path}")
                 saved_paths.append(file_path)
+                success_count += 1
             except Exception as e:
                 logger.error(f"保存 {chart_type} 图表失败: {e}")
         
-        logger.info(f"批量保存完成，共成功保存 {len(saved_paths)} 个图表。")
+        # 性能优化：只输出摘要信息
+        logger.info(f"良率图表保存完成: {success_count}/{len(self.all_charts_cache)} 个成功")
         return saved_paths 

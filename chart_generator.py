@@ -126,10 +126,11 @@ def generate_custom_plotly_charts(cleaned_df, yield_analyzer, output_base_dir):
             )
 
             box_filename = custom_output_dir / f"{param}_boxplot.html"
-            # 使用unpkg CDN减少文件大小（延迟最低）
+            # 使用unpkg CDN减小文件大小，保留完整工具栏功能
             fig_box.write_html(
                 str(box_filename),
-                include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js'
+                include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js',
+                validate=False  # 跳过验证，提升速度
             )
             logger.info(f"  ✅ [{i}/{len(plot_params)}] 箱体图: {box_filename.name}")
 
@@ -173,10 +174,11 @@ def generate_custom_plotly_charts(cleaned_df, yield_analyzer, output_base_dir):
                     )
 
                     scatter_filename = custom_output_dir / f"{param1}_vs_{param2}_scatter.html"
-                    # 使用unpkg CDN减少文件大小（延迟最低）
+                    # 使用unpkg CDN减小文件大小，保留完整工具栏功能
                     fig_scatter.write_html(
                         str(scatter_filename),
-                        include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js'
+                        include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js',
+                        validate=False  # 跳过验证，提升速度
                     )
                     logger.info(f"  ✅ 散点图: {scatter_filename.name}")
 

@@ -592,34 +592,303 @@ class BoxplotChart:
         
         return fig
     
+    def _create_boxplot_chart(self, parameter: str) -> go.Figure:
+        """
+        创建箱体图+散点图组合图表
+        
+        Args:
+            parameter: 参数名
+            
+        Returns:
+            go.Figure: Plotly图表对象
+        """
+        # 准备数据
+        chart_data, x_labels, param_info, lot_positions = self.prepare_chart_data(parameter)
+        
+        if chart_data.empty:
+            # 创建空图表
+            fig = go.Figure()
+            fig.add_annotation(
+                text=f"参数 {parameter} 没有有效数据",
+                xref="paper", yref="paper",
+                x=0.5, y=0.5, showarrow=False,
+                font=dict(size=16)
+            )
+            return fig
+        
+        # 创建图表
+        fig = go.Figure()
+        
+        # Material Design 配色方案 - 现代且专业
+        material_design_colors = [
+            '#1976D2',  # Blue 700 - 主蓝色
+            '#388E3C',  # Green 700 - 绿色
+            '#F57C00',  # Orange 700 - 橙色
+            '#7B1FA2',  # Purple 700 - 紫色
+            '#D32F2F',  # Red 700 - 红色
+            '#0097A7',  # Cyan 700 - 青色
+            '#5D4037',  # Brown 700 - 棕色
+            '#616161',  # Grey 700 - 灰色
+            '#303F9F',  # Indigo 700 - 靛蓝
+            '#E64A19'   # Deep Orange 700 - 深橙
+        ]
+        
+        for i, lot_id_val in enumerate(chart_data['lot_id'].unique()): # lot_id 现在是 True_Lot_ID
+            lot_data = chart_data[chart_data['lot_id'] == lot_id_val]
+            color = material_design_colors[i % len(material_design_colors)]
+            
+            # 为散点添加抖动效果，提高可视化效果
+            np.random.seed(42)  # 设置随机种子确保一致性
+            jitter = np.random.uniform(-self.chart_config['jitter_amount'], 
+                                     self.chart_config['jitter_amount'], 
+                                     len(lot_data))
+            jittered_x = lot_data['x_position'] + jitter
+            
+            # 添加散点图 - 使用更现代的样式和抖动效果
+            fig.add_trace(go.Scatter(
+                x=jittered_x,  # 使用抖动后的X坐标
+                y=lot_data['value'],
+                mode='markers',
+                name=f'{lot_id_val}', # Legend name will be True_Lot_ID
+                marker=dict(
+                    size=self.chart_config['scatter_size'],
+                    opacity=self.chart_config['scatter_opacity'],
+                    color=color,
+                    line=dict(width=0.5, color='white'),  # 更细的白色边框
+                    symbol='circle'  # 明确指定圆形标记
+                ),
+                hovertemplate=f'<b>{lot_id_val}</b><br>' +
+                             'Wafer: %{customdata[0]}<br>' +
+                             f'{parameter}: %{{y}}<br>' +
+                             '<extra></extra>',
+                customdata=[[row['wafer_id']] for _, row in lot_data.iterrows()]
+            ))
+            
+            # 为每个wafer添加箱体图 - 使用标准四分位数方法和自定义异常值检测
+            for wafer_id in lot_data['wafer_id'].unique():
+                wafer_data = lot_data[lot_data['wafer_id'] == wafer_id]
+                
+                # 修改条件：支持单个数据点显示（显示为中位线）
+                if len(wafer_data) >= 1:  # 改为>=1，支持单个数据点
+                    x_pos = wafer_data['x_position'].iloc[0]
+                    values = wafer_data['value'].values
+                    
+                    if len(values) == 1:
+                        # 单个数据点：只显示中位线
+                        single_value = values[0]
+                        fig.add_trace(go.Scatter(
+                            x=[x_pos - 0.2, x_pos + 0.2],  # 横线的起点和终点
+                            y=[single_value, single_value],  # 水平线
+                            mode='lines',
+                            line=dict(color=color, width=3),
+                            name=f'{lot_id_val}-W{wafer_id}-中位线',
+                            showlegend=False,
+                            hovertemplate=f'<b>单点中位线</b><br>' +
+                                         f'Lot: {lot_id_val}<br>' +
+                                         f'Wafer: {wafer_id}<br>' +
+                                         f'{parameter}: {single_value}<br>' +
+                                         '<extra></extra>'
+                        ))
+                    else:
+                        # 多个数据点：显示完整箱体图
+                        # 计算标准箱体图统计量
+                        Q1 = np.percentile(values, 25)  # 下四分位数 (25%分位点)
+                        Q2 = np.percentile(values, 50)  # 中位数 (50%分位点)  
+                        Q3 = np.percentile(values, 75)  # 上四分位数 (75%分位点)
+                        IQR = Q3 - Q1  # 四分位距
+                        
+                        # 计算须线边界
+                        lower_whisker = Q1 - 1.5 * IQR  # 下须
+                        upper_whisker = Q3 + 1.5 * IQR  # 上须
+                        
+                        # 分离正常值和异常值
+                        normal_mask = (values >= lower_whisker) & (values <= upper_whisker)
+                        normal_values = values[normal_mask]
+                        outlier_values = values[~normal_mask]
+                        
+                        # 须线的实际端点（数据中在须线范围内的最大/最小值）
+                        if len(normal_values) > 0:
+                            actual_lower_whisker = normal_values.min()
+                            actual_upper_whisker = normal_values.max()
+                        else:
+                            # 如果没有正常值，须线就是Q1和Q3
+                            actual_lower_whisker = Q1
+                            actual_upper_whisker = Q3
+                        
+                        # 将十六进制颜色转换为RGB以便设置透明度
+                        hex_color = color.lstrip('#')
+                        rgb = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+                        
+                        # 创建自定义箱体图 - 使用预计算的统计量
+                        fig.add_trace(go.Box(
+                            x=[x_pos],  # X位置
+                            name=f'{lot_id_val}-W{wafer_id}', # Box name also uses True_Lot_ID
+                            marker=dict(
+                                color=color,
+                                line=dict(width=1.5, color=color)  # 箱体边框使用相同颜色
+                            ),
+                            fillcolor=f'rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, 0.3)',  # 半透明填充
+                            opacity=self.chart_config['box_opacity'],
+                            showlegend=False,
+                            width=0.6,
+                            boxpoints=False,  # 不显示箱体图的点，避免与散点图重复
+                            line=dict(width=1.5),  # 箱体线条宽度
+                            # 使用预计算的统计量
+                            q1=[Q1],
+                            median=[Q2], 
+                            q3=[Q3],
+                            lowerfence=[actual_lower_whisker],
+                            upperfence=[actual_upper_whisker]
+                        ))
+                        
+                        # 单独添加异常值散点 - 大小与散点一致
+                        if len(outlier_values) > 0:
+                            fig.add_trace(go.Scatter(
+                                x=[x_pos] * len(outlier_values),
+                                y=outlier_values,
+                                mode='markers',
+                                marker=dict(
+                                    size=self.chart_config['scatter_size'],  # 与散点大小一致
+                                    color=color,
+                                    symbol='circle-open',  # 空心圆圈表示异常值
+                                    line=dict(width=1, color=color)
+                                ),
+                                name=f'异常值-{lot_id_val}-W{wafer_id}',
+                                showlegend=False,
+                                hovertemplate=f'<b>异常值</b><br>' +
+                                             f'Lot: {lot_id_val}<br>' +
+                                             f'Wafer: {wafer_id}<br>' +
+                                             f'{parameter}: %{{y}}<br>' +
+                                             '<extra></extra>'
+                            ))
+        
+        # 添加上下限线
+        if param_info.get('limit_upper') is not None:
+            fig.add_hline(
+                y=param_info['limit_upper'],
+                line_dash="dash",
+                line_color=self.chart_config['limit_line_color'],
+                line_width=self.chart_config['limit_line_width'],
+                annotation_text=f"USL: {param_info['limit_upper']}"
+            )
+        
+        if param_info.get('limit_lower') is not None:
+            fig.add_hline(
+                y=param_info['limit_lower'],
+                line_dash="dash", 
+                line_color=self.chart_config['limit_line_color'],
+                line_width=self.chart_config['limit_line_width'],
+                annotation_text=f"LSL: {param_info['limit_lower']}"
+            )
+        
+        # 设置布局
+        title = self.generate_chart_title(parameter)
+        
+        # 动态计算图表宽度
+        num_total_wafers = len(x_labels)
+        calculated_width = num_total_wafers * self.chart_config['pixels_per_wafer']
+        final_chart_width = max(self.chart_config['min_chart_width'], calculated_width)
+        
+        fig.update_layout(
+            title=dict(
+                text=title,
+                font_size=self.chart_config['title_font_size'],
+                x=0.5
+            ),
+            xaxis_title="Wafer_ID",
+            yaxis_title=f"{parameter} [{param_info.get('unit', '')}]",
+            width=final_chart_width, # 使用动态计算的宽度
+            height=self.chart_config['height'],
+            font_size=self.chart_config['font_size'],
+            hovermode='closest',
+            showlegend=False,
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=1.02,
+                xanchor="right",
+                x=1
+            )
+        )
+        
+        # 设置X轴刻度和标签，并添加网格线
+        fig.update_xaxes(
+            tickmode='array',
+            tickvals=list(range(len(x_labels))),
+            ticktext=x_labels,
+            tickangle=0,
+            showgrid=True,        # 显示X轴垂直网格线
+            gridwidth=1,          # 网格线宽度
+            gridcolor='rgba(211, 211, 211, 0.5)', # 网格线颜色 - 浅灰带50%透明度
+            griddash='dash'       # X轴网格线也使用虚线
+        )
+
+        # 设置Y轴，并添加虚线网格线，并根据上下限调整显示范围
+        y_axis_updates = {
+            'showgrid': True,
+            'gridwidth': 1,
+            'gridcolor': 'rgba(211, 211, 211, 0.5)',  # 网格线颜色 - 浅灰带50%透明度
+            'griddash': 'dash'
+        }
+        
+        # 根据参数的上下限设置Y轴的显示范围
+        limit_l = param_info.get('limit_lower') # 已经是 float 或 None
+        limit_u = param_info.get('limit_upper') # 已经是 float 或 None
+
+        if limit_l is not None and limit_u is not None:
+            # 确保 lsl 是较小值, usl 是较大值
+            lsl = min(limit_l, limit_u)
+            usl = max(limit_l, limit_u)
+            
+            current_span = usl - lsl
+            
+            if current_span == 0:  # 上下限相等
+                # 如果 limit_l 和 limit_u 相等, padding 为其绝对值的10%，如果为0则设为1.0
+                padding = abs(usl * 0.1) if usl != 0 else 1.0
+            else:  # 上下限不同
+                padding = current_span * 0.1  # padding 为上下限差值的10%
+            
+            y_axis_updates['range'] = [lsl - padding, usl + padding]
+            
+        fig.update_yaxes(**y_axis_updates)
+        
+        # 添加Lot_ID的二级X轴标签（通过annotation实现）
+        for lot_id_text, pos_info in lot_positions.items(): # lot_positions is keyed by True_Lot_ID
+            mid_position = (pos_info['start'] + pos_info['end']) / 2
+            fig.add_annotation(
+                x=mid_position,
+                y=-0.15,  # 位置在主X轴下方
+                text=str(lot_id_text), # Text for annotation is True_Lot_ID
+                showarrow=False,
+                xref="x",
+                yref="paper",
+                font=dict(size=10, color="blue")
+            )
+        
+        return fig
+    
     def _populate_charts_cache(self):
-        """
-        生成所有参数的图表并存入缓存。
-        """
+        """填充图表缓存"""
         if self.cleaned_data is None or self.spec_data is None:
-            logger.warning("数据未加载，无法生成图表缓存。")
+            logger.error("数据未完全加载，无法生成图表。")
             return
-
-        # 调试：打印从加载的cleaned_data中找到的Lot_ID信息
-        if 'Lot_ID' in self.cleaned_data.columns:
-            unique_lots_in_script = self.cleaned_data['Lot_ID'].unique()
-            logger.info(f"[DEBUG] Unique Lot_IDs from loaded cleaned_data: {unique_lots_in_script}")
-            logger.info(f"[DEBUG] Number of unique Lot_IDs: {len(unique_lots_in_script)}")
-        else:
-            logger.warning("[DEBUG] 'Lot_ID' column not found in cleaned_data.")
-
-        parameters = self.get_available_parameters()
-        self.all_charts_cache = {} # 清空旧缓存
         
-        for param in parameters:
+        # 性能优化：减少详细日志，只显示开始信息
+        available_params = self.get_available_parameters()
+        logger.info(f"开始生成 {len(available_params)} 个箱体图表...")
+        
+        success_count = 0
+        for param in available_params:
             try:
-                chart_fig = self._create_boxplot_scatter_chart(param)
-                self.all_charts_cache[param] = chart_fig
-                logger.info(f"已生成并缓存参数 {param} 的图表")
+                chart_fig = self._create_boxplot_chart(param)
+                if chart_fig is not None:
+                    self.all_charts_cache[param] = chart_fig
+                    success_count += 1
             except Exception as e:
-                logger.error(f"生成参数 {param} 的图表并缓存失败: {e}")
+                logger.error(f"生成参数 {param} 的图表失败: {e}")
         
-        logger.info(f"已成功缓存 {len(self.all_charts_cache)} 个图表。")
+        # 性能优化：只输出摘要信息
+        logger.info(f"箱体图表生成完成: {success_count}/{len(available_params)} 个成功")
 
     def get_chart(self, parameter: str) -> Optional[go.Figure]:
         """
@@ -686,10 +955,11 @@ class BoxplotChart:
             filename = f"{title}.html" # 保持原文件名格式
             file_path = output_path / filename
             
-            # 使用unpkg CDN减少文件大小（延迟最低）
+            # 使用unpkg CDN减小文件大小，保留完整工具栏功能
             figure_to_save.write_html(
                 str(file_path),
-                include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js'
+                include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js',
+                validate=False  # 跳过验证，提升速度
             )
             logger.info(f"图表已保存: {file_path}")
             
@@ -717,25 +987,29 @@ class BoxplotChart:
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"开始批量保存 {len(self.all_charts_cache)} 个图表到目录: {output_dir}")
+        # 性能优化：减少详细日志，只显示开始和结束
+        logger.info(f"开始批量保存 {len(self.all_charts_cache)} 个箱体图表...")
 
+        success_count = 0
         for parameter, figure in self.all_charts_cache.items():
             try:
                 title = self.generate_chart_title(parameter)
                 filename = f"{title}.html"
                 file_path = output_path / filename
                 
-                # 使用unpkg CDN减少文件大小（延迟最低）
+                # 使用unpkg CDN减小文件大小，保留完整工具栏功能
                 figure.write_html(
                     str(file_path),
-                    include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js'
+                    include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js',
+                    validate=False  # 跳过验证，提升速度
                 )
-                logger.info(f"图表 '{parameter}' 已保存: {file_path}")
                 saved_paths.append(file_path)
+                success_count += 1
             except Exception as e:
                 logger.error(f"保存参数 {parameter} 的图表失败: {e}")
         
-        logger.info(f"批量保存完成，共成功保存 {len(saved_paths)} 个图表。")
+        # 性能优化：只输出摘要信息
+        logger.info(f"箱体图表保存完成: {success_count}/{len(self.all_charts_cache)} 个成功")
         return saved_paths
 
 
