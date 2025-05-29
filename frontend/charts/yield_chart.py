@@ -219,17 +219,24 @@ class YieldChart:
         colors = self.chart_config['colors']
         
         for i, lot in enumerate(lots):
-            lot_data = self.wafer_data[self.wafer_data['Lot_Short'] == lot].sort_values('Wafer_ID')
+            lot_data = self.wafer_data[self.wafer_data['Lot_Short'] == lot].copy()
             
-            fig.add_trace(go.Scatter(
-                x=lot_data['Wafer_ID'],
-                y=lot_data['Yield_Numeric'],
-                mode='lines+markers',
-                name=lot,
-                line=dict(color=colors[i % len(colors)], width=3),
-                marker=dict(size=8, symbol='circle'),
-                hovertemplate=f'<b>{lot}</b><br>Wafer: %{{x}}<br>良率: %{{y:.2f}}%<extra></extra>'
-            ))
+            # 将Wafer_ID转换为数值类型，用于X轴定位
+            lot_data['Wafer_Num'] = pd.to_numeric(lot_data['Wafer_ID'], errors='coerce')
+            
+            # 过滤掉无法转换的数据并按Wafer编号排序
+            lot_data = lot_data.dropna(subset=['Wafer_Num']).sort_values('Wafer_Num')
+            
+            if not lot_data.empty:
+                fig.add_trace(go.Scatter(
+                    x=lot_data['Wafer_Num'],  # 使用数值化的Wafer编号
+                    y=lot_data['Yield_Numeric'],
+                    mode='lines+markers',
+                    name=lot,
+                    line=dict(color=colors[i % len(colors)], width=3),
+                    marker=dict(size=8, symbol='circle'),
+                    hovertemplate=f'<b>{lot}</b><br>Wafer: %{{x}}<br>良率: %{{y:.2f}}%<extra></extra>'
+                ))
         
         # 添加平均线
         overall_mean = self.wafer_data['Yield_Numeric'].mean()
@@ -244,6 +251,12 @@ class YieldChart:
             title="📈 Wafer良率趋势分析",
             xaxis_title="Wafer编号",
             yaxis_title="良率 (%)",
+            xaxis=dict(
+                range=[0.5, 25.5],  # 固定X轴范围为1~25
+                tick0=1,            # 起始刻度
+                dtick=1,            # 刻度间隔
+                tickmode='linear'   # 线性刻度模式
+            ),
             yaxis=dict(range=[95, 101]),
             hovermode='x unified',
             height=self.chart_config['height'],
@@ -266,20 +279,21 @@ class YieldChart:
         
         colors = self.chart_config['colors']
         
-        # 柱状图
-        fig.add_trace(go.Bar(
-            x=lot_stats['Lot_Short'],
-            y=lot_stats['mean'],
-            error_y=dict(type='data', array=lot_stats['std']),
-            name='平均良率',
-            marker_color=colors[:len(lot_stats)],
-            hovertemplate='<b>%{x}</b><br>平均良率: %{y:.2f}%<br>标准差: %{error_y.array:.2f}%<extra></extra>'
-        ))
-        
-        # 添加数据标签
+        # 为每个批次创建单独的柱状图trace，以便显示图例
         for i, row in lot_stats.iterrows():
+            fig.add_trace(go.Bar(
+                x=[i+1],  # 使用数字索引作为X轴位置
+                y=[row['mean']],
+                error_y=dict(type='data', array=[row['std']]),
+                name=row['Lot_Short'],  # 批次名称作为图例
+                marker_color=colors[i % len(colors)],
+                hovertemplate=f'<b>{row["Lot_Short"]}</b><br>平均良率: %{{y:.2f}}%<br>标准差: {row["std"]:.2f}%<br>Wafer数: {int(row["count"])}<extra></extra>',
+                showlegend=True  # 显示图例
+            ))
+            
+            # 添加数据标签
             fig.add_annotation(
-                x=row['Lot_Short'],
+                x=i+1,
                 y=row['mean'] + row['std'] + 0.2,
                 text=f"{row['mean']:.2f}%<br>({int(row['count'])} wafers)",
                 showarrow=False,
@@ -288,12 +302,23 @@ class YieldChart:
         
         fig.update_layout(
             title="📊 批次良率对比",
-            xaxis_title="批次",
+            xaxis_title="批次序号",
             yaxis_title="平均良率 (%)",
+            xaxis=dict(
+                showticklabels=False,  # 隐藏X轴刻度标签
+                range=[0.5, len(lot_stats) + 0.5]  # 设置X轴范围
+            ),
             yaxis=dict(range=[96, 100]),
             height=self.chart_config['height'],
             font=dict(size=self.chart_config['font_size']),
-            title_font_size=self.chart_config['title_font_size']
+            title_font_size=self.chart_config['title_font_size'],
+            legend=dict(
+                orientation="v",  # 垂直图例
+                yanchor="top",
+                y=1,
+                xanchor="left",
+                x=1.02
+            )
         )
         
         return fig
