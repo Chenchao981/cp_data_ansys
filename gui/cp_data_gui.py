@@ -8,6 +8,8 @@ CP数据分析工具 - 简化版GUI界面
 import sys
 import os
 from pathlib import Path
+from datetime import datetime
+import re
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLabel, QLineEdit, QPushButton, 
                              QTextEdit, QFileDialog, QMessageBox, QProgressBar)
@@ -27,6 +29,87 @@ from frontend.charts.boxplot_chart import BoxplotChart
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+
+def get_desktop_path():
+    """获取用户桌面路径"""
+    return os.path.join(os.path.expanduser("~"), "Desktop")
+
+
+def extract_first_lot_id(directory_path):
+    """从目录中的文件提取第一个批次号"""
+    try:
+        input_path = Path(directory_path)
+        
+        # 搜索所有DCP文件
+        dcp_files = []
+        dcp_files.extend(list(input_path.rglob("*.txt")))
+        dcp_files.extend(list(input_path.rglob("*.TXT")))
+        dcp_files.extend(list(input_path.rglob("*.dcp")))
+        dcp_files.extend(list(input_path.rglob("*.DCP")))
+        
+        if not dcp_files:
+            return None
+        
+        # 尝试从第一个文件中提取批次号
+        first_file = dcp_files[0]
+        try:
+            with open(first_file, 'r', encoding='utf-8', errors='ignore') as f:
+                lines = f.readlines()
+                if len(lines) >= 2:
+                    # 从R2C2位置提取批次号
+                    second_line = lines[1].strip()
+                    parts = second_line.split()
+                    if len(parts) >= 2:
+                        lot_id = parts[1]  # R2C2位置
+                        # 提取批次号的核心部分（去掉@后缀）
+                        if '@' in lot_id:
+                            lot_id = lot_id.split('@')[0]
+                        # 进一步简化：提取主要批次标识
+                        match = re.search(r'([A-Z]+\d+-\d+)', lot_id)
+                        if match:
+                            return match.group(1)
+                        return lot_id
+        except Exception as e:
+            logger.warning(f"无法从文件 {first_file} 提取批次号: {e}")
+        
+        # 如果无法从文件内容提取，尝试从文件夹名称提取
+        folder_name = input_path.name
+        match = re.search(r'([A-Z]+\d+-\d+)', folder_name)
+        if match:
+            return match.group(1)
+        
+        return None
+        
+    except Exception as e:
+        logger.error(f"提取批次号失败: {e}")
+        return None
+
+
+def generate_output_folder_name(input_dir):
+    """生成输出文件夹名称：批次号_YYYYMMDD_HHMMSS"""
+    try:
+        # 提取第一个批次号
+        lot_id = extract_first_lot_id(input_dir)
+        if not lot_id:
+            lot_id = "CP_Analysis"
+        
+        # 生成时间戳
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # 组合文件夹名称
+        folder_name = f"{lot_id}_{timestamp}"
+        
+        # 确保文件夹名称是有效的Windows文件名
+        folder_name = re.sub(r'[<>:"/\\|?*]', '_', folder_name)
+        
+        return folder_name
+        
+    except Exception as e:
+        logger.error(f"生成输出文件夹名称失败: {e}")
+        # 备用方案
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        return f"CP_Analysis_{timestamp}"
 
 
 class DataProcessingThread(QThread):
@@ -73,6 +156,10 @@ class DataProcessingThread(QThread):
         if not dcp_files:
             self.finished.emit(False, "未找到DCP数据文件(.txt或.dcp)\n请确保选择的文件夹或其子文件夹中包含数据文件")
             return
+        
+        # 确保输出目录存在
+        os.makedirs(self.output_dir, exist_ok=True)
+        self.progress_updated.emit(f"📁 输出文件夹已创建: {self.output_dir}")
         
         # 直接处理整个目录
         self.progress_updated.emit("🧹 正在处理所有数据文件...")
@@ -133,11 +220,20 @@ class CPDataGUI(QMainWindow):
         self.output_dir = ""
         self.processing_thread = None
         self.init_ui()
+        self.set_default_paths()
+    
+    def set_default_paths(self):
+        """设置默认路径为桌面"""
+        desktop_path = get_desktop_path()
+        self.input_path_edit.setText(desktop_path)
+        self.input_dir = desktop_path
+        # 输出路径暂时也设为桌面，实际使用时会创建子文件夹
+        self.output_path_edit.setText(desktop_path)
     
     def init_ui(self):
         """初始化用户界面"""
         self.setWindowTitle("🔬 CP数据分析工具 - 简化版")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 1000, 750)
         
         # 创建中央widget
         central_widget = QWidget()
@@ -145,13 +241,13 @@ class CPDataGUI(QMainWindow):
         
         # 主布局
         main_layout = QVBoxLayout(central_widget)
-        main_layout.setSpacing(20)
-        main_layout.setContentsMargins(30, 30, 30, 30)
+        main_layout.setSpacing(25)
+        main_layout.setContentsMargins(40, 40, 40, 40)
         
         # 标题
         title_label = QLabel("🔬 CP数据分析工具")
         title_font = QFont()
-        title_font.setPointSize(18)
+        title_font.setPointSize(22)
         title_font.setBold(True)
         title_label.setFont(title_font)
         title_label.setAlignment(Qt.AlignCenter)
@@ -160,10 +256,16 @@ class CPDataGUI(QMainWindow):
         # 输入文件夹选择
         input_layout = QHBoxLayout()
         input_label = QLabel("📁 数据文件夹:")
-        input_label.setMinimumWidth(100)
+        input_label.setMinimumWidth(125)
+        input_label.setFont(QFont("", 12))
         self.input_path_edit = QLineEdit()
         self.input_path_edit.setPlaceholderText("选择包含DCP数据文件的文件夹...")
+        self.input_path_edit.setMinimumHeight(35)
+        self.input_path_edit.setFont(QFont("", 11))
         self.input_browse_btn = QPushButton("选择文件夹...")
+        self.input_browse_btn.setMinimumHeight(35)
+        self.input_browse_btn.setMinimumWidth(120)
+        self.input_browse_btn.setFont(QFont("", 11))
         self.input_browse_btn.clicked.connect(self.browse_input_dir)
         
         input_layout.addWidget(input_label)
@@ -174,10 +276,16 @@ class CPDataGUI(QMainWindow):
         # 输出文件夹选择
         output_layout = QHBoxLayout()
         output_label = QLabel("📁 输出文件夹:")
-        output_label.setMinimumWidth(100)
+        output_label.setMinimumWidth(125)
+        output_label.setFont(QFont("", 12))
         self.output_path_edit = QLineEdit()
-        self.output_path_edit.setPlaceholderText("默认与输入文件夹相同...")
+        self.output_path_edit.setPlaceholderText("将自动创建以批次号+时间戳命名的文件夹...")
+        self.output_path_edit.setMinimumHeight(35)
+        self.output_path_edit.setFont(QFont("", 11))
         self.output_browse_btn = QPushButton("选择文件夹...")
+        self.output_browse_btn.setMinimumHeight(35)
+        self.output_browse_btn.setMinimumWidth(120)
+        self.output_browse_btn.setFont(QFont("", 11))
         self.output_browse_btn.clicked.connect(self.browse_output_dir)
         
         output_layout.addWidget(output_label)
@@ -187,17 +295,17 @@ class CPDataGUI(QMainWindow):
         
         # 操作按钮
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(20)
+        button_layout.setSpacing(30)
         
         self.clean_btn = QPushButton("🧹 开始清洗数据")
-        self.clean_btn.setMinimumHeight(50)
+        self.clean_btn.setMinimumHeight(60)
         self.clean_btn.setStyleSheet("""
             QPushButton {
                 background-color: #2196F3;
                 color: white;
                 border: none;
-                border-radius: 5px;
-                font-size: 14px;
+                border-radius: 8px;
+                font-size: 20px;
                 font-weight: bold;
             }
             QPushButton:hover {
@@ -208,17 +316,17 @@ class CPDataGUI(QMainWindow):
             }
         """)
         self.clean_btn.clicked.connect(self.start_cleaning)
-        self.clean_btn.setEnabled(False)
+        self.clean_btn.setEnabled(True)  # 默认启用，因为有默认路径
         
         self.generate_btn = QPushButton("📊 生成图表")
-        self.generate_btn.setMinimumHeight(50)
+        self.generate_btn.setMinimumHeight(60)
         self.generate_btn.setStyleSheet("""
             QPushButton {
                 background-color: #4CAF50;
                 color: white;
                 border: none;
-                border-radius: 5px;
-                font-size: 14px;
+                border-radius: 8px;
+                font-size: 20px;
                 font-weight: bold;
             }
             QPushButton:hover {
@@ -237,23 +345,26 @@ class CPDataGUI(QMainWindow):
         
         # 进度条
         self.progress_bar = QProgressBar()
+        self.progress_bar.setMinimumHeight(25)
         self.progress_bar.setVisible(False)
         main_layout.addWidget(self.progress_bar)
         
         # 状态显示区域
         status_label = QLabel("📋 处理状态:")
+        status_label.setFont(QFont("", 12))
         main_layout.addWidget(status_label)
         
         self.status_text = QTextEdit()
-        self.status_text.setMaximumHeight(200)
+        self.status_text.setMaximumHeight(250)
         self.status_text.setPlaceholderText("等待用户操作...")
         self.status_text.setStyleSheet("""
             QTextEdit {
                 background-color: #F5F5F5;
                 border: 1px solid #CCCCCC;
-                border-radius: 5px;
-                padding: 10px;
+                border-radius: 8px;
+                padding: 15px;
                 font-family: 'Consolas', monospace;
+                font-size: 16px;
             }
         """)
         main_layout.addWidget(self.status_text)
@@ -263,32 +374,26 @@ class CPDataGUI(QMainWindow):
     
     def browse_input_dir(self):
         """浏览输入目录"""
-        dir_path = QFileDialog.getExistingDirectory(self, "选择数据文件夹")
+        # 从桌面开始浏览
+        start_dir = get_desktop_path()
+        dir_path = QFileDialog.getExistingDirectory(self, "选择数据文件夹", start_dir)
         if dir_path:
             self.input_dir = dir_path
             self.input_path_edit.setText(dir_path)
-            
-            # 默认输出目录与输入目录相同
-            if not self.output_dir:
-                self.output_dir = dir_path
-                self.output_path_edit.setText(dir_path)
     
     def browse_output_dir(self):
         """浏览输出目录"""
-        dir_path = QFileDialog.getExistingDirectory(self, "选择输出文件夹")
+        # 从桌面开始浏览
+        start_dir = get_desktop_path()
+        dir_path = QFileDialog.getExistingDirectory(self, "选择输出文件夹", start_dir)
         if dir_path:
-            self.output_dir = dir_path
             self.output_path_edit.setText(dir_path)
     
     def on_input_path_changed(self):
         """输入路径变化时的处理"""
         has_input = bool(self.input_path_edit.text().strip())
         self.clean_btn.setEnabled(has_input)
-        
-        if has_input and not self.output_path_edit.text().strip():
-            # 自动设置输出路径
-            self.output_dir = self.input_path_edit.text().strip()
-            self.output_path_edit.setText(self.output_dir)
+        self.input_dir = self.input_path_edit.text().strip() if has_input else ""
     
     def start_cleaning(self):
         """开始数据清洗"""
@@ -296,11 +401,14 @@ class CPDataGUI(QMainWindow):
             QMessageBox.warning(self, "警告", "请先选择数据文件夹！")
             return
         
-        if not self.output_dir:
-            self.output_dir = self.input_dir
-            self.output_path_edit.setText(self.output_dir)
+        # 生成输出文件夹名称
+        base_output_dir = self.output_path_edit.text().strip() or get_desktop_path()
+        folder_name = generate_output_folder_name(self.input_dir)
+        self.output_dir = os.path.join(base_output_dir, folder_name)
         
         self.log_message("🚀 开始数据清洗流程...")
+        self.log_message(f"📁 输入目录: {self.input_dir}")
+        self.log_message(f"📁 输出目录: {self.output_dir}")
         self.set_processing_state(True)
         
         # 启动后台处理线程
@@ -335,7 +443,7 @@ class CPDataGUI(QMainWindow):
         if success:
             self.log_message(f"✅ {message}")
             self.generate_btn.setEnabled(True)
-            QMessageBox.information(self, "成功", f"数据清洗完成！\n{message}")
+            QMessageBox.information(self, "成功", f"数据清洗完成！\n{message}\n\n输出文件夹: {self.output_dir}")
         else:
             self.log_message(f"❌ {message}")
             QMessageBox.critical(self, "错误", f"数据清洗失败！\n{message}")
@@ -351,7 +459,7 @@ class CPDataGUI(QMainWindow):
             # 询问是否打开输出文件夹
             reply = QMessageBox.question(
                 self, "完成", 
-                f"图表生成完成！\n{message}\n\n是否打开输出文件夹？",
+                f"图表生成完成！\n{message}\n\n输出文件夹: {self.output_dir}\n\n是否打开输出文件夹？",
                 QMessageBox.Yes | QMessageBox.No
             )
             
