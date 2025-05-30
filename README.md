@@ -281,3 +281,117 @@ CP数据处理器
 ---
 
 > 💡 **提示**: 建议先运行 `python demo_yield_chart.py` 快速体验功能，然后根据具体需求进行定制化分析。 
+
+## 🚀 快速开始
+
+### 安装依赖
+
+```bash
+pip install pandas numpy plotly matplotlib seaborn openpyxl pathlib2
+```
+
+### 运行程序
+
+```bash
+python chart_generator.py
+```
+
+## 📁 项目结构
+
+```
+cp_data_ansys/
+├── 📊 核心应用
+│   ├── chart_generator.py           # 主程序入口
+│   ├── frontend/                    # 前端图表模块  
+│   ├── cp_data_processor/          # 数据处理器
+│   ├── output/                     # 数据输出目录
+│   └── demo_output/                # 演示输出
+├── 📦 打包系统 (packaging/)
+│   ├── README.md                   # 打包系统说明  
+│   ├── 使用说明.md                 # 快速使用指南
+│   └── build_scripts/              # 构建脚本集合
+│       ├── conda_pack_builder.py  # 主构建脚本
+│       ├── quick_build.bat        # 一键构建
+│       └── ...                    # 其他构建工具
+├── 🔧 开发工具
+│   ├── analyze_data.py             # 数据分析脚本
+│   ├── yield_chart_generator.py    # 良率图表生成器
+│   └── ...                        # 其他工具脚本
+└── 📚 文档
+    ├── README.md                   # 本文档
+    ├── 功能实现总结.md             # 功能总结
+    └── ...                        # 其他文档
+```
+
+## 🎯 主要功能
+
+- ✅ **多格式数据读取**：支持DCP、CW、MEX等格式
+- ✅ **专业图表生成**：箱体图、散点图、良率图等
+- ✅ **数据统计分析**：自动统计和趋势分析
+- ✅ **报告导出**：支持多种格式导出
+
+## 📦 打包与发布
+
+### 开发者注意
+
+**日常开发**：
+- 专注于主应用开发
+- **可以完全忽略** `packaging/` 目录
+- 这个目录不会影响任何开发工作
+
+**需要发布时**：
+```bash
+# 进入打包目录
+cd packaging
+
+# 一键构建安装包
+build_scripts\quick_build.bat
+```
+
+### 打包系统特点
+
+- 🔄 **离线安装**：包含完整Python环境
+- 📦 **体积优化**：~100-150MB安装包
+- 🛡️ **环境隔离**：不影响用户现有环境
+- ⚡ **快速部署**：一次构建，多次安装
+
+详细信息请查看 [`packaging/README.md`](packaging/README.md)
+
+## 🔧 开发指南
+
+### 添加新功能
+
+1. 在对应模块目录下开发
+2. 更新相关文档
+3. 测试功能正常工作
+
+### 发布新版本
+
+1. 确保代码稳定
+2. 进入 `packaging/` 目录
+3. 运行构建脚本
+4. 测试生成的安装包
+
+## 📊 技术栈
+
+- **Python 3.12+**
+- **数据处理**：pandas, numpy
+- **图表生成**：plotly, matplotlib, seaborn  
+- **文件处理**：openpyxl
+- **打包工具**：conda-pack
+
+## 📞 技术支持
+
+- 应用问题：查看主目录文档
+- 打包问题：查看 `packaging/README.md`
+- 功能建议：提交Issue或联系开发团队
+
+## 📝 更新日志
+
+- **v1.0.0** - 初始版本，包含完整数据分析功能
+- 支持多种数据格式和图表类型
+- 集成conda-pack打包系统
+
+---
+
+💡 **提示**：新手开发者可以先忽略打包相关内容，专注于主要功能开发。 

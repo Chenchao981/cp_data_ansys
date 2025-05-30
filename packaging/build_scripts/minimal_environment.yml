@@ -1,0 +1,33 @@
+name: cp_data_analyzer_minimal
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  # 核心Python
+  - python=3.12
+  
+  # 数据处理核心
+  - pandas>=1.3.0
+  - numpy>=1.21.0
+  
+  # 图表生成
+  - plotly>=5.0.0
+  - matplotlib>=3.0.0
+  - seaborn>=0.10.0
+  
+  # 文件处理
+  - openpyxl>=3.0.0
+  
+  # 工具库
+  - pathlib2>=2.3.0
+  
+  # 压缩和打包需要的
+  - conda-pack
+  
+  # 可选：如果需要GUI支持
+  # - pyqt5>=5.15.0
+  
+  # pip安装的包（如果有的话）
+  # - pip
+  # - pip:
+  #   - some-pypi-package 
