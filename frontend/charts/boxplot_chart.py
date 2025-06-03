@@ -225,14 +225,12 @@ class BoxplotChart:
             logger.warning(f"参数 {parameter} 没有有效数据 após filtragem completa") # Added more context to warning
             return pd.DataFrame(), [], param_info, {}
 
-        # 定义提取真实Lot ID的函数
+        # 定义提取真实Lot ID的函数 - 使用策略2以识别更多批次
         def get_true_lot_id(raw_lot_id):
-            if isinstance(raw_lot_id, str):
-                parts = raw_lot_id.rsplit('-', 1)
-                # 检查是否成功分割，并且分割出的后缀部分包含@符号，且后缀不含其他连字符 (简单判断是否为时间戳部分)
-                if len(parts) > 1 and '@' in parts[1] and parts[1].count('-') == 0:
-                    return parts[0]
-            return raw_lot_id # 如果不符合预期格式或不是字符串，返回原始值
+            """提取真实Lot ID - 只去掉@后面的部分，保留更多批次信息"""
+            if isinstance(raw_lot_id, str) and '@' in raw_lot_id:
+                return raw_lot_id.split('@')[0]
+            return raw_lot_id
 
         # 应用函数提取真实Lot ID，并覆盖原始Lot_ID列或创建新列后使用新列
         # 为了最小化其他代码部分的更改，我们将直接修改 'Lot_ID' 列，或者确保所有后续都用 'True_Lot_ID'

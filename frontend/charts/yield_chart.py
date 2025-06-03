@@ -92,24 +92,46 @@ class YieldChart:
         self.wafer_data = self.yield_data[self.yield_data['Lot_ID'] != 'ALL'].copy()
         self.summary_data = self.yield_data[self.yield_data['Lot_ID'] == 'ALL'].copy()
         
+        logger.info(f"原始数据行数: {len(self.yield_data)}")
+        logger.info(f"过滤后wafer数据行数: {len(self.wafer_data)}")
+        logger.info(f"原始Lot_ID唯一值: {self.wafer_data['Lot_ID'].unique()}")
+        
         # 转换yield为数值
         if 'Yield' in self.wafer_data.columns:
             self.wafer_data['Yield_Numeric'] = self.wafer_data['Yield'].str.rstrip('%').astype(float)
         
-        # 提取批次简称（通用方式处理各种批次格式）
-        # 方案1：直接使用Lot_ID作为批次名称（最简单可靠）
-        self.wafer_data['Lot_Short'] = self.wafer_data['Lot_ID']
+        # 改进True_Lot_ID提取逻辑 - 使用策略2以识别更多批次
+        def get_true_lot_id(raw_lot_id):
+            """提取真实Lot ID - 只去掉@后面的部分，保留更多批次信息"""
+            if isinstance(raw_lot_id, str) and '@' in raw_lot_id:
+                return raw_lot_id.split('@')[0]
+            return raw_lot_id
         
-        # 方案2：如果需要简化显示，可以提取批次的核心部分（去掉后缀）
-        # 例如：FA55-4307-327A-250501@203 -> FA55-4307-327A-250501
-        # 或者：C11200-325A-250502@203 -> C11200-325A-250502
-        # self.wafer_data['Lot_Short'] = self.wafer_data['Lot_ID'].str.split('@').str[0]
+        # 应用函数提取真实Lot ID
+        self.wafer_data['True_Lot_ID'] = self.wafer_data['Lot_ID'].apply(get_true_lot_id)
+        
+        logger.info(f"提取的True_Lot_ID唯一值: {self.wafer_data['True_Lot_ID'].unique()}")
+        logger.info(f"每个True_Lot_ID的数据量: {self.wafer_data['True_Lot_ID'].value_counts().to_dict()}")
+        
+        # 按True_Lot_ID和Wafer_ID排序 - 确保与箱体图相同的排序
+        self.wafer_data = self.wafer_data.sort_values(['True_Lot_ID', 'Wafer_ID'])
+        
+        # 保持Lot_Short用于向后兼容，但现在使用True_Lot_ID
+        self.wafer_data['Lot_Short'] = self.wafer_data['True_Lot_ID']
         
         # 计算失效总数
         failure_columns = ['Bin3', 'Bin4', 'Bin6', 'Bin7', 'Bin8', 'Bin9']
         self.wafer_data['Total_Failures'] = self.wafer_data[failure_columns].sum(axis=1)
         
-        logger.info(f"预处理完成: {len(self.wafer_data)} 个wafer, {self.wafer_data['Lot_Short'].nunique()} 个批次")
+        # 调试信息
+        unique_true_lots = self.wafer_data['True_Lot_ID'].unique()
+        logger.info(f"预处理完成: {len(self.wafer_data)} 个wafer, {len(unique_true_lots)} 个批次")
+        logger.info(f"最终True_Lot_IDs: {list(unique_true_lots)}")
+        
+        # 检查每个批次的Wafer数量
+        for lot_id in unique_true_lots:
+            lot_wafers = self.wafer_data[self.wafer_data['True_Lot_ID'] == lot_id]['Wafer_ID'].unique()
+            logger.info(f"批次 {lot_id}: {len(lot_wafers)} 个Wafer ({min(lot_wafers)}-{max(lot_wafers)})")
     
     def get_available_chart_types(self) -> List[str]:
         """
@@ -209,34 +231,86 @@ class YieldChart:
         return title_map.get(chart_type, f'{chart_type}_yield_chart')
     
     def _create_wafer_trend_chart(self) -> go.Figure:
-        """创建Wafer良率趋势图"""
+        """创建Wafer良率趋势图 - 采用与箱体图相同的X轴布局"""
         fig = go.Figure()
         
         if self.wafer_data is None or self.wafer_data.empty:
             return fig
         
-        lots = self.wafer_data['Lot_Short'].unique()
-        colors = self.chart_config['colors']
+        # 参考boxplot_chart.py的prepare_chart_data方法，生成X轴位置和标签
+        chart_data = []
+        x_labels = []
+        x_position = 0
+        lot_positions = {}  # 记录每个Lot在X轴上的位置范围
         
-        for i, lot in enumerate(lots):
-            lot_data = self.wafer_data[self.wafer_data['Lot_Short'] == lot].copy()
+        # 使用Lot_Short作为分组键，确保与箱体图一致
+        # 按Lot_Short分组处理，保持与箱体图相同的排序
+        for lot_id_val in self.wafer_data['Lot_Short'].unique():
+            lot_data = self.wafer_data[self.wafer_data['Lot_Short'] == lot_id_val]
+            lot_positions[lot_id_val] = {'start': x_position, 'wafers': []}
             
-            # 将Wafer_ID转换为数值类型，用于X轴定位
-            lot_data['Wafer_Num'] = pd.to_numeric(lot_data['Wafer_ID'], errors='coerce')
+            # 为每个wafer分配X轴位置 - 修复排序问题
+            wafer_ids = lot_data['Wafer_ID'].unique()
+            # 将Wafer_ID转换为数值进行排序，然后转回字符串
+            try:
+                wafer_ids_numeric = [int(w) for w in wafer_ids]
+                wafer_ids_sorted = [str(w) for w in sorted(wafer_ids_numeric)]
+            except ValueError:
+                # 如果转换失败，使用字符串排序
+                wafer_ids_sorted = sorted(wafer_ids)
             
-            # 过滤掉无法转换的数据并按Wafer编号排序
-            lot_data = lot_data.dropna(subset=['Wafer_Num']).sort_values('Wafer_Num')
+            for wafer_id in wafer_ids_sorted:
+                wafer_data = lot_data[lot_data['Wafer_ID'] == wafer_id]
+                
+                # 只取第一行数据，避免重复
+                if not wafer_data.empty:
+                    row = wafer_data.iloc[0]
+                    chart_data.append({
+                        'x_position': x_position,
+                        'yield_value': row['Yield_Numeric'],
+                        'lot_id': lot_id_val,
+                        'wafer_id': wafer_id,
+                        'x_label': str(wafer_id)
+                    })
+                
+                # 记录wafer信息
+                lot_positions[lot_id_val]['wafers'].append({
+                    'wafer_id': wafer_id,
+                    'x_position': x_position
+                })
+                
+                x_labels.append(str(wafer_id))
+                x_position += 1
             
-            if not lot_data.empty:
-                fig.add_trace(go.Scatter(
-                    x=lot_data['Wafer_Num'],  # 使用数值化的Wafer编号
-                    y=lot_data['Yield_Numeric'],
-                    mode='lines+markers',
-                    name=lot,
-                    line=dict(color=colors[i % len(colors)], width=3),
-                    marker=dict(size=8, symbol='circle'),
-                    hovertemplate=f'<b>{lot}</b><br>Wafer: %{{x}}<br>良率: %{{y:.2f}}%<extra></extra>'
-                ))
+            lot_positions[lot_id_val]['end'] = x_position - 1
+        
+        chart_df = pd.DataFrame(chart_data)
+        logger.info(f"Wafer良率趋势图 - 准备的数据点总数: {len(chart_df)}")
+        
+        # 为每个Lot创建趋势线
+        colors = self.chart_config['colors']
+        for i, lot_id_val in enumerate(chart_df['lot_id'].unique()):
+            lot_data = chart_df[chart_df['lot_id'] == lot_id_val].copy()
+            
+            # 按X轴位置排序，确保趋势线正确连接
+            lot_data = lot_data.sort_values('x_position')
+            
+            color = colors[i % len(colors)]
+            
+            # 添加趋势线
+            fig.add_trace(go.Scatter(
+                x=lot_data['x_position'],
+                y=lot_data['yield_value'],
+                mode='lines+markers',
+                name=lot_id_val,
+                line=dict(color=color, width=3),
+                marker=dict(size=8, symbol='circle', color=color),
+                hovertemplate=f'<b>{lot_id_val}</b><br>' +
+                             'Wafer: %{customdata[0]}<br>' +
+                             '良率: %{y:.2f}%<br>' +
+                             '<extra></extra>',
+                customdata=[[row['wafer_id']] for _, row in lot_data.iterrows()]
+            ))
         
         # 添加平均线
         overall_mean = self.wafer_data['Yield_Numeric'].mean()
@@ -247,21 +321,58 @@ class YieldChart:
             annotation_text=f"平均良率: {overall_mean:.2f}%"
         )
         
+        # 计算合适的图表宽度 - 确保每个数据点有足够空间
+        total_wafers = len(x_labels)
+        # 每个wafer分配40像素宽度，最小1200像素
+        chart_width = max(1200, total_wafers * 40)
+        
+        # 设置初始显示范围（如果数据点太多，只显示前50个）
+        if total_wafers > 50:
+            initial_range = [-0.5, 49.5]
+            autorange = False
+        else:
+            initial_range = [-0.5, len(x_labels) - 0.5]
+            autorange = True
+        
+        # 添加Lot_ID的二级X轴标签（参考箱体图的annotation实现）
+        for lot_id_text, pos_info in lot_positions.items():
+            mid_position = (pos_info['start'] + pos_info['end']) / 2
+            fig.add_annotation(
+                x=mid_position,
+                y=-0.15,  # 位置在主X轴下方
+                text=str(lot_id_text),
+                showarrow=False,
+                xref="x",
+                yref="paper",
+                font=dict(size=10, color="blue")
+            )
+        
         fig.update_layout(
             title="📈 Wafer良率趋势分析",
             xaxis_title="Wafer编号",
             yaxis_title="良率 (%)",
-            xaxis=dict(
-                range=[0.5, 25.5],  # 固定X轴范围为1~25
-                tick0=1,            # 起始刻度
-                dtick=1,            # 刻度间隔
-                tickmode='linear'   # 线性刻度模式
-            ),
             yaxis=dict(range=[95, 101]),
             hovermode='x unified',
+            # 设置图表尺寸以支持滚动
+            width=chart_width,
             height=self.chart_config['height'],
             font=dict(size=self.chart_config['font_size']),
-            title_font_size=self.chart_config['title_font_size']
+            title_font_size=self.chart_config['title_font_size'],
+            # 启用滚动和缩放
+            dragmode='pan',  # 默认为平移模式
+            # X轴配置 - 参考箱体图样式，确保间距一致
+            xaxis=dict(
+                tickvals=list(range(len(x_labels))),
+                ticktext=x_labels,
+                title="Wafer编号",
+                showgrid=True,
+                gridwidth=1,
+                gridcolor='rgba(211, 211, 211, 0.3)',
+                range=initial_range,
+                autorange=autorange,
+                fixedrange=False,  # 允许X轴缩放和平移
+                rangeslider=dict(visible=False)  # 不显示范围滑块
+            )
         )
         
         return fig
