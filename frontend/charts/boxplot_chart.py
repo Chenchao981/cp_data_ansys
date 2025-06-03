@@ -812,11 +812,16 @@ class BoxplotChart:
         )
         
         # 设置X轴刻度和标签，并添加网格线
+        # 计算X轴的实际数据范围，消除两端空白
+        x_range_start = -0.5  # 从第一个wafer的左侧0.5个单位开始
+        x_range_end = len(x_labels) - 0.5  # 到最后一个wafer的右侧0.5个单位结束
+        
         fig.update_xaxes(
             tickmode='array',
             tickvals=list(range(len(x_labels))),
             ticktext=x_labels,
             tickangle=0,
+            range=[x_range_start, x_range_end],  # 设置X轴显示范围，紧贴数据
             showgrid=True,        # 显示X轴垂直网格线
             gridwidth=1,          # 网格线宽度
             gridcolor='rgba(211, 211, 211, 0.5)', # 网格线颜色 - 浅灰带50%透明度
