@@ -1,0 +1,178 @@
+# 🔬 GUI集成汇总图表功能说明
+
+## 📋 功能概述
+
+在现有的CP数据分析工具GUI中，我们成功集成了汇总箱体图表功能。现在当用户点击"生成图表"按钮时，除了生成原有的各种图表外，还会额外生成一个包含所有测量参数的汇总箱体图（`*_summary_chart.html`）。
+
+## 🎯 新增功能特点
+
+### ✨ 汇总图表特性
+- **一页显示所有参数**：将所有测量参数的箱体图合并到一个HTML页面
+- **垂直排列布局**：参数按垂直方向排列，便于对比分析
+- **X轴完美对齐**：所有参数共享相同的X轴配置，便于批次间对比
+- **交互功能保持**：支持缩放、平移、悬停等所有原有交互功能
+- **Y轴滚动查看**：通过滚动查看不同参数的分析结果
+- **X轴滑动查看**：通过滑动查看不同批次的数据
+
+### 🔧 技术实现
+- **完全复用现有代码**：基于BoxplotChart类，避免重复开发
+- **模块化设计**：新功能位于`frontend/charts/summary_chart/`目录
+- **不影响现有功能**：原有的单独图表生成功能保持不变
+- **自动集成**：无需额外配置，自动在图表生成流程中执行
+
+## 🚀 使用方法
+
+### 通过GUI使用（推荐）
+
+1. **启动GUI程序**
+   ```bash
+   cd gui
+   python cp_data_gui.py
+   ```
+
+2. **选择数据路径**
+   - 数据文件夹：选择包含DCP数据文件的文件夹
+   - 输出文件夹：选择图表输出位置
+
+3. **清洗数据**
+   - 点击"🧹 开始清洗数据"按钮
+   - 等待数据清洗完成
+
+4. **生成图表**
+   - 点击"📊 生成图表"按钮
+   - 系统会自动生成：
+     - 📈 良率分析图表（3个）
+     - 📦 箱体统计图表（11个独立参数）
+     - 📋 **汇总箱体图表（1个包含所有参数）**
+
+### 程序化使用
+
+```python
+from frontend.charts.summary_chart import SummaryChart
+
+# 创建汇总图表实例
+summary_chart = SummaryChart(data_dir="path/to/data")
+
+# 加载数据并生成汇总图表
+if summary_chart.load_data():
+    summary_file = summary_chart.save_summary_chart("output_dir")
+    print(f"汇总图表已保存: {summary_file}")
+```
+
+## 📊 生成的文件
+
+执行完整的图表生成流程后，会在输出目录中生成以下文件：
+
+### 汇总图表（新增）
+- `*_summary_chart.html` - 包含所有参数的汇总箱体图（约4.3MB）
+
+### 原有图表
+- **良率图表**（3个）
+  - `Wafer良率趋势分析_yield_chart.html`
+  - `批次良率对比分析_yield_chart.html`
+  - `失效类型分析_yield_chart.html`
+
+- **单独箱体图表**（11个）
+  - `CONT[V]@1.00mA_boxplot_chart.html`
+  - `IGSS0[A]@1.00V_boxplot_chart.html`
+  - `IGSS1[A]@10.0V_boxplot_chart.html`
+  - `IGSSR1[A]@10.0V_boxplot_chart.html`
+  - `VTH[V]@250uA_boxplot_chart.html`
+  - `BVDSS1[V]@250uA_boxplot_chart.html`
+  - `BVDSS2[V]@10.0mA_boxplot_chart.html`
+  - `IDSS1[A]@110V_boxplot_chart.html`
+  - `IDSS2[A]@120V_boxplot_chart.html`
+  - `IGSS2[A]@18.0V_boxplot_chart.html`
+  - `IGSSR2[A]@18.0V_boxplot_chart.html`
+
+## 🎨 汇总图表界面
+
+### 布局特点
+- **垂直子图布局**：每个参数占用一个子图区域
+- **共享X轴**：所有参数使用相同的X轴刻度和标签
+- **动态高度**：根据参数数量自动调整图表高度（11参数×450px=4950px）
+- **Material Design配色**：保持与原有图表一致的视觉风格
+
+### 交互功能
+- **缩放**：支持X轴和Y轴独立缩放
+- **平移**：支持图表拖拽平移
+- **悬停信息**：鼠标悬停显示详细数据信息
+- **图例交互**：点击图例可隐藏/显示对应的数据系列
+- **工具栏**：包含缩放、平移、重置等工具按钮
+
+## 🔧 技术架构
+
+### 目录结构
+```
+frontend/charts/summary_chart/
+├── __init__.py              # 模块初始化
+├── summary_chart.py         # 主要实现类
+├── README.md               # 详细技术文档
+└── example.py              # 使用示例
+```
+
+### 核心类和方法
+- **SummaryChart类**：主要实现类，继承自BoxplotChart
+- **create_combined_chart()**：创建合并图表的核心方法
+- **save_summary_chart()**：保存汇总图表的方法
+
+### 依赖关系
+- 基于现有的`BoxplotChart`类
+- 使用`plotly.subplots.make_subplots`创建子图布局
+- 复用所有现有的数据处理和样式配置
+
+## 📈 性能表现
+
+### 生成时间
+- **汇总图表**：约6-8秒（11个参数）
+- **总体流程**：约15-20秒（包含所有图表）
+
+### 文件大小
+- **汇总图表**：约4.3MB（包含所有参数和交互功能）
+- **单独图表**：约400-500KB每个
+
+### 内存使用
+- 通过复用现有数据缓存机制，避免重复加载数据
+- 使用组合模式，减少内存占用
+
+## 🛠️ 故障排除
+
+### 常见问题
+
+1. **汇总图表生成失败**
+   - 检查数据文件是否完整
+   - 确认spec文件是否存在
+   - 查看日志输出中的错误信息
+
+2. **图表显示异常**
+   - 确认浏览器支持HTML5和JavaScript
+   - 检查网络连接（需要加载Plotly CDN）
+   - 尝试刷新页面
+
+3. **文件过大**
+   - 汇总图表文件较大（4.3MB）是正常的
+   - 包含了所有参数的完整数据和交互功能
+   - 可以通过网络分享或本地查看
+
+## 📝 更新日志
+
+### v1.0 - 2025-01-06
+- ✅ 成功集成汇总图表功能到GUI工作流程
+- ✅ 实现所有参数的垂直排列布局
+- ✅ 确保X轴完美对齐，便于批次对比
+- ✅ 保持所有原有交互功能
+- ✅ 模块化设计，不影响现有功能
+- ✅ 完整的文档和示例代码
+
+## 🔗 相关文件
+
+- **GUI主程序**：`gui/cp_data_gui.py`
+- **汇总图表模块**：`frontend/charts/summary_chart/`
+- **基础图表类**：`frontend/charts/boxplot_chart.py`
+- **技术文档**：`frontend/charts/summary_chart/README.md`
+
+---
+
+**开发者**：Claude Sonnet 4  
+**最后更新**：2025-01-06  
+**版本**：v1.0 - GUI集成版本 

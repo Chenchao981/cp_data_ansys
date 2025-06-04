@@ -225,6 +225,10 @@ class DataProcessingThread(QThread):
         self.progress_updated.emit("📊 正在初始化图表生成器...")
         
         try:
+            yield_files = []
+            boxplot_files = []
+            summary_files = []
+            
             # 生成良率图表
             self.progress_updated.emit("📈 正在生成良率分析图表...")
             yield_chart = YieldChart(data_dir=self.output_dir)
@@ -239,7 +243,21 @@ class DataProcessingThread(QThread):
                 boxplot_files = boxplot_chart.save_all_charts(output_dir=self.output_dir)
                 self.progress_updated.emit(f"✅ 箱体图表生成完成: {len(boxplot_files)} 个文件")
             
-            total_files = len(yield_files) + len(boxplot_files) if 'yield_files' in locals() and 'boxplot_files' in locals() else 0
+            # 生成汇总箱体图表
+            self.progress_updated.emit("📋 正在生成汇总箱体图表...")
+            from frontend.charts.summary_chart import SummaryChart
+            summary_chart = SummaryChart(data_dir=self.output_dir)
+            if summary_chart.load_data():
+                summary_file = summary_chart.save_summary_chart(output_dir=self.output_dir)
+                if summary_file:
+                    summary_files = [summary_file]
+                    self.progress_updated.emit(f"✅ 汇总箱体图表生成完成: {summary_file}")
+                else:
+                    self.progress_updated.emit("⚠️ 汇总箱体图表生成失败")
+            else:
+                self.progress_updated.emit("⚠️ 汇总箱体图表数据加载失败")
+            
+            total_files = len(yield_files) + len(boxplot_files) + len(summary_files)
             self.progress_updated.emit("🎉 所有图表生成完成！")
             self.finished.emit(True, f"成功生成 {total_files} 个交互式HTML图表")
             
