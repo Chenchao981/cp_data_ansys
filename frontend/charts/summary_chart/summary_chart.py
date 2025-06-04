@@ -91,7 +91,7 @@ class SummaryChart:
         fig = make_subplots(
             rows=len(parameters),
             cols=1,
-            shared_xaxes=True,  # 共享X轴
+            shared_xaxes=False,  # 不共享X轴，让每个子图都能显示自己的X轴标签
             vertical_spacing=self.summary_config['subplot_spacing'],
             subplot_titles=subplot_titles,
             specs=[[{"secondary_y": False}] for _ in parameters]  # 每个子图的规格
@@ -359,17 +359,20 @@ class SummaryChart:
             dragmode='pan'
         )
         
-        # 配置X轴 - 与BoxplotChart完全一致的配置
+        # 配置X轴 - 每个子图都显示自己的X轴标签
         if x_labels:
             # 计算X轴范围 - 与BoxplotChart完全一致
             x_range_start = -0.5  # 从第一个wafer的左侧0.5个单位开始
             x_range_end = len(x_labels) - 0.5  # 到最后一个wafer的右侧0.5个单位结束
             
+            # 直接使用数字格式的x_labels（1, 2, 3...），与单个箱体图保持一致
+            
+            # 为每个子图配置X轴，让每个参数都显示wafer_id标签
             for i in range(1, len(parameters) + 1):
                 fig.update_xaxes(
                     tickmode='array',
                     tickvals=list(range(len(x_labels))),
-                    ticktext=x_labels if i == len(parameters) else [],  # 只在最后一个子图显示标签
+                    ticktext=x_labels,  # 直接使用数字格式的WAFER_ID标签（1, 2, 3...）
                     tickangle=0,
                     range=[x_range_start, x_range_end],  # 设置X轴显示范围，紧贴数据
                     showgrid=True,        # 显示X轴垂直网格线
@@ -377,14 +380,10 @@ class SummaryChart:
                     gridcolor='rgba(211, 211, 211, 0.5)', # 网格线颜色 - 浅灰带50%透明度
                     griddash='dash',      # X轴网格线也使用虚线
                     fixedrange=False,
+                    showticklabels=True,  # 每个子图都显示X轴标签
+                    title_text="Wafer_ID" if i == len(parameters) else "",  # 只有最底部显示X轴标题
                     row=i, col=1
                 )
-            
-            # 为最底部的X轴添加标题
-            fig.update_xaxes(
-                title_text=self.summary_config['shared_xaxis_title'],
-                row=len(parameters), col=1
-            )
             
             # 添加Lot_ID的二级X轴标签 - 与BoxplotChart完全一致
             if lot_positions:
