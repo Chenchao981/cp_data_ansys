@@ -30,6 +30,43 @@ from frontend.charts.boxplot_chart import BoxplotChart
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# Global variable to keep track of the current file log handler
+current_log_file_handler = None
+
+def setup_file_logging(target_output_dir: str):
+    """
+    Sets up a file handler for logging to the specified output directory.
+    Removes any existing custom file handler before adding a new one.
+    """
+    global current_log_file_handler
+    root_logger = logging.getLogger()
+
+    # Remove existing file handler if it exists
+    if current_log_file_handler:
+        root_logger.removeHandler(current_log_file_handler)
+        current_log_file_handler.close()
+        current_log_file_handler = None
+        logger.info("Previous file log handler removed.")
+
+    try:
+        log_file_name = f"processing_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+        log_file_path = Path(target_output_dir) / log_file_name
+
+        # Create file handler
+        file_handler = logging.FileHandler(log_file_path, encoding='utf-8')
+        file_handler.setLevel(logging.INFO)
+
+        # Create formatter and add it to the handler
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        file_handler.setFormatter(formatter)
+
+        # Add the handler to the root logger
+        root_logger.addHandler(file_handler)
+        current_log_file_handler = file_handler
+        logger.info(f"Logging to file: {log_file_path}")
+    except Exception as e:
+        logger.error(f"Failed to set up file logging to {target_output_dir}: {e}")
+
 
 def get_desktop_path():
     """获取用户桌面路径"""
@@ -406,6 +443,17 @@ class CPDataGUI(QMainWindow):
         folder_name = generate_output_folder_name(self.input_dir)
         self.output_dir = os.path.join(base_output_dir, folder_name)
         
+        # 确保输出目录存在
+        try:
+            os.makedirs(self.output_dir, exist_ok=True)
+            self.log_message(f"📁 输出文件夹已创建/确认: {self.output_dir}")
+            # Setup file logging to the new output directory
+            setup_file_logging(self.output_dir)
+        except Exception as e:
+            self.log_message(f"❌ 创建输出文件夹失败: {self.output_dir} - {e}")
+            QMessageBox.critical(self, "错误", f"创建输出文件夹失败: {e}")
+            return
+
         self.log_message("🚀 开始数据清洗流程...")
         self.log_message(f"📁 输入目录: {self.input_dir}")
         self.log_message(f"📁 输出目录: {self.output_dir}")
@@ -422,9 +470,21 @@ class CPDataGUI(QMainWindow):
     def start_generating(self):
         """开始生成图表"""
         if not self.output_dir:
-            QMessageBox.warning(self, "警告", "请先完成数据清洗！")
+            QMessageBox.warning(self, "警告", "请先完成数据清洗或指定有效的输出文件夹！")
             return
         
+        # Ensure output directory exists (it should, if cleaning was done, but good for standalone generation)
+        try:
+            Path(self.output_dir).mkdir(parents=True, exist_ok=True)
+            # Setup file logging to the output directory for chart generation
+            # This ensures logs are captured even if only chart generation is run (e.g. on existing cleaned data)
+            # or if the output_dir was changed manually (if GUI would allow)
+            setup_file_logging(self.output_dir)
+        except Exception as e:
+            self.log_message(f"❌ 确认/创建输出文件夹失败: {self.output_dir} - {e}")
+            QMessageBox.critical(self, "错误", f"确认/创建输出文件夹失败: {e}")
+            return
+
         self.log_message("🚀 开始图表生成流程...")
         self.set_processing_state(True)
         

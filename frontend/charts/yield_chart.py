@@ -286,16 +286,43 @@ class YieldChart:
         
         chart_df = pd.DataFrame(chart_data)
         logger.info(f"Wafer良率趋势图 - 准备的数据点总数: {len(chart_df)}")
+        if chart_df.empty:
+            logger.warning("图表数据为空，无法生成趋势图")
+            return fig
         
+        unique_lots_in_chart_df = chart_df['lot_id'].unique()
+        logger.info(f"识别到批次数量: {len(unique_lots_in_chart_df)}, 批次列表: {list(unique_lots_in_chart_df)}")
+
         # 为每个Lot创建趋势线
         colors = self.chart_config['colors']
-        for i, lot_id_val in enumerate(chart_df['lot_id'].unique()):
+        for i, lot_id_val in enumerate(unique_lots_in_chart_df):
             lot_data = chart_df[chart_df['lot_id'] == lot_id_val].copy()
             
             # 按X轴位置排序，确保趋势线正确连接
             lot_data = lot_data.sort_values('x_position')
             
             color = colors[i % len(colors)]
+            logger.info(f"正在绘制批次 {lot_id_val}: {len(lot_data)} 个数据点")
+            
+            if lot_data.empty:
+                logger.warning(f"批次 {lot_id_val} 数据为空，跳过绘制")
+                continue
+            
+            nan_yield_count = lot_data['yield_value'].isnull().sum()
+            if nan_yield_count > 0:
+                logger.warning(f"批次 {lot_id_val} 有 {nan_yield_count} NaN yield_values out of {len(lot_data)} points.")
+            if nan_yield_count == len(lot_data) and len(lot_data) > 0:
+                logger.warning(f"批次 {lot_id_val} 所有 yield_values 都是 NaN. 趋势线可能不可见。")
+            
+            min_yield = lot_data['yield_value'].min()
+            max_yield = lot_data['yield_value'].max()
+            logger.info(f"批次 {lot_id_val}: Yield_Numeric Min={min_yield}, Max={max_yield}. (Fixed Y-axis: [95, 101])")
+
+            if pd.notna(min_yield) and pd.notna(max_yield):
+                if not (max_yield >= 95 and min_yield <= 101):
+                     logger.warning(f"批次 {lot_id_val} 所有有效 yield_values ({min_yield}, {max_yield}) 似乎超出 Y-axis 范围 [95, 101]。趋势线可能不可见或被剪切。")
+            elif nan_yield_count != len(lot_data):
+                 logger.error(f"批次 {lot_id_val} 混合 NaN 和有效数据，但 min/max 无法确定。这应该是意外的。")
             
             # 添加趋势线
             fig.add_trace(go.Scatter(
@@ -326,13 +353,10 @@ class YieldChart:
         # 每个wafer分配40像素宽度，最小1200像素
         chart_width = max(1200, total_wafers * 40)
         
-        # 设置初始显示范围（如果数据点太多，只显示前50个）
-        if total_wafers > 50:
-            initial_range = [-0.5, 49.5]
-            autorange = False
-        else:
-            initial_range = [-0.5, len(x_labels) - 0.5]
-            autorange = True
+        # 参考箱体图的X轴设置方式 - 确保显示所有数据点
+        # 计算X轴的实际数据范围，消除两端空白
+        x_range_start = -0.5  # 从第一个wafer的左侧0.5个单位开始
+        x_range_end = len(x_labels) - 0.5  # 到最后一个wafer的右侧0.5个单位结束
         
         # 添加Lot_ID的二级X轴标签（参考箱体图的annotation实现）
         for lot_id_text, pos_info in lot_positions.items():
@@ -360,16 +384,17 @@ class YieldChart:
             title_font_size=self.chart_config['title_font_size'],
             # 启用滚动和缩放
             dragmode='pan',  # 默认为平移模式
-            # X轴配置 - 参考箱体图样式，确保间距一致
+            # X轴配置 - 完全参考箱体图的样式和设置
             xaxis=dict(
+                tickmode='array',
                 tickvals=list(range(len(x_labels))),
                 ticktext=x_labels,
+                tickangle=0,
                 title="Wafer编号",
                 showgrid=True,
                 gridwidth=1,
                 gridcolor='rgba(211, 211, 211, 0.3)',
-                range=initial_range,
-                autorange=autorange,
+                range=[x_range_start, x_range_end],  # 设置X轴显示范围，紧贴数据，确保所有数据点可见
                 fixedrange=False,  # 允许X轴缩放和平移
                 rangeslider=dict(visible=False)  # 不显示范围滑块
             )
