@@ -43,8 +43,28 @@ class BoxplotChart:
             'limit_line_width': 2,
             'font_size': 12,
             'title_font_size': 16,
-            'jitter_amount': 0.15  # 散点抖动幅度
+            'jitter_amount': 0.15,  # 散点抖动幅度
+            # 散点数据优化配置
+            'enable_scatter_optimization': True,  # 是否启用散点优化
+            'max_scatter_points_per_wafer': 80,   # 每个wafer最大散点数
+            'min_scatter_points_per_wafer': 50    # 每个wafer最小散点数
         }
+        
+    def configure_scatter_optimization(self, enable: bool = True, max_points: int = 80, min_points: int = 50):
+        """
+        配置散点数据优化参数
+        
+        Args:
+            enable: 是否启用优化
+            max_points: 每个wafer最大散点数
+            min_points: 每个wafer最小散点数（少于此数量不优化）
+        """
+        self.chart_config['enable_scatter_optimization'] = enable
+        self.chart_config['max_scatter_points_per_wafer'] = max_points
+        self.chart_config['min_scatter_points_per_wafer'] = min_points
+        
+        logger.info(f"散点数据优化配置: {'启用' if enable else '禁用'} "
+                   f"(每wafer {min_points}-{max_points} 点)")
         
     def load_data(self) -> bool:
         """
@@ -164,6 +184,118 @@ class BoxplotChart:
             logger.error(f"获取参数 {parameter} 信息失败: {e}")
             return {}
     
+    def optimize_scatter_data_statistical(self, wafer_data: pd.DataFrame, parameter: str) -> pd.DataFrame:
+        """
+        通用统计特征保留法 - 优化散点图数据量
+        
+        策略：
+        1. 保留所有异常值
+        2. 保留关键统计点（最小值、Q1、中位数、均值、Q3、最大值）
+        3. 对剩余数据进行均匀采样，保持分布形状
+        4. 每个wafer控制在50-100个点之间
+        
+        Args:
+            wafer_data: 单个wafer的数据
+            parameter: 参数名称
+            
+        Returns:
+            优化后的数据DataFrame
+        """
+        if not self.chart_config.get('enable_scatter_optimization', True):
+            return wafer_data
+            
+        # 获取参数值，注意这里直接使用parameter列名而不是'value'
+        values = wafer_data[parameter].values
+        max_points = self.chart_config['max_scatter_points_per_wafer']
+        min_points = self.chart_config['min_scatter_points_per_wafer']
+        
+        # 如果数据点已经很少，直接返回
+        if len(values) <= min_points:
+            return wafer_data
+            
+        # 动态调整保留点数：根据数据量大小
+        if len(values) <= max_points:
+            target_points = len(values)
+        else:
+            # 数据量大时，使用目标点数
+            target_points = max_points
+            
+        try:
+            # 第1步：识别和保留异常值
+            Q1 = np.percentile(values, 25)
+            Q3 = np.percentile(values, 75)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+            
+            outlier_mask = (values < lower_bound) | (values > upper_bound)
+            outlier_indices = wafer_data.index[outlier_mask].tolist()
+            outlier_data = wafer_data.loc[outlier_indices] if len(outlier_indices) > 0 else pd.DataFrame()
+            
+            # 第2步：保留关键统计点
+            Q2 = np.percentile(values, 50)  # 中位数
+            mean_val = np.mean(values)
+            min_val = np.min(values)
+            max_val = np.max(values)
+            
+            key_values = [min_val, Q1, Q2, mean_val, Q3, max_val]
+            key_indices = []
+            for target_val in key_values:
+                # 找到最接近目标值的数据点索引
+                closest_idx = wafer_data.index[np.argmin(np.abs(values - target_val))]
+                if closest_idx not in key_indices:
+                    key_indices.append(closest_idx)
+                    
+            key_data = wafer_data.loc[key_indices]
+            
+            # 第3步：计算剩余配额
+            reserved_count = len(outlier_data) + len(key_data)
+            remaining_quota = max(0, target_points - reserved_count)
+            
+            # 第4步：对非关键、非异常值数据进行均匀采样
+            excluded_indices = set(outlier_indices + key_indices)
+            normal_data = wafer_data[~wafer_data.index.isin(excluded_indices)]
+            
+            if len(normal_data) > 0 and remaining_quota > 0:
+                if len(normal_data) <= remaining_quota:
+                    sampled_normal = normal_data
+                else:
+                    # 均匀采样：按数值排序后等间隔选择
+                    normal_sorted = normal_data.sort_values(parameter)
+                    step = len(normal_sorted) / remaining_quota
+                    sample_indices = [int(i * step) for i in range(remaining_quota)]
+                    # 确保索引不超出范围
+                    sample_indices = [min(idx, len(normal_sorted) - 1) for idx in sample_indices]
+                    sampled_normal = normal_sorted.iloc[sample_indices]
+            else:
+                sampled_normal = pd.DataFrame()
+            
+            # 第5步：合并所有保留的数据
+            result_data_list = []
+            if len(outlier_data) > 0:
+                result_data_list.append(outlier_data)
+            if len(key_data) > 0:
+                result_data_list.append(key_data)
+            if len(sampled_normal) > 0:
+                result_data_list.append(sampled_normal)
+                
+            if result_data_list:
+                optimized_data = pd.concat(result_data_list).drop_duplicates()
+                # 按原始顺序排序
+                optimized_data = optimized_data.sort_index()
+                
+                logger.debug(f"[SCATTER_OPTIMIZATION] '{parameter}' - Wafer数据优化: "
+                           f"{len(wafer_data)} -> {len(optimized_data)} 点 "
+                           f"(异常值:{len(outlier_data)}, 关键点:{len(key_data)}, 采样:{len(sampled_normal)})")
+                return optimized_data
+            else:
+                # 如果出现异常，返回原始数据的前target_points个点
+                return wafer_data.head(target_points)
+                
+        except Exception as e:
+            logger.warning(f"[SCATTER_OPTIMIZATION] '{parameter}' - 优化失败，使用原始数据: {e}")
+            return wafer_data.head(target_points)
+
     def generate_chart_title(self, parameter: str) -> str:
         """
         生成图表标题，格式：参数名[单位]@测试条件_boxplot_chart
@@ -289,8 +421,11 @@ class BoxplotChart:
             for wafer_id in sorted(lot_data['Wafer_ID'].unique()):
                 wafer_data = lot_data[lot_data['Wafer_ID'] == wafer_id]
                 
-                # 添加该wafer的所有数据点
-                for _, row in wafer_data.iterrows():
+                # 应用散点数据优化
+                optimized_wafer_data = self.optimize_scatter_data_statistical(wafer_data, parameter)
+                
+                # 添加优化后的wafer数据点
+                for _, row in optimized_wafer_data.iterrows():
                     chart_data.append({
                         'x_position': x_position,
                         'value': float(row[parameter]),
@@ -311,7 +446,16 @@ class BoxplotChart:
             lot_positions[true_lot_id_val]['end'] = x_position - 1
         
         chart_df = pd.DataFrame(chart_data)
-        logger.info(f"[DATA_CHECK] '{parameter}' - Total scatter points prepared in chart_df: {len(chart_df)}")
+        
+        # 优化效果日志
+        if self.chart_config.get('enable_scatter_optimization', True):
+            original_total = len(valid_data)
+            optimized_total = len(chart_df)
+            reduction_ratio = (original_total - optimized_total) / original_total if original_total > 0 else 0
+            logger.info(f"[SCATTER_OPTIMIZATION] '{parameter}' - 数据优化效果: "
+                       f"{original_total} -> {optimized_total} 点 (减少 {reduction_ratio:.1%})")
+        else:
+            logger.info(f"[DATA_CHECK] '{parameter}' - Total scatter points prepared in chart_df: {len(chart_df)}")
         
         return chart_df, x_labels, param_info, lot_positions
     
