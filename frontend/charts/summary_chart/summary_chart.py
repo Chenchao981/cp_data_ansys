@@ -3,6 +3,7 @@
 """
 Summary Chart 模块 - 合并所有参数的箱体图
 基于BoxplotChart复用数据处理和图表生成逻辑，使用Plotly subplots垂直排列所有参数
+新增：在最上方添加良率对比图
 """
 
 import pandas as pd
@@ -21,7 +22,7 @@ from boxplot_chart import BoxplotChart
 logger = logging.getLogger(__name__)
 
 class SummaryChart:
-    """合并箱体图类 - 将所有参数的箱体图合并到一个页面"""
+    """合并箱体图类 - 将所有参数的箱体图合并到一个页面，顶部添加良率对比图"""
     
     def __init__(self, data_dir: str = "output"):
         """
@@ -34,23 +35,91 @@ class SummaryChart:
         # 复用BoxplotChart的功能
         self.boxplot_chart = BoxplotChart(data_dir)
         
+        # 良率数据
+        self.yield_data = None
+        
         # 合并图表的样式配置
         self.summary_config = {
-            'subplot_height': 450,  # 每个参数子图的高度
+            'subplot_height': 450,  # 每个参数子图的高度（包括良率图）
             'subplot_spacing': 0.02,  # 子图间距
             'title_font_size': 20,
             'subplot_title_font_size': 14,
             'shared_xaxis_title': "Wafer_ID / Lot_ID",
         }
         
+        # 良率图表配色方案 - 与YieldChart保持一致
+        self.yield_colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+        
     def load_data(self) -> bool:
         """
-        加载数据，复用BoxplotChart的数据加载逻辑
+        加载数据，复用BoxplotChart的数据加载逻辑，同时加载良率数据
         
         Returns:
             bool: 是否成功加载数据
         """
-        return self.boxplot_chart.load_data()
+        # 加载箱体图数据
+        boxplot_success = self.boxplot_chart.load_data()
+        
+        # 加载良率数据
+        yield_success = self._load_yield_data()
+        
+        return boxplot_success and yield_success
+    
+    def _load_yield_data(self) -> bool:
+        """
+        加载良率数据
+        
+        Returns:
+            bool: 是否成功加载良率数据
+        """
+        try:
+            # 查找yield文件
+            yield_files = list(self.data_dir.glob("*_yield_*.csv"))
+            if not yield_files:
+                logger.error("未找到yield数据文件")
+                return False
+            
+            # 使用第一个找到的yield文件
+            yield_file = yield_files[0]
+            logger.info(f"加载良率数据文件: {yield_file}")
+            
+            # 读取yield数据
+            self.yield_data = pd.read_csv(yield_file)
+            
+            # 数据预处理
+            self._preprocess_yield_data()
+            
+            logger.info(f"良率数据加载成功，共 {len(self.yield_data)} 条记录")
+            return True
+            
+        except Exception as e:
+            logger.error(f"加载良率数据失败: {e}")
+            return False
+    
+    def _preprocess_yield_data(self):
+        """预处理良率数据"""
+        if self.yield_data is None:
+            return
+        
+        # 过滤掉汇总行
+        self.yield_data = self.yield_data[self.yield_data['Lot_ID'] != 'ALL'].copy()
+        
+        # 转换良率为数值格式
+        if 'Yield' in self.yield_data.columns:
+            self.yield_data['Yield_Numeric'] = self.yield_data['Yield'].str.rstrip('%').astype(float)
+        
+        # 提取真实的Lot_ID（去掉@后缀）
+        def get_true_lot_id(raw_lot_id):
+            if isinstance(raw_lot_id, str) and '@' in raw_lot_id:
+                return raw_lot_id.split('@')[0]
+            return raw_lot_id
+        
+        self.yield_data['Lot_Short'] = self.yield_data['Lot_ID'].apply(get_true_lot_id)
+        
+        # 按Lot_Short和Wafer_ID排序
+        self.yield_data = self.yield_data.sort_values(['Lot_Short', 'Wafer_ID']).reset_index(drop=True)
+        
+        logger.info(f"良率数据预处理完成，识别到 {self.yield_data['Lot_Short'].nunique()} 个批次")
     
     def get_available_parameters(self) -> List[str]:
         """
@@ -63,13 +132,17 @@ class SummaryChart:
     
     def create_combined_chart(self) -> go.Figure:
         """
-        创建合并的箱体图，所有参数垂直排列
+        创建合并的图表，顶部为良率对比图，下方为所有参数的箱体图垂直排列
         
         Returns:
             go.Figure: 合并的Plotly图表对象
         """
         if self.boxplot_chart.cleaned_data is None:
-            logger.error("数据未加载，无法创建合并图表")
+            logger.error("箱体图数据未加载，无法创建合并图表")
+            return go.Figure()
+        
+        if self.yield_data is None:
+            logger.error("良率数据未加载，无法创建合并图表")
             return go.Figure()
         
         # 获取所有可用参数
@@ -78,35 +151,40 @@ class SummaryChart:
             logger.error("没有可用的测试参数")
             return go.Figure()
         
-        logger.info(f"开始创建包含 {len(parameters)} 个参数的合并图表")
+        logger.info(f"开始创建包含良率图和 {len(parameters)} 个参数的合并图表")
         
-        # 创建子图布局 - 垂直排列，共享X轴
-        subplot_titles = []
+        # 创建子图布局 - 第一行为良率图，后续行为参数箱体图
+        subplot_titles = ["📊 批次良率对比"]  # 良率图标题
+        
+        # 添加参数图标题
         for param in parameters:
             param_info = self.boxplot_chart.get_parameter_info(param)
             unit_str = f" [{param_info.get('unit', '')}]" if param_info.get('unit') else ""
             test_cond = f" @{param_info.get('test_condition', '')}" if param_info.get('test_condition') else ""
             subplot_titles.append(f"{param}{unit_str}{test_cond}")
         
+        # 总行数 = 1（良率图）+ len(parameters)（参数图）
+        total_rows = 1 + len(parameters)
+        
         fig = make_subplots(
-            rows=len(parameters),
+            rows=total_rows,
             cols=1,
             shared_xaxes=False,  # 不共享X轴，让每个子图都能显示自己的X轴标签
             vertical_spacing=self.summary_config['subplot_spacing'],
             subplot_titles=subplot_titles,
-            specs=[[{"secondary_y": False}] for _ in parameters]  # 每个子图的规格
+            specs=[[{"secondary_y": False}] for _ in range(total_rows)]  # 每个子图的规格
         )
         
-        # 为每个参数生成箱体图数据并添加到对应的子图
-        x_labels = None  # 用于确保所有子图使用相同的X轴标签
-        lot_positions = None  # 批次位置信息
+        # 第一步：添加良率对比图（第1行）
+        x_labels, lot_positions = self._add_yield_comparison_chart(fig, row=1)
         
-        for i, param in enumerate(parameters, 1):
+        # 第二步：为每个参数生成箱体图数据并添加到对应的子图（从第2行开始）
+        for i, param in enumerate(parameters, 2):  # 从第2行开始
             try:
                 # 复用BoxplotChart的数据准备逻辑
                 chart_data, current_x_labels, param_info, current_lot_positions = self.boxplot_chart.prepare_chart_data(param)
                 
-                # 第一个参数时保存X轴标签和批次位置，后续参数复用
+                # 确保X轴标签和批次位置与良率图一致
                 if x_labels is None:
                     x_labels = current_x_labels
                     lot_positions = current_lot_positions
@@ -135,8 +213,123 @@ class SummaryChart:
         # 设置整体布局
         self._configure_layout(fig, parameters, x_labels, lot_positions)
         
-        logger.info(f"合并图表创建完成，包含 {len(parameters)} 个参数")
+        logger.info(f"合并图表创建完成，包含良率图和 {len(parameters)} 个参数")
         return fig
+    
+    def _add_yield_comparison_chart(self, fig: go.Figure, row: int) -> Tuple[List[str], Dict]:
+        """
+        添加Wafer良率趋势图到指定行
+        
+        Args:
+            fig: Plotly图表对象
+            row: 子图行号
+            
+        Returns:
+            Tuple[List[str], Dict]: X轴标签和批次位置信息
+        """
+        if self.yield_data is None or self.yield_data.empty:
+            logger.warning("良率数据为空，无法生成良率趋势图")
+            return [], {}
+        
+        # 准备图表数据 - 复用YieldChart的逻辑
+        chart_data = []
+        x_labels = []
+        x_position = 0
+        lot_positions = {}
+        
+        # 按Lot_Short分组处理，保持与箱体图相同的排序
+        for lot_id_val in self.yield_data['Lot_Short'].unique():
+            lot_data = self.yield_data[self.yield_data['Lot_Short'] == lot_id_val]
+            lot_positions[lot_id_val] = {'start': x_position, 'wafers': []}
+            
+            # 为每个wafer分配X轴位置 - 修复排序问题
+            wafer_ids = lot_data['Wafer_ID'].unique()
+            # 将Wafer_ID转换为数值进行排序，然后转回字符串
+            try:
+                wafer_ids_numeric = [int(w) for w in wafer_ids]
+                wafer_ids_sorted = [str(w) for w in sorted(wafer_ids_numeric)]
+            except ValueError:
+                # 如果转换失败，使用字符串排序
+                wafer_ids_sorted = sorted(wafer_ids)
+            
+            for wafer_id in wafer_ids_sorted:
+                wafer_data = lot_data[lot_data['Wafer_ID'] == wafer_id]
+                
+                # 只取第一行数据，避免重复
+                if not wafer_data.empty:
+                    row_data = wafer_data.iloc[0]
+                    chart_data.append({
+                        'x_position': x_position,
+                        'yield_value': row_data['Yield_Numeric'],
+                        'lot_id': lot_id_val,
+                        'wafer_id': wafer_id,
+                        'x_label': str(wafer_id)
+                    })
+                
+                # 记录wafer信息
+                lot_positions[lot_id_val]['wafers'].append({
+                    'wafer_id': wafer_id,
+                    'x_position': x_position
+                })
+                
+                x_labels.append(str(wafer_id))
+                x_position += 1
+            
+            lot_positions[lot_id_val]['end'] = x_position - 1
+        
+        chart_df = pd.DataFrame(chart_data)
+        logger.info(f"Wafer良率趋势图 - 准备的数据点总数: {len(chart_df)}")
+        
+        if chart_df.empty:
+            logger.warning("图表数据为空，无法生成趋势图")
+            return x_labels, lot_positions
+        
+        unique_lots_in_chart_df = chart_df['lot_id'].unique()
+        logger.info(f"识别到批次数量: {len(unique_lots_in_chart_df)}, 批次列表: {list(unique_lots_in_chart_df)}")
+
+        # 为每个Lot创建趋势线
+        for i, lot_id_val in enumerate(unique_lots_in_chart_df):
+            lot_data = chart_df[chart_df['lot_id'] == lot_id_val].copy()
+            
+            # 按X轴位置排序，确保趋势线正确连接
+            lot_data = lot_data.sort_values('x_position')
+            
+            color = self.yield_colors[i % len(self.yield_colors)]
+            logger.info(f"正在绘制批次 {lot_id_val}: {len(lot_data)} 个数据点")
+            
+            if lot_data.empty:
+                logger.warning(f"批次 {lot_id_val} 数据为空，跳过绘制")
+                continue
+            
+            # 添加趋势线
+            fig.add_trace(go.Scatter(
+                x=lot_data['x_position'],
+                y=lot_data['yield_value'],
+                mode='lines+markers',
+                name=lot_id_val,
+                line=dict(color=color, width=3),
+                marker=dict(size=8, symbol='circle', color=color),
+                hovertemplate=f'<b>{lot_id_val}</b><br>' +
+                             'Wafer: %{customdata[0]}<br>' +
+                             '良率: %{y:.2f}%<br>' +
+                             '<extra></extra>',
+                customdata=[[row_data['wafer_id']] for _, row_data in lot_data.iterrows()],
+                showlegend=True,
+                legendgroup=f"yield_{lot_id_val}"
+            ), row=row, col=1)
+        
+        # 添加平均线
+        overall_mean = self.yield_data['Yield_Numeric'].mean()
+        fig.add_hline(
+            y=overall_mean,
+            line_dash="dash",
+            line_color="#FF6347",
+            annotation_text=f"平均良率: {overall_mean:.2f}%",
+            annotation_position="top right",
+            row=row, col=1
+        )
+        
+        return x_labels, lot_positions
     
     def _add_parameter_traces(self, fig: go.Figure, chart_data: pd.DataFrame, param_info: Dict, row: int):
         """
@@ -333,8 +526,8 @@ class SummaryChart:
             x_labels: X轴标签
             lot_positions: 批次位置信息
         """
-        # 计算总高度
-        total_height = len(parameters) * self.summary_config['subplot_height']
+        # 计算总高度 = 1（良率图）+ len(parameters)（参数图）
+        total_height = (1 + len(parameters)) * self.summary_config['subplot_height']
         
         # 动态计算图表宽度 - 复用BoxplotChart的逻辑
         num_total_wafers = len(x_labels) if x_labels else 20
@@ -346,7 +539,7 @@ class SummaryChart:
         
         fig.update_layout(
             title=dict(
-                text=f"📊 {dataset_name} - 所有参数箱体图汇总",
+                text=f"📊 {dataset_name} - 良率分析与参数箱体图汇总",
                 font_size=self.summary_config['title_font_size'],
                 x=0.5
             ),
@@ -354,7 +547,7 @@ class SummaryChart:
             height=total_height,
             font_size=self.boxplot_chart.chart_config['font_size'],
             hovermode='closest',
-            showlegend=False,
+            showlegend=True,  # 显示图例（良率图需要图例）
             # 启用滚动和缩放
             dragmode='pan'
         )
@@ -365,25 +558,45 @@ class SummaryChart:
             x_range_start = -0.5  # 从第一个wafer的左侧0.5个单位开始
             x_range_end = len(x_labels) - 0.5  # 到最后一个wafer的右侧0.5个单位结束
             
-            # 直接使用数字格式的x_labels（1, 2, 3...），与单个箱体图保持一致
+            # 总行数 = 1（良率图）+ len(parameters)（参数图）
+            total_rows = 1 + len(parameters)
             
-            # 为每个子图配置X轴，让每个参数都显示wafer_id标签
-            for i in range(1, len(parameters) + 1):
-                fig.update_xaxes(
-                    tickmode='array',
-                    tickvals=list(range(len(x_labels))),
-                    ticktext=x_labels,  # 直接使用数字格式的WAFER_ID标签（1, 2, 3...）
-                    tickangle=0,
-                    range=[x_range_start, x_range_end],  # 设置X轴显示范围，紧贴数据
-                    showgrid=True,        # 显示X轴垂直网格线
-                    gridwidth=1,          # 网格线宽度
-                    gridcolor='rgba(211, 211, 211, 0.5)', # 网格线颜色 - 浅灰带50%透明度
-                    griddash='dash',      # X轴网格线也使用虚线
-                    fixedrange=False,
-                    showticklabels=True,  # 每个子图都显示X轴标签
-                    title_text="Wafer_ID" if i == len(parameters) else "",  # 只有最底部显示X轴标题
-                    row=i, col=1
-                )
+            # 为每个子图配置X轴
+            for i in range(1, total_rows + 1):
+                if i == 1:
+                    # 第1行：良率图的X轴配置
+                    fig.update_xaxes(
+                        tickmode='array',
+                        tickvals=list(range(len(x_labels))),
+                        ticktext=x_labels,  # 显示wafer_id标签
+                        tickangle=0,
+                        range=[x_range_start, x_range_end],
+                        showgrid=True,
+                        gridwidth=1,
+                        gridcolor='rgba(211, 211, 211, 0.5)',
+                        griddash='dash',
+                        fixedrange=False,
+                        showticklabels=True,
+                        title_text="",  # 良率图不显示X轴标题
+                        row=i, col=1
+                    )
+                else:
+                    # 第2行及以后：参数图的X轴配置
+                    fig.update_xaxes(
+                        tickmode='array',
+                        tickvals=list(range(len(x_labels))),
+                        ticktext=x_labels,  # 直接使用数字格式的WAFER_ID标签（1, 2, 3...）
+                        tickangle=0,
+                        range=[x_range_start, x_range_end],  # 设置X轴显示范围，紧贴数据
+                        showgrid=True,        # 显示X轴垂直网格线
+                        gridwidth=1,          # 网格线宽度
+                        gridcolor='rgba(211, 211, 211, 0.5)', # 网格线颜色 - 浅灰带50%透明度
+                        griddash='dash',      # X轴网格线也使用虚线
+                        fixedrange=False,
+                        showticklabels=True,  # 每个子图都显示X轴标签
+                        title_text="Wafer_ID" if i == total_rows else "",  # 只有最底部显示X轴标题
+                        row=i, col=1
+                    )
             
             # 添加Lot_ID的二级X轴标签 - 与BoxplotChart完全一致
             if lot_positions:
@@ -399,8 +612,20 @@ class SummaryChart:
                         font=dict(size=10, color="blue")
                     )
         
-        # 配置Y轴标签和范围 - 与BoxplotChart完全一致
-        for i, param in enumerate(parameters, 1):
+        # 配置Y轴
+        # 第1行：良率图的Y轴配置
+        fig.update_yaxes(
+            title_text="良率 (%)",
+            showgrid=True,
+            gridwidth=1,
+            gridcolor='rgba(211, 211, 211, 0.5)',
+            griddash='dash',
+            range=[95, 101],  # 良率图的Y轴范围，与独立良率图保持一致
+            row=1, col=1
+        )
+        
+        # 第2行及以后：参数图的Y轴配置 - 与BoxplotChart完全一致
+        for i, param in enumerate(parameters, 2):  # 从第2行开始
             param_info = self.boxplot_chart.get_parameter_info(param)
             unit_str = f" [{param_info.get('unit', '')}]" if param_info.get('unit') else ""
             
