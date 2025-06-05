@@ -171,7 +171,7 @@ processed_data = transformer.data
 
 - 支持交互式图表和静态图表
 - 可自定义色彩方案和标签
-- 支持导出为多种格式(PNG, PDF, SVG等)
+- 支持导出为多种格式(PNG, PDF等)
 
 #### 使用示例：
 
