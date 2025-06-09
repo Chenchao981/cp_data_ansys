@@ -19,6 +19,26 @@ import sys
 sys.path.append(str(Path(__file__).parent.parent))
 from boxplot_chart import BoxplotChart
 
+# 导入JavaScript嵌入工具 - 使用兼容的导入方式
+def get_embedded_plotly_js():
+    """获取嵌入式Plotly.js内容"""
+    try:
+        # 尝试相对导入
+        from ..js_embedder import get_embedded_plotly_js as _get_embedded_plotly_js
+        return _get_embedded_plotly_js()
+    except ImportError:
+        try:
+            # 尝试绝对导入
+            current_dir = Path(__file__).parent.parent
+            if str(current_dir) not in sys.path:
+                sys.path.append(str(current_dir))
+            from js_embedder import get_embedded_plotly_js as _get_embedded_plotly_js
+            return _get_embedded_plotly_js()
+        except ImportError:
+            # 最后回退到CDN
+            logger.warning("无法导入JavaScript嵌入工具，使用CDN模式")
+            return 'https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js'
+
 logger = logging.getLogger(__name__)
 
 class SummaryChart:
@@ -708,10 +728,10 @@ class SummaryChart:
             filename = f"{dataset_name}_summary_chart.html"
             file_path = output_path / filename
             
-            # 保存HTML文件
+            # 保存HTML文件 - 使用本地嵌入的Plotly.js，避免CDN加载失败
             fig.write_html(
                 str(file_path),
-                include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js',
+                include_plotlyjs=get_embedded_plotly_js(),
                 validate=False
             )
             

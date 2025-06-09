@@ -14,6 +14,26 @@ from typing import Dict, List, Optional, Tuple
 import logging
 from pathlib import Path
 
+# 导入JavaScript嵌入工具 - 使用兼容的导入方式
+def get_embedded_plotly_js():
+    """获取嵌入式Plotly.js内容"""
+    try:
+        # 尝试相对导入
+        from .js_embedder import get_embedded_plotly_js as _get_embedded_plotly_js
+        return _get_embedded_plotly_js()
+    except ImportError:
+        try:
+            # 尝试绝对导入
+            current_dir = Path(__file__).parent
+            if str(current_dir) not in sys.path:
+                sys.path.append(str(current_dir))
+            from js_embedder import get_embedded_plotly_js as _get_embedded_plotly_js
+            return _get_embedded_plotly_js()
+        except ImportError:
+            # 最后回退到CDN
+            logger.warning("无法导入JavaScript嵌入工具，使用CDN模式")
+            return 'https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js'
+
 logger = logging.getLogger(__name__)
 
 class BoxplotChart:
@@ -1102,10 +1122,10 @@ class BoxplotChart:
             filename = f"{title}.html" # 保持原文件名格式
             file_path = output_path / filename
             
-            # 使用unpkg CDN减小文件大小，保留完整工具栏功能
+            # 使用本地嵌入的Plotly.js，避免CDN加载失败
             figure_to_save.write_html(
                 str(file_path),
-                include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js',
+                include_plotlyjs=get_embedded_plotly_js(),
                 validate=False  # 跳过验证，提升速度
             )
             logger.info(f"图表已保存: {file_path}")
@@ -1144,10 +1164,10 @@ class BoxplotChart:
                 filename = f"{title}.html"
                 file_path = output_path / filename
                 
-                # 使用unpkg CDN减小文件大小，保留完整工具栏功能
+                # 使用本地嵌入的Plotly.js，避免CDN加载失败
                 figure.write_html(
                     str(file_path),
-                    include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js',
+                    include_plotlyjs=get_embedded_plotly_js(),
                     validate=False  # 跳过验证，提升速度
                 )
                 saved_paths.append(file_path)

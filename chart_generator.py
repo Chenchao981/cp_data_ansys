@@ -7,12 +7,33 @@
 """
 
 import logging
+import sys
 from pathlib import Path
 import plotly.express as px
 import pandas as pd
 
 # 导入 YieldChart 类
 from frontend.charts.yield_chart import YieldChart
+
+# 导入JavaScript嵌入工具 - 使用兼容的导入方式
+def get_embedded_plotly_js():
+    """获取嵌入式Plotly.js内容"""
+    try:
+        # 尝试绝对导入
+        from frontend.charts.js_embedder import get_embedded_plotly_js as _get_embedded_plotly_js
+        return _get_embedded_plotly_js()
+    except ImportError:
+        try:
+            # 尝试从当前目录导入
+            current_dir = Path(__file__).parent / "frontend" / "charts"
+            if str(current_dir) not in sys.path:
+                sys.path.append(str(current_dir))
+            from js_embedder import get_embedded_plotly_js as _get_embedded_plotly_js
+            return _get_embedded_plotly_js()
+        except ImportError:
+            # 最后回退到CDN
+            logger.warning("无法导入JavaScript嵌入工具，使用CDN模式")
+            return 'https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js'
 
 # 配置日志记录
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -126,10 +147,10 @@ def generate_custom_plotly_charts(cleaned_df, yield_analyzer, output_base_dir):
             )
 
             box_filename = custom_output_dir / f"{param}_boxplot.html"
-            # 使用unpkg CDN减小文件大小，保留完整工具栏功能
+            # 使用本地嵌入的Plotly.js，避免CDN加载失败
             fig_box.write_html(
                 str(box_filename),
-                include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js',
+                include_plotlyjs=get_embedded_plotly_js(),
                 validate=False  # 跳过验证，提升速度
             )
             logger.info(f"  ✅ [{i}/{len(plot_params)}] 箱体图: {box_filename.name}")
@@ -174,10 +195,10 @@ def generate_custom_plotly_charts(cleaned_df, yield_analyzer, output_base_dir):
                     )
 
                     scatter_filename = custom_output_dir / f"{param1}_vs_{param2}_scatter.html"
-                    # 使用unpkg CDN减小文件大小，保留完整工具栏功能
+                    # 使用本地嵌入的Plotly.js，避免CDN加载失败
                     fig_scatter.write_html(
                         str(scatter_filename),
-                        include_plotlyjs='https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js',
+                        include_plotlyjs=get_embedded_plotly_js(),
                         validate=False  # 跳过验证，提升速度
                     )
                     logger.info(f"  ✅ 散点图: {scatter_filename.name}")
