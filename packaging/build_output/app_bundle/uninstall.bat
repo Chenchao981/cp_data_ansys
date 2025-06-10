@@ -1,34 +1,34 @@
 @echo off
-echo CP Data Analysis Tool Uninstaller
+echo 🗑️ CP数据分析工具卸载程序
 echo ===============================
 echo.
 
-set "INSTALL_DIR=%ProgramFiles%\CP Data Analysis Tool"
+set "INSTALL_DIR=%ProgramFiles%\CP数据分析工具"
 if not exist "%INSTALL_DIR%" (
-    set "INSTALL_DIR=%USERPROFILE%\CP Data Analysis Tool"
+    set "INSTALL_DIR=%USERPROFILE%\CP数据分析工具"
 )
 
-echo Detected installation directory: %INSTALL_DIR%
+echo 📁 检测到安装目录: %INSTALL_DIR%
 echo.
-echo WARNING: Are you sure you want to uninstall CP Data Analysis Tool?
-echo This will remove all program files (user data will be preserved)
+echo ⚠️ 确定要卸载CP数据分析工具吗？
+echo 这将删除所有程序文件（不包括用户数据）
 pause
 
 if exist "%INSTALL_DIR%" (
-    echo Removing program files...
+    echo 🔄 正在删除程序文件...
     rmdir /s /q "%INSTALL_DIR%"
     if errorlevel 1 (
-        echo ERROR: Deletion failed, some files may be in use
+        echo ❌ 删除失败，可能有文件被占用
     ) else (
-        echo Program files removed successfully
+        echo ✅ 程序文件已删除
     )
 )
 
-REM Remove shortcuts
-echo Cleaning up shortcuts...
-del "%USERPROFILE%\Desktop\CP Data Analysis Tool.lnk" 2>nul
-rmdir /s /q "%APPDATA%\Microsoft\Windows\Start Menu\Programs\CP Data Analysis Tool" 2>nul
+REM 删除快捷方式
+echo 🔗 清理快捷方式...
+del "%USERPROFILE%\Desktop\CP数据分析工具.lnk" 2>nul
+rmdir /s /q "%APPDATA%\Microsoft\Windows\Start Menu\Programs\CP数据分析工具" 2>nul
 
 echo.
-echo Uninstallation completed!
+echo ✅ 卸载完成！
 pause
