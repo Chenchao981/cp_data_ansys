@@ -24,8 +24,8 @@ dependencies:
   # 压缩和打包需要的
   - conda-pack
   
-  # 可选：如果需要GUI支持
-  # - pyqt5>=5.15.0
+  # GUI支持 (tkinter通常随Python安装，但确保可用)
+  - tk
   
   # pip安装的包（如果有的话）
   # - pip

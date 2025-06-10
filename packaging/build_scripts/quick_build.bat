@@ -41,7 +41,7 @@ echo.
 
 REM 运行Python构建脚本
 echo 🔨 开始构建过程...
-python conda_pack_builder.py
+python build_scripts\conda_pack_builder.py
 
 if errorlevel 1 (
     echo.

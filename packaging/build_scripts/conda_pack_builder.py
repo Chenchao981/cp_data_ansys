@@ -161,6 +161,7 @@ class CondaPackBuilder:
         
         # 复制核心文件
         core_files = [
+            "cp_data_processor_gui.py",  # GUI主程序
             "chart_generator.py",
             "README.md",
             "requirements.txt",
@@ -256,8 +257,8 @@ REM 进入应用程序目录
 cd /d "%APP_CODE_DIR%"
 
 REM 启动应用程序
-echo 🚀 启动CP数据分析工具...
-python chart_generator.py
+echo 🚀 启动CP数据分析工具GUI...
+python cp_data_processor_gui.py
 
 REM 检查运行结果
 if errorlevel 1 (
@@ -315,9 +316,9 @@ def main():
     new_env["PYTHONPATH"] = str(app_code_dir) + ";" + new_env.get("PYTHONPATH", "")
     
     # 启动应用程序
-    print("🚀 启动CP数据分析工具...")
+    print("🚀 启动CP数据分析工具GUI...")
     python_exe = env_dir / "python.exe"
-    app_script = app_code_dir / "chart_generator.py"
+    app_script = app_code_dir / "cp_data_processor_gui.py"
     
     try:
         result = subprocess.run([
