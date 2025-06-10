@@ -1,61 +1,61 @@
 @echo off
-echo 🛠️ CP数据分析工具安装程序
+echo CP Data Analysis Tool Installer
 echo ===============================
 echo.
 
-REM 检查管理员权限
+REM Check administrator privileges
 net session >nul 2>&1
 if errorlevel 1 (
-    echo ⚠️ 建议以管理员身份运行以获得最佳体验
-    echo 但也可以继续普通安装...
+    echo WARNING: Administrator privileges recommended for best experience.
+    echo You can continue with normal installation...
     echo.
     pause
 )
 
-set "INSTALL_DIR=%ProgramFiles%\CP数据分析工具"
+set "INSTALL_DIR=%ProgramFiles%\CP Data Analysis Tool"
 set "CURRENT_DIR=%~dp0"
 
-echo 📁 安装目录: %INSTALL_DIR%
-echo 📁 源目录: %CURRENT_DIR%
+echo Install Directory: %INSTALL_DIR%
+echo Source Directory: %CURRENT_DIR%
 echo.
 
-REM 创建安装目录
+REM Create installation directory
 if not exist "%INSTALL_DIR%" (
     mkdir "%INSTALL_DIR%"
     if errorlevel 1 (
-        echo ❌ 无法创建安装目录，可能需要管理员权限
-        set "INSTALL_DIR=%USERPROFILE%\CP数据分析工具"
-        echo 🔄 改为用户目录安装: !INSTALL_DIR!
+        echo ERROR: Cannot create installation directory. Administrator privileges may be required.
+        set "INSTALL_DIR=%USERPROFILE%\CP Data Analysis Tool"
+        echo Switching to user directory installation: !INSTALL_DIR!
         mkdir "!INSTALL_DIR!"
     )
 )
 
-REM 复制文件
-echo 📋 复制应用程序文件...
+REM Copy files
+echo Copying application files...
 xcopy "%CURRENT_DIR%*" "%INSTALL_DIR%\" /E /I /Y /Q
 if errorlevel 1 (
-    echo ❌ 文件复制失败
+    echo ERROR: File copy failed.
     pause
     exit /b 1
 )
 
-REM 创建桌面快捷方式
-echo 🔗 创建桌面快捷方式...
-set "SHORTCUT=%USERPROFILE%\Desktop\CP数据分析工具.lnk"
-powershell -Command "$WshShell = New-Object -comObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%SHORTCUT%'); $Shortcut.TargetPath = '%INSTALL_DIR%\scripts\start_app.bat'; $Shortcut.WorkingDirectory = '%INSTALL_DIR%'; $Shortcut.Description = 'CP数据分析工具'; $Shortcut.Save()"
+REM Create desktop shortcut
+echo Creating desktop shortcut...
+set "SHORTCUT=%USERPROFILE%\Desktop\CP Data Analysis Tool.lnk"
+powershell -Command "$WshShell = New-Object -comObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%SHORTCUT%'); $Shortcut.TargetPath = '%INSTALL_DIR%\scripts\start_app.bat'; $Shortcut.WorkingDirectory = '%INSTALL_DIR%'; $Shortcut.Description = 'CP Data Analysis Tool'; $Shortcut.Save()"
 
-REM 创建开始菜单快捷方式
-echo 📋 创建开始菜单快捷方式...
+REM Create start menu shortcut
+echo Creating start menu shortcut...
 set "START_MENU=%APPDATA%\Microsoft\Windows\Start Menu\Programs"
-if not exist "%START_MENU%\CP数据分析工具" mkdir "%START_MENU%\CP数据分析工具"
-set "START_SHORTCUT=%START_MENU%\CP数据分析工具\CP数据分析工具.lnk"
-powershell -Command "$WshShell = New-Object -comObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%START_SHORTCUT%'); $Shortcut.TargetPath = '%INSTALL_DIR%\scripts\start_app.bat'; $Shortcut.WorkingDirectory = '%INSTALL_DIR%'; $Shortcut.Description = 'CP数据分析工具'; $Shortcut.Save()"
+if not exist "%START_MENU%\CP Data Analysis Tool" mkdir "%START_MENU%\CP Data Analysis Tool"
+set "START_SHORTCUT=%START_MENU%\CP Data Analysis Tool\CP Data Analysis Tool.lnk"
+powershell -Command "$WshShell = New-Object -comObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%START_SHORTCUT%'); $Shortcut.TargetPath = '%INSTALL_DIR%\scripts\start_app.bat'; $Shortcut.WorkingDirectory = '%INSTALL_DIR%'; $Shortcut.Description = 'CP Data Analysis Tool'; $Shortcut.Save()"
 
 echo.
-echo ✅ 安装完成！
-echo 📍 安装位置: %INSTALL_DIR%
-echo 🖥️ 桌面快捷方式: CP数据分析工具
-echo 📋 开始菜单: CP数据分析工具
+echo Installation completed successfully!
+echo Install Location: %INSTALL_DIR%
+echo Desktop Shortcut: CP Data Analysis Tool
+echo Start Menu: CP Data Analysis Tool
 echo.
-echo 💡 首次运行时会自动初始化Python环境，请耐心等待
+echo NOTE: First run will automatically initialize Python environment. Please be patient.
 pause

@@ -208,67 +208,67 @@ class CondaPackBuilder:
         launcher_content = '''@echo off
 setlocal EnableDelayedExpansion
 
-echo 🔬 CP数据分析工具启动中...
+echo CP Data Analysis Tool Starting...
 echo.
 
-REM 设置应用程序目录
+REM Set application directories
 set "APP_DIR=%~dp0.."
 set "ENV_DIR=%APP_DIR%\\python_env"
 set "APP_CODE_DIR=%APP_DIR%\\app"
 
-REM 检查环境是否已解压
+REM Check if environment is unpacked
 if not exist "%ENV_DIR%\\python.exe" (
-    echo 📦 首次运行，正在初始化Python环境...
-    echo 这可能需要几分钟时间，请耐心等待...
+    echo First run detected. Initializing Python environment...
+    echo This may take a few minutes, please wait...
     echo.
     
-    REM 解压Python环境
+    REM Extract Python environment
     cd /d "%ENV_DIR%"
     if exist "environment.tar.gz" (
-        echo 🔄 正在解压Python环境...
+        echo Extracting Python environment...
         tar -xzf environment.tar.gz
         if errorlevel 1 (
-            echo ❌ 环境解压失败，请检查tar命令是否可用
-            echo 💡 提示：Windows 10 1903+自带tar命令
+            echo ERROR: Environment extraction failed. Please check if tar command is available.
+            echo NOTE: Windows 10 1903+ includes tar command by default.
             pause
             exit /b 1
         )
         
-        REM 激活环境
+        REM Activate environment
         call conda-unpack.exe
         if errorlevel 1 (
-            echo ⚠️ 环境激活可能有问题，但会尝试继续运行
+            echo WARNING: Environment activation may have issues, but will try to continue.
         )
         
-        echo ✅ Python环境初始化完成
+        echo Python environment initialization completed.
         echo.
     ) else (
-        echo ❌ 未找到环境包文件
+        echo ERROR: Environment package file not found.
         pause
         exit /b 1
     )
 )
 
-REM 设置Python路径
+REM Set Python paths
 set "PATH=%ENV_DIR%;%ENV_DIR%\\Scripts;%ENV_DIR%\\Library\\bin;%PATH%"
 set "PYTHONPATH=%APP_CODE_DIR%;%PYTHONPATH%"
 
-REM 进入应用程序目录
+REM Change to application directory
 cd /d "%APP_CODE_DIR%"
 
-REM 启动应用程序
-echo 🚀 启动CP数据分析工具GUI...
+REM Start application
+echo Starting CP Data Analysis Tool GUI...
 python cp_data_processor_gui.py
 
-REM 检查运行结果
+REM Check execution result
 if errorlevel 1 (
     echo.
-    echo ❌ 应用程序运行出错
-    echo 💡 请检查是否有权限问题或缺少依赖
+    echo ERROR: Application execution failed.
+    echo Please check for permission issues or missing dependencies.
     pause
 ) else (
     echo.
-    echo ✅ 应用程序运行完成
+    echo Application execution completed.
     pause
 )
 '''
@@ -281,7 +281,7 @@ if errorlevel 1 (
         launcher_py_content = '''#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-CP数据分析工具启动器
+CP Data Analysis Tool Launcher
 """
 
 import os
@@ -292,8 +292,8 @@ import tarfile
 from pathlib import Path
 
 def main():
-    """主启动函数"""
-    print("🔬 CP数据分析工具启动器")
+    """Main launcher function"""
+    print("CP Data Analysis Tool Launcher")
     print("=" * 40)
     
     # 获取路径
@@ -304,7 +304,7 @@ def main():
     
     # 检查并初始化环境
     if not (env_dir / "python.exe").exists():
-        print("📦 首次运行，初始化Python环境...")
+        print("First run detected. Initializing Python environment...")
         initialize_environment(env_dir)
     
     # 设置环境变量
@@ -316,7 +316,7 @@ def main():
     new_env["PYTHONPATH"] = str(app_code_dir) + ";" + new_env.get("PYTHONPATH", "")
     
     # 启动应用程序
-    print("🚀 启动CP数据分析工具GUI...")
+    print("Starting CP Data Analysis Tool GUI...")
     python_exe = env_dir / "python.exe"
     app_script = app_code_dir / "cp_data_processor_gui.py"
     
@@ -326,25 +326,25 @@ def main():
         ], env=new_env, cwd=str(app_code_dir))
         
         if result.returncode == 0:
-            print("✅ 应用程序运行完成")
+            print("Application execution completed.")
         else:
-            print(f"❌ 应用程序退出，代码: {result.returncode}")
+            print(f"Application exited with code: {result.returncode}")
             
     except Exception as e:
-        print(f"❌ 启动失败: {e}")
+        print(f"Launch failed: {e}")
         return 1
     
     return 0
 
 def initialize_environment(env_dir):
-    """初始化Python环境"""
+    """Initialize Python environment"""
     env_archive = env_dir / "environment.tar.gz"
     
     if not env_archive.exists():
-        print("❌ 未找到环境包文件")
+        print("ERROR: Environment package file not found.")
         return False
     
-    print("🔄 正在解压Python环境...")
+    print("Extracting Python environment...")
     try:
         with tarfile.open(env_archive, 'r:gz') as tar:
             tar.extractall(path=env_dir)
@@ -354,11 +354,11 @@ def initialize_environment(env_dir):
         if conda_unpack.exists():
             subprocess.run([str(conda_unpack)], cwd=str(env_dir), check=True)
         
-        print("✅ Python环境初始化完成")
+        print("Python environment initialization completed.")
         return True
         
     except Exception as e:
-        print(f"❌ 环境初始化失败: {e}")
+        print(f"Environment initialization failed: {e}")
         return False
 
 if __name__ == "__main__":
@@ -375,65 +375,65 @@ if __name__ == "__main__":
         # 简单的安装脚本
         install_bat = bundle_dir / "install.bat"
         install_content = '''@echo off
-echo 🛠️ CP数据分析工具安装程序
+echo CP Data Analysis Tool Installer
 echo ===============================
 echo.
 
-REM 检查管理员权限
+REM Check administrator privileges
 net session >nul 2>&1
 if errorlevel 1 (
-    echo ⚠️ 建议以管理员身份运行以获得最佳体验
-    echo 但也可以继续普通安装...
+    echo WARNING: Administrator privileges recommended for best experience.
+    echo You can continue with normal installation...
     echo.
     pause
 )
 
-set "INSTALL_DIR=%ProgramFiles%\\CP数据分析工具"
+set "INSTALL_DIR=%ProgramFiles%\\CP Data Analysis Tool"
 set "CURRENT_DIR=%~dp0"
 
-echo 📁 安装目录: %INSTALL_DIR%
-echo 📁 源目录: %CURRENT_DIR%
+echo Install Directory: %INSTALL_DIR%
+echo Source Directory: %CURRENT_DIR%
 echo.
 
-REM 创建安装目录
+REM Create installation directory
 if not exist "%INSTALL_DIR%" (
     mkdir "%INSTALL_DIR%"
     if errorlevel 1 (
-        echo ❌ 无法创建安装目录，可能需要管理员权限
-        set "INSTALL_DIR=%USERPROFILE%\\CP数据分析工具"
-        echo 🔄 改为用户目录安装: !INSTALL_DIR!
+        echo ERROR: Cannot create installation directory. Administrator privileges may be required.
+        set "INSTALL_DIR=%USERPROFILE%\\CP Data Analysis Tool"
+        echo Switching to user directory installation: !INSTALL_DIR!
         mkdir "!INSTALL_DIR!"
     )
 )
 
-REM 复制文件
-echo 📋 复制应用程序文件...
+REM Copy files
+echo Copying application files...
 xcopy "%CURRENT_DIR%*" "%INSTALL_DIR%\\" /E /I /Y /Q
 if errorlevel 1 (
-    echo ❌ 文件复制失败
+    echo ERROR: File copy failed.
     pause
     exit /b 1
 )
 
-REM 创建桌面快捷方式
-echo 🔗 创建桌面快捷方式...
-set "SHORTCUT=%USERPROFILE%\\Desktop\\CP数据分析工具.lnk"
-powershell -Command "$WshShell = New-Object -comObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%SHORTCUT%'); $Shortcut.TargetPath = '%INSTALL_DIR%\\scripts\\start_app.bat'; $Shortcut.WorkingDirectory = '%INSTALL_DIR%'; $Shortcut.Description = 'CP数据分析工具'; $Shortcut.Save()"
+REM Create desktop shortcut
+echo Creating desktop shortcut...
+set "SHORTCUT=%USERPROFILE%\\Desktop\\CP Data Analysis Tool.lnk"
+powershell -Command "$WshShell = New-Object -comObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%SHORTCUT%'); $Shortcut.TargetPath = '%INSTALL_DIR%\\scripts\\start_app.bat'; $Shortcut.WorkingDirectory = '%INSTALL_DIR%'; $Shortcut.Description = 'CP Data Analysis Tool'; $Shortcut.Save()"
 
-REM 创建开始菜单快捷方式
-echo 📋 创建开始菜单快捷方式...
+REM Create start menu shortcut
+echo Creating start menu shortcut...
 set "START_MENU=%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs"
-if not exist "%START_MENU%\\CP数据分析工具" mkdir "%START_MENU%\\CP数据分析工具"
-set "START_SHORTCUT=%START_MENU%\\CP数据分析工具\\CP数据分析工具.lnk"
-powershell -Command "$WshShell = New-Object -comObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%START_SHORTCUT%'); $Shortcut.TargetPath = '%INSTALL_DIR%\\scripts\\start_app.bat'; $Shortcut.WorkingDirectory = '%INSTALL_DIR%'; $Shortcut.Description = 'CP数据分析工具'; $Shortcut.Save()"
+if not exist "%START_MENU%\\CP Data Analysis Tool" mkdir "%START_MENU%\\CP Data Analysis Tool"
+set "START_SHORTCUT=%START_MENU%\\CP Data Analysis Tool\\CP Data Analysis Tool.lnk"
+powershell -Command "$WshShell = New-Object -comObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('%START_SHORTCUT%'); $Shortcut.TargetPath = '%INSTALL_DIR%\\scripts\\start_app.bat'; $Shortcut.WorkingDirectory = '%INSTALL_DIR%'; $Shortcut.Description = 'CP Data Analysis Tool'; $Shortcut.Save()"
 
 echo.
-echo ✅ 安装完成！
-echo 📍 安装位置: %INSTALL_DIR%
-echo 🖥️ 桌面快捷方式: CP数据分析工具
-echo 📋 开始菜单: CP数据分析工具
+echo Installation completed successfully!
+echo Install Location: %INSTALL_DIR%
+echo Desktop Shortcut: CP Data Analysis Tool
+echo Start Menu: CP Data Analysis Tool
 echo.
-echo 💡 首次运行时会自动初始化Python环境，请耐心等待
+echo NOTE: First run will automatically initialize Python environment. Please be patient.
 pause
 '''
         
@@ -443,38 +443,38 @@ pause
         # 卸载脚本
         uninstall_bat = bundle_dir / "uninstall.bat"
         uninstall_content = '''@echo off
-echo 🗑️ CP数据分析工具卸载程序
+echo CP Data Analysis Tool Uninstaller
 echo ===============================
 echo.
 
-set "INSTALL_DIR=%ProgramFiles%\\CP数据分析工具"
+set "INSTALL_DIR=%ProgramFiles%\\CP Data Analysis Tool"
 if not exist "%INSTALL_DIR%" (
-    set "INSTALL_DIR=%USERPROFILE%\\CP数据分析工具"
+    set "INSTALL_DIR=%USERPROFILE%\\CP Data Analysis Tool"
 )
 
-echo 📁 检测到安装目录: %INSTALL_DIR%
+echo Detected installation directory: %INSTALL_DIR%
 echo.
-echo ⚠️ 确定要卸载CP数据分析工具吗？
-echo 这将删除所有程序文件（不包括用户数据）
+echo WARNING: Are you sure you want to uninstall CP Data Analysis Tool?
+echo This will remove all program files (excluding user data).
 pause
 
 if exist "%INSTALL_DIR%" (
-    echo 🔄 正在删除程序文件...
+    echo Removing program files...
     rmdir /s /q "%INSTALL_DIR%"
     if errorlevel 1 (
-        echo ❌ 删除失败，可能有文件被占用
+        echo ERROR: Removal failed. Some files may be in use.
     ) else (
-        echo ✅ 程序文件已删除
+        echo Program files removed successfully.
     )
 )
 
-REM 删除快捷方式
-echo 🔗 清理快捷方式...
-del "%USERPROFILE%\\Desktop\\CP数据分析工具.lnk" 2>nul
-rmdir /s /q "%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\CP数据分析工具" 2>nul
+REM Remove shortcuts
+echo Cleaning up shortcuts...
+del "%USERPROFILE%\\Desktop\\CP Data Analysis Tool.lnk" 2>nul
+rmdir /s /q "%APPDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\CP Data Analysis Tool" 2>nul
 
 echo.
-echo ✅ 卸载完成！
+echo Uninstallation completed!
 pause
 '''
         
