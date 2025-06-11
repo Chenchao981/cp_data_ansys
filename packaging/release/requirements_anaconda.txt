@@ -1,0 +1,15 @@
+# CP数据分析工具 - Anaconda环境依赖清单
+# 
+# 注意：Anaconda已预装 numpy, pandas, matplotlib 等核心包
+# 这里只列出可能需要额外安装的包
+
+# Excel文件支持（如果Anaconda没有预装）
+openpyxl>=3.0.0
+
+# 统计图表增强（如果Anaconda没有预装）
+seaborn>=0.10.0
+
+# GUI界面支持 - 必需
+PyQt5>=5.15.0
+
+# 备注：如果上述包在您的Anaconda中已存在，可以跳过安装 
