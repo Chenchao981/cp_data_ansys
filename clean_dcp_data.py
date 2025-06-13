@@ -67,9 +67,15 @@ def collect_wafer_data(lot: CPLot) -> pd.DataFrame:
             # if 'No.U' not in df.columns: # No longer ensuring No.U here
             #     df['No.U'] = 1
                 
-            # 添加Lot_ID作为参考
+            # 添加Lot_ID作为参考（使用子目录名称作为lot_id）
             if hasattr(wafer, 'source_lot_id') and wafer.source_lot_id is not None:
                 df['Lot_ID'] = wafer.source_lot_id
+            else:
+                # 如果没有设置source_lot_id，尝试使用批次的lot_id
+                if hasattr(lot, 'lot_id') and lot.lot_id is not None:
+                    df['Lot_ID'] = lot.lot_id
+                else:
+                    df['Lot_ID'] = 'Unknown'
                 
             all_data.append(df)
     
@@ -179,26 +185,117 @@ def process_lot_data(lot: CPLot, output_dir: str, apply_clean: bool = True,
         logger.exception(f"处理批次数据时出错: {str(e)}")
         return None
 
-def find_dcp_files(directory_path):
-    """查找目录中的DCP格式TXT文件"""
+def detect_directory_structure(directory_path):
+    """检测目录结构类型
+    
+    Returns:
+        tuple: (structure_type, batch_info)
+        - structure_type: 'single' 或 'double'
+        - batch_info: 单层时为目录名，两层时为子目录列表
+    """
+    directory_path = os.path.abspath(directory_path)
+    
+    # 检查当前目录是否直接包含DCP文件
+    has_dcp_files_in_current = False
+    has_subdirs_with_dcp = False
+    subdirs_with_dcp = []
+    
+    # 检查当前目录中的直接文件
+    for file in os.listdir(directory_path):
+        file_path = os.path.join(directory_path, file)
+        if os.path.isfile(file_path) and file.lower().endswith('.txt'):
+            # 简单检查是否为DCP格式文件
+            try:
+                from cp_data_processor.readers.excel_txt_reader import ExcelTXTReader
+                if not ExcelTXTReader.is_excel_format(file_path):
+                    has_dcp_files_in_current = True
+                    break
+            except Exception:
+                has_dcp_files_in_current = True
+                break
+    
+    # 如果当前目录没有DCP文件，检查子目录
+    if not has_dcp_files_in_current:
+        for item in os.listdir(directory_path):
+            item_path = os.path.join(directory_path, item)
+            if os.path.isdir(item_path):
+                # 检查子目录中是否有DCP文件
+                subdir_has_dcp = False
+                try:
+                    for file in os.listdir(item_path):
+                        if file.lower().endswith('.txt'):
+                            file_path = os.path.join(item_path, file)
+                            try:
+                                from cp_data_processor.readers.excel_txt_reader import ExcelTXTReader
+                                if not ExcelTXTReader.is_excel_format(file_path):
+                                    subdir_has_dcp = True
+                                    break
+                            except Exception:
+                                subdir_has_dcp = True
+                                break
+                except OSError:
+                    continue
+                
+                if subdir_has_dcp:
+                    has_subdirs_with_dcp = True
+                    subdirs_with_dcp.append(item)
+    
+    # 根据检测结果返回结构类型
+    if has_dcp_files_in_current:
+        # 单层结构：当前目录直接包含DCP文件
+        dir_name = os.path.basename(directory_path)
+        return 'single', dir_name
+    elif has_subdirs_with_dcp:
+        # 两层结构：子目录包含DCP文件
+        return 'double', subdirs_with_dcp
+    else:
+        # 没有找到DCP文件
+        return 'none', None
+
+def find_dcp_files_in_directory(directory_path, recursive=False):
+    """查找指定目录中的DCP格式TXT文件
+    
+    Args:
+        directory_path: 目录路径
+        recursive: 是否递归查找（默认False，只查找当前目录）
+    """
     dcp_files = []
     
-    for root, dirs, files in os.walk(directory_path):
-        for file in files:
-            if file.lower().endswith('.txt'):
-                file_path = os.path.join(root, file)
-                # 检查是否为Excel格式，如果不是则视为DCP格式
-                try:
-                    from cp_data_processor.readers.excel_txt_reader import ExcelTXTReader
-                    if not ExcelTXTReader.is_excel_format(file_path):
+    if recursive:
+        # 原有的递归查找逻辑
+        for root, dirs, files in os.walk(directory_path):
+            for file in files:
+                if file.lower().endswith('.txt'):
+                    file_path = os.path.join(root, file)
+                    try:
+                        from cp_data_processor.readers.excel_txt_reader import ExcelTXTReader
+                        if not ExcelTXTReader.is_excel_format(file_path):
+                            dcp_files.append(file_path)
+                            logger.info(f"找到DCP文件: {file}")
+                    except Exception:
                         dcp_files.append(file_path)
-                        logger.info(f"找到DCP文件: {file}")
-                except Exception:
-                    # 如果检查出错，默认当作DCP格式
-                    dcp_files.append(file_path)
-                    logger.info(f"假定为DCP文件 (excel_txt_reader check failed or not available): {file}")
+                        logger.info(f"假定为DCP文件 (excel_txt_reader check failed or not available): {file}")
+    else:
+        # 只查找当前目录
+        try:
+            for file in os.listdir(directory_path):
+                if file.lower().endswith('.txt'):
+                    file_path = os.path.join(directory_path, file)
+                    if os.path.isfile(file_path):
+                        try:
+                            from cp_data_processor.readers.excel_txt_reader import ExcelTXTReader
+                            if not ExcelTXTReader.is_excel_format(file_path):
+                                dcp_files.append(file_path)
+                                logger.info(f"找到DCP文件: {file}")
+                        except Exception:
+                            dcp_files.append(file_path)
+                            logger.info(f"假定为DCP文件 (excel_txt_reader check failed or not available): {file}")
+        except OSError as e:
+            logger.error(f"无法访问目录 {directory_path}: {e}")
     
     return dcp_files
+
+
 
 def process_directory(directory_path, output_dir=None, outlier_method='iqr', convert_units=True):
     """处理指定目录中的所有DCP文件"""
@@ -208,28 +305,122 @@ def process_directory(directory_path, output_dir=None, outlier_method='iqr', con
     if output_dir is None:
         output_dir = os.path.join(current_dir, "output")
     
-    # 查找DCP文件
-    dcp_files = find_dcp_files(directory_path)
+    # 检测目录结构并获取正确的lot_id
+    structure_type, batch_info = detect_directory_structure(directory_path)
     
-    if not dcp_files:
+    if structure_type == 'none':
         logger.warning(f"在 {directory_path} 中没有找到DCP格式文件")
         return None
-    
-    logger.info(f"找到 {len(dcp_files)} 个DCP文件: {', '.join(dcp_files)}") # 打印找到的所有文件
-    
-    # 创建DCPReader处理文件
-    try:
-        reader = DCPReader(dcp_files)
-        lot = reader.read()
+    elif structure_type == 'single':
+        # 单层结构：当前目录直接包含DCP文件
+        lot_id = batch_info  # batch_info 是目录名
+        logger.info(f"检测到单层目录结构，批次ID: {lot_id}")
         
-        # 处理批次数据，并传递第一个DCP文件用于生成spec
-        first_dcp_file_for_spec = dcp_files[0] if dcp_files else None
-        return process_lot_data(lot, output_dir, True, outlier_method, 
-                              source_dcp_file_for_spec=first_dcp_file_for_spec,
-                              convert_units=convert_units)
-    except Exception as e:
-        logger.exception(f"处理DCP文件时出错: {str(e)}")
-        return None
+        # 查找DCP文件
+        dcp_files = find_dcp_files_in_directory(directory_path, recursive=False)
+        
+        if not dcp_files:
+            logger.warning(f"在目录 {directory_path} 中没有找到DCP格式文件")
+            return None
+        
+        logger.info(f"找到 {len(dcp_files)} 个DCP文件: {[os.path.basename(f) for f in dcp_files]}")
+        
+        # 创建DCPReader处理文件
+        try:
+            reader = DCPReader(dcp_files)
+            lot = reader.read()
+            
+            # 设置正确的lot_id
+            if lot:
+                lot.lot_id = lot_id
+                logger.info(f"设置批次ID为: {lot_id}")
+            
+            # 处理批次数据，使用原始输出目录
+            first_dcp_file_for_spec = dcp_files[0] if dcp_files else None
+            return process_lot_data(lot, output_dir, True, outlier_method, 
+                                  source_dcp_file_for_spec=first_dcp_file_for_spec,
+                                  convert_units=convert_units)
+        except Exception as e:
+            logger.exception(f"处理批次 {lot_id} 的DCP文件时出错: {str(e)}")
+            return None
+            
+    elif structure_type == 'double':
+        # 两层结构：子目录包含DCP文件，合并处理但保持各自的lot_id
+        subdirs = batch_info  # batch_info 是子目录列表
+        logger.info(f"检测到两层目录结构，找到 {len(subdirs)} 个子批次: {subdirs}")
+        
+        # 设置主输出目录的名称
+        parent_dir_name = os.path.basename(directory_path)
+        main_lot_id = parent_dir_name if parent_dir_name != "data" else f"Combined_{len(subdirs)}_batches"
+        logger.info(f"主输出目录名称: {main_lot_id}")
+        
+        # 收集所有子目录中的DCP文件，并建立文件到子目录的映射
+        all_dcp_files = []
+        file_to_subdir_map = {}  # 文件路径 -> 子目录名称的映射
+        
+        for subdir in subdirs:
+            subdir_path = os.path.join(directory_path, subdir)
+            subdir_dcp_files = find_dcp_files_in_directory(subdir_path, recursive=False)
+            all_dcp_files.extend(subdir_dcp_files)
+            
+            # 建立文件到子目录的映射
+            for file_path in subdir_dcp_files:
+                file_to_subdir_map[file_path] = subdir
+            
+            logger.info(f"子批次 {subdir} 找到 {len(subdir_dcp_files)} 个DCP文件")
+        
+        if not all_dcp_files:
+            logger.warning(f"在所有子目录中都没有找到DCP格式文件")
+            return None
+        
+        logger.info(f"总共找到 {len(all_dcp_files)} 个DCP文件")
+        
+        # 创建DCPReader处理所有文件
+        try:
+            reader = DCPReader(all_dcp_files)
+            lot = reader.read()
+            
+            # 为每个晶圆设置正确的lot_id（基于文件的分组分配）
+            if lot and lot.wafers:
+                # 按子目录分组文件，并为每个子目录的文件分配连续的索引范围
+                subdir_file_ranges = {}
+                wafer_index = 0
+                
+                for subdir in subdirs:
+                    subdir_files = [f for f in all_dcp_files if file_to_subdir_map[f] == subdir]
+                    wafer_count_in_subdir = len(subdir_files)
+                    subdir_file_ranges[subdir] = (wafer_index, wafer_index + wafer_count_in_subdir)
+                    wafer_index += wafer_count_in_subdir
+                    logger.info(f"子目录 {subdir}: 晶圆索引范围 {subdir_file_ranges[subdir][0]} - {subdir_file_ranges[subdir][1]-1}")
+                
+                # 为每个晶圆分配lot_id
+                for idx, wafer in enumerate(lot.wafers):
+                    wafer.source_lot_id = subdirs[0]  # 默认值
+                    
+                    # 根据晶圆在wafers列表中的位置确定其lot_id
+                    for subdir, (start_idx, end_idx) in subdir_file_ranges.items():
+                        if start_idx <= idx < end_idx:
+                            wafer.source_lot_id = subdir
+                            logger.info(f"晶圆 {wafer.wafer_id} (索引 {idx}) 设置lot_id为: {wafer.source_lot_id}")
+                            break
+                    
+                    if wafer.source_lot_id == subdirs[0] and idx >= subdir_file_ranges[subdirs[0]][1]:
+                        logger.warning(f"晶圆 {wafer.wafer_id} (索引 {idx}) 无法确定lot_id，使用默认值: {wafer.source_lot_id}")
+                
+                # 设置批次的主ID用于文件命名
+                lot.lot_id = main_lot_id
+                logger.info(f"设置主批次ID为: {main_lot_id}")
+            
+            # 处理批次数据，使用原始输出目录
+            first_dcp_file_for_spec = all_dcp_files[0] if all_dcp_files else None
+            return process_lot_data(lot, output_dir, True, outlier_method, 
+                                  source_dcp_file_for_spec=first_dcp_file_for_spec,
+                                  convert_units=convert_units)
+        except Exception as e:
+            logger.exception(f"处理合并批次 {main_lot_id} 时出错: {str(e)}")
+            return None
+    
+    return None
 
 def main():
     """主函数"""
@@ -248,12 +439,13 @@ def main():
         sys.exit(1)
     
     # 处理目录
-    output_file = process_directory(args.dir, args.output, args.method, not args.no_convert)
+    result = process_directory(args.dir, args.output, args.method, not args.no_convert)
     
-    if output_file:
-        print(f"处理完成！最终输出文件: {output_file}")
+    if result:
+        print(f"处理完成！最终输出文件: {result}")
     else:
         print("处理失败或未找到有效数据")
+
 
 if __name__ == "__main__":
     try:
