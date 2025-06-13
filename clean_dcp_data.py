@@ -112,7 +112,7 @@ def process_lot_data(lot: CPLot, output_dir: str, apply_clean: bool = True,
         spec_file_path = None
         if source_dcp_file_for_spec:
             logger.info(f"开始为批次 {lot.lot_id} (源文件: {source_dcp_file_for_spec}) 生成规格文件...")
-            spec_file_path = generate_spec_file(source_dcp_file_for_spec, output_dir)
+            spec_file_path = generate_spec_file(source_dcp_file_for_spec, output_dir, lot.lot_id)
             if spec_file_path:
                 logger.info(f"规格文件已成功生成: {spec_file_path}")
                 print(f"规格文件已成功生成: {spec_file_path}")
@@ -149,16 +149,15 @@ def process_lot_data(lot: CPLot, output_dir: str, apply_clean: bool = True,
                 # --- 开始添加良率报告生成逻辑 ---
                 try:
                     logger.info(f"开始为 {cleaned_file_path_str} 生成良率报告...")
+                    
+                    # 从已保存的cleaned文件中读取数据
                     cleaned_df_for_yield = pd.read_csv(cleaned_file_path_str)
 
-                    cleaned_file_path_obj = Path(cleaned_file_path_str)
-                    yield_report_filename = cleaned_file_path_obj.name.replace("_cleaned_", "_yield_")
-                    
-                    if "_cleaned_" not in cleaned_file_path_obj.name: 
-                        base, ext = os.path.splitext(cleaned_file_path_obj.name)
-                        yield_report_filename = f"{base}_yield{ext}"
-
-                    yield_report_filepath = cleaned_file_path_obj.parent / yield_report_filename
+                    # --- 修复：确保yield文件名与cleaned文件名的时间戳部分一致 ---
+                    # 从cleaned文件名生成yield文件名，例如 'lot_cleaned_timestamp.csv' -> 'lot_yield_timestamp.csv'
+                    cleaned_filename = Path(cleaned_file_path_str).name
+                    yield_report_filename = cleaned_filename.replace('_cleaned_', '_yield_')
+                    yield_report_filepath = Path(output_dir) / yield_report_filename
                     
                     success_yield = generate_yield_report_from_dataframe(cleaned_df_for_yield, str(yield_report_filepath))
                     

@@ -139,7 +139,7 @@ def _format_value_for_csv(value: float | None) -> str:
     else:
         return str(int(value))
 
-def generate_spec_file(dcp_file_path: str, output_dir: str) -> str | None:
+def generate_spec_file(dcp_file_path: str, output_dir: str, lot_id: str = None) -> str | None:
     """
     解析DCP文件的头部，提取规格数据，
     并将其写入一个使用制表符分隔的 _spec_.csv 文件。
@@ -147,6 +147,7 @@ def generate_spec_file(dcp_file_path: str, output_dir: str) -> str | None:
     参数:
         dcp_file_path (str): 输入的DCP .txt文件路径。
         output_dir (str): 输出CSV文件将被保存的目录。
+        lot_id (str, optional): 批次ID，用于统一文件命名。如果提供，将使用{lot_id}_spec_{timestamp}.csv格式。
 
     返回:
         str | None: 生成的CSV文件的路径，如果发生错误则返回None。
@@ -311,8 +312,11 @@ def generate_spec_file(dcp_file_path: str, output_dir: str) -> str | None:
                 output_data[i] = row[:expected_cols]
 
         # --- 写入CSV文件 ---
-        # 文件名: [原始DCP文件名基名]_spec_[时间戳].csv
-        output_filename = f"{dcp_file.stem}_spec_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
+        # 文件名: 如果提供了lot_id，使用统一格式 {lot_id}_spec_{timestamp}.csv，否则使用原格式
+        if lot_id:
+            output_filename = f"{lot_id}_spec_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
+        else:
+            output_filename = f"{dcp_file.stem}_spec_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
         output_path = Path(output_dir) / output_filename
         os.makedirs(output_dir, exist_ok=True)
 
