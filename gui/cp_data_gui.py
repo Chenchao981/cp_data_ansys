@@ -94,25 +94,44 @@ def extract_first_lot_id(directory_path):
             with open(first_file, 'r', encoding='utf-8', errors='ignore') as f:
                 lines = f.readlines()
                 if len(lines) >= 2:
-                    # 从R2C2位置提取批次号
+                    # 从R2C2位置提取批次号（第二行第二列）
                     second_line = lines[1].strip()
-                    parts = second_line.split()
+                    logger.info(f"第二行内容: {second_line}")
+                    
+                    # DCP文件使用制表符分隔，先尝试制表符分割
+                    if '\t' in second_line:
+                        parts = second_line.split('\t')
+                        logger.info(f"使用制表符分割，共{len(parts)}部分: {parts}")
+                    else:
+                        # 备用方案：使用空格分割
+                        parts = second_line.split()
+                        logger.info(f"使用空格分割，共{len(parts)}部分: {parts}")
+                    
                     if len(parts) >= 2:
-                        lot_id = parts[1]  # R2C2位置
-                        # 提取批次号的核心部分（去掉@后缀）
-                        if '@' in lot_id:
-                            lot_id = lot_id.split('@')[0]
-                        # 进一步简化：提取主要批次标识
-                        match = re.search(r'([A-Z]+\d+-\d+)', lot_id)
-                        if match:
-                            return match.group(1)
+                        # 对于制表符分割的情况，批次号通常在最后一列
+                        # 对于"Lot number\tFA54-5339-327A-250501@203"格式，批次号在索引2
+                        if len(parts) >= 3 and parts[0].lower() in ['lot', 'lot number']:
+                            lot_id_raw = parts[2] if len(parts) > 2 else parts[1]
+                        else:
+                            lot_id_raw = parts[1]  # R2C2位置的原始批次号
+                            
+                        logger.info(f"从文件 {first_file.name} 提取到原始批次号: {lot_id_raw}")
+                        
+                        # 去掉@后面的内容，保留完整的批次号
+                        if '@' in lot_id_raw:
+                            lot_id = lot_id_raw.split('@')[0]
+                        else:
+                            lot_id = lot_id_raw
+                        
+                        logger.info(f"处理后的批次号: {lot_id}")
                         return lot_id
         except Exception as e:
             logger.warning(f"无法从文件 {first_file} 提取批次号: {e}")
         
         # 如果无法从文件内容提取，尝试从文件夹名称提取
         folder_name = input_path.name
-        match = re.search(r'([A-Z]+\d+-\d+)', folder_name)
+        # 尝试从文件夹名称中提取类似格式的批次号
+        match = re.search(r'([A-Z]\d+\.\d+-[A-Z0-9]+-\d+-\d+)', folder_name)
         if match:
             return match.group(1)
         
