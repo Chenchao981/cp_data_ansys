@@ -47,11 +47,10 @@ class DCPReader(BaseReader):
         Returns:
             CPLot: 包含所有读取数据的 CPLot 对象
         """
-        # 从第一个文件的R2C2提取批次ID（使用文件内容，不是文件夹名称）
-        first_lot_id, _ = self._extract_ids_from_r2c2_r2c3(self.file_paths[0]) if self.file_paths else (None, None)
-        batch_id = first_lot_id if first_lot_id else "UnknownLot"
+        # 使用文件夹名称作为批次ID，确保同一批次的所有文件使用相同的lot_id
+        batch_id = self._extract_batch_id_from_folder(self.file_paths[0]) if self.file_paths else "UnknownLot"
         
-        # 创建新的 CPLot 对象，使用文件内容的批次ID
+        # 创建新的 CPLot 对象，使用文件夹名称作为批次ID
         self.lot = CPLot(lot_id=batch_id, pass_bin=self.pass_bin) 
         
         for file_path in self.file_paths:
@@ -269,8 +268,8 @@ class DCPReader(BaseReader):
                 self._add_param_info(df, lot)
                 logger.info(f"从文件提取了 {lot.param_count} 个参数信息")
             
-            # 创建晶圆对象
-            wafer = self._create_wafer(df, current_wafer_id, file_path, lot_id_r2c2)
+            # 创建晶圆对象 - 使用lot的lot_id（从文件夹名称提取的）而不是lot_id_r2c2（从文件内容提取的）
+            wafer = self._create_wafer(df, current_wafer_id, file_path, lot.lot_id)
             
             # 添加到Lot
             if wafer and wafer.chip_count > 0:
