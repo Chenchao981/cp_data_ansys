@@ -5,7 +5,7 @@ import logging
 # 配置日志
 logger = logging.getLogger(__name__)
 
-def generate_yield_report_from_dataframe(cleaned_df: pd.DataFrame, output_filepath: str) -> bool:
+def generate_yield_report_from_dataframe(cleaned_df: pd.DataFrame, output_filepath: str, product_name: str = None) -> bool:
     """
     根据清洗后的DataFrame生成良率报告CSV文件。
 
@@ -15,6 +15,7 @@ def generate_yield_report_from_dataframe(cleaned_df: pd.DataFrame, output_filepa
         cleaned_df (pd.DataFrame): 包含清洗后数据的Pandas DataFrame。
                                    必须包含 'Lot_ID', 'Wafer_ID', 'Bin' 列。
         output_filepath (str): 生成的良率报告CSV文件的完整路径。
+        product_name (str, optional): 产品名称，从文件夹名称中"_"前面部分提取。如果未提供，将尝试从Lot_ID推断。
 
     Returns:
         bool: 如果报告成功生成则返回True，否则返回False。
@@ -34,8 +35,30 @@ def generate_yield_report_from_dataframe(cleaned_df: pd.DataFrame, output_filepa
         logger.error(f"输入DataFrame缺失必要列。需要: {required_columns}, 实际拥有: {cleaned_df.columns.tolist()}")
         return False
 
+    # 如果没有提供product_name，尝试从第一个Lot_ID中推断
+    if product_name is None:
+        first_lot_id = str(cleaned_df['Lot_ID'].iloc[0])
+        if '_' in first_lot_id and '@' in first_lot_id:
+            # 尝试从标准格式提取：NCETSG7120BAA_FA54-5339@203
+            try:
+                underscore_pos = first_lot_id.find('_')
+                if underscore_pos > 0:
+                    product_name = first_lot_id[:underscore_pos]
+                    logger.info(f"从Lot_ID {first_lot_id} 中推断product_name: {product_name}")
+                else:
+                    product_name = first_lot_id.split('-')[0] if '-' in first_lot_id else first_lot_id
+            except Exception as e:
+                logger.warning(f"无法从Lot_ID推断product_name: {e}")
+                product_name = "Unknown"
+        else:
+            # 备用方案：使用Lot_ID的第一部分
+            product_name = first_lot_id.split('-')[0] if '-' in first_lot_id else first_lot_id
+
+    logger.info(f"使用产品名称: {product_name}")
+
     TARGET_BINS = [3, 4, 6, 7, 8, 9]
-    TARGET_COLUMNS = ['Lot_ID', 'Wafer_ID', 'Yield', 'Total', 'Pass'] + [f'Bin{b}' for b in TARGET_BINS]
+    # 将product_name作为第一列
+    TARGET_COLUMNS = ['Product_Name', 'Lot_ID', 'Wafer_ID', 'Yield', 'Total', 'Pass'] + [f'Bin{b}' for b in TARGET_BINS]
 
     wafer_reports_data: List[Dict[str, Any]] = []
     all_wafer_numerical_yields: List[float] = [] # 用于计算批次平均良率
@@ -49,6 +72,7 @@ def generate_yield_report_from_dataframe(cleaned_df: pd.DataFrame, output_filepa
         
     for (lot_id, wafer_id), wafer_data in grouped_by_wafer:
         wafer_report: Dict[str, Any] = {}
+        wafer_report['Product_Name'] = product_name  # 添加产品名称作为第一列
         wafer_report['Lot_ID'] = str(lot_id)
         wafer_report['Wafer_ID'] = str(wafer_id)
         total_die = len(wafer_data)
@@ -66,7 +90,7 @@ def generate_yield_report_from_dataframe(cleaned_df: pd.DataFrame, output_filepa
 
     # 计算 "ALL" 汇总行
     if wafer_reports_data: # 确保至少有一个晶圆被处理了
-        all_row: Dict[str, Any] = {'Lot_ID': 'ALL', 'Wafer_ID': 'ALL'}
+        all_row: Dict[str, Any] = {'Product_Name': product_name, 'Lot_ID': 'ALL', 'Wafer_ID': 'ALL'}
         
         all_total_die = sum(item['Total'] for item in wafer_reports_data)
         all_pass_die = sum(item['Pass'] for item in wafer_reports_data)
@@ -128,13 +152,34 @@ if __name__ == '__main__':
     # 增加一个 Bin 值不存在于 TARGET_BINS 中的情况
     mock_cleaned_df.loc[2, 'Bin'] = 50 # This Bin won't be in BinX columns but is part of Total
 
-    # 测试情况1: 正常数据
+    # 测试情况1: 正常数据，自动推断product_name
     output_file_1 = "sample_yield_report.csv"
     logger.info(f"测试1: 使用模拟数据生成报告到 {output_file_1}")
     success1 = generate_yield_report_from_dataframe(mock_cleaned_df, output_file_1)
     logger.info(f"测试1 完成, 结果: {'成功' if success1 else '失败'}")
     if success1:
         logger.info(f"测试1 内容:\n{pd.read_csv(output_file_1)}")
+
+    # 测试情况1b: 指定product_name的标准格式数据
+    standard_format_data = {
+        'Lot_ID': ['NCETSG7120BAA_FA54-5339@203'] * 5,
+        'Wafer_ID': ['W1'] * 5,
+        'X': range(5), 'Y': range(5),
+        'Bin': [1, 1, 3, 1, 4],
+        'Test_Time': [pd.Timestamp('2023-01-01 10:00:00')] * 5
+    }
+    standard_format_df = pd.DataFrame(standard_format_data)
+    output_file_1b = "standard_format_yield_report.csv"
+    logger.info(f"测试1b: 使用标准格式Lot_ID测试product_name提取，报告到 {output_file_1b}")
+    success1b = generate_yield_report_from_dataframe(standard_format_df, output_file_1b, "NCETSG7120BAA")
+    logger.info(f"测试1b 完成, 结果: {'成功' if success1b else '失败'}")
+    if success1b:
+        df_check = pd.read_csv(output_file_1b)
+        logger.info(f"测试1b 内容:\n{df_check}")
+        if 'Product_Name' in df_check.columns and df_check['Product_Name'].iloc[0] == 'NCETSG7120BAA':
+            logger.info("测试1b: Product_Name 字段正确添加并显示在第一列")
+        else:
+            logger.error("测试1b: Product_Name 字段未正确添加")
 
     # 测试情况2: 空 DataFrame
     empty_df = pd.DataFrame(columns=['Lot_ID', 'Wafer_ID', 'X', 'Y', 'Bin', 'Test_Time'])
@@ -183,7 +228,7 @@ if __name__ == '__main__':
     numeric_id_df = pd.DataFrame(numeric_id_data)
     output_file_4 = "numeric_id_yield_report.csv"
     logger.info(f"测试4: DataFrame中LotID和WaferID为数字，报告到 {output_file_4}")
-    success4 = generate_yield_report_from_dataframe(numeric_id_df, output_file_4)
+    success4 = generate_yield_report_from_dataframe(numeric_id_df, output_file_4, "TEST_PRODUCT")
     logger.info(f"测试4 完成, 结果: {'成功' if success4 else '失败'}")
     if success4:
         logger.info(f"测试4 内容:\n{pd.read_csv(output_file_4)}")

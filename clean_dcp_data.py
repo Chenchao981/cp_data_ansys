@@ -159,7 +159,16 @@ def process_lot_data(lot: CPLot, output_dir: str, apply_clean: bool = True,
                     yield_report_filename = cleaned_filename.replace('_cleaned_', '_yield_')
                     yield_report_filepath = Path(output_dir) / yield_report_filename
                     
-                    success_yield = generate_yield_report_from_dataframe(cleaned_df_for_yield, str(yield_report_filepath))
+                    # 获取产品名称
+                    product_name = getattr(lot, 'product', None)
+                    if not product_name:
+                        # 如果lot对象没有product属性，尝试从lot_id提取
+                        if hasattr(lot, 'lot_id') and lot.lot_id:
+                            product_name = lot.lot_id.split('-')[0] if '-' in lot.lot_id else lot.lot_id
+                        else:
+                            product_name = "Unknown"
+                    
+                    success_yield = generate_yield_report_from_dataframe(cleaned_df_for_yield, str(yield_report_filepath), product_name)
                     
                     if success_yield:
                         logger.info(f"良率报告已成功生成: {yield_report_filepath}")
