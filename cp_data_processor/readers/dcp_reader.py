@@ -65,20 +65,23 @@ class DCPReader(BaseReader):
     
     def _extract_batch_id_from_folder(self, file_path: str) -> str:
         """
-        从文件路径中提取批次ID（文件夹名称）
+        从文件路径中提取批次ID（文件夹名称），使用新的提取规则
         
         Args:
             file_path: 文件路径
             
         Returns:
-            str: 批次ID（文件夹名称）
+            str: 批次ID（从文件夹名称中提取的lot_id）
         """
         try:
-            # 获取文件的父目录名称作为批次ID
+            # 获取文件的父目录名称作为文件夹名称
             folder_name = os.path.basename(os.path.dirname(file_path))
             if folder_name and folder_name != '.' and folder_name != '':
                 logger.info(f"从文件夹名称提取批次ID: {folder_name}")
-                return folder_name
+                # 使用新的提取规则：从标准格式中提取lot_id
+                product_name, lot_id = self._extract_lot_id_from_folder_name(folder_name)
+                logger.info(f"应用新提取规则 - 产品名: {product_name}, 批次ID: {lot_id}")
+                return lot_id
             else:
                 # 如果无法获取文件夹名称，使用默认方式
                 logger.warning(f"无法从文件路径获取文件夹名称，使用默认提取方式")
@@ -86,6 +89,30 @@ class DCPReader(BaseReader):
         except Exception as e:
             logger.error(f"从文件夹提取批次ID时出错: {e}")
             return "UnknownLot_Fallback"
+
+    def _extract_lot_id_from_folder_name(self, folder_name: str) -> tuple[str, str]:
+        """
+        从标准格式的文件夹名称中提取 product_name 和 lot_id
+        
+        标准格式：NCETSG7120BAA_FA54-5342@203
+        - product_name: _ 之前的部分 (NCETSG7120BAA)
+        - lot_id: _ 后面到 @ 之间的部分 (FA54-5342)
+        
+        Args:
+            folder_name: 文件夹名称，如 "NCETSG7120BAA_FA54-5342@203"
+        
+        Returns:
+            tuple[str, str]: (product_name, lot_id)
+            例如: ("NCETSG7120BAA", "FA54-5342")
+        """
+        # 所有批次都遵循标准格式，直接分割即可
+        underscore_pos = folder_name.find('_')
+        at_pos = folder_name.find('@')
+        
+        product_name = folder_name[:underscore_pos]
+        lot_id = folder_name[underscore_pos + 1:at_pos]
+        
+        return product_name, lot_id
     
     def _extract_ids_from_r2c2_r2c3(self, file_path: str) -> Tuple[Optional[str], Optional[str]]:
         """

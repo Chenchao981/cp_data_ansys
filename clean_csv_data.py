@@ -9,8 +9,32 @@ import sys
 import pandas as pd
 import argparse
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Tuple
 import re
+
+def extract_lot_id_from_folder_name(folder_name: str) -> Tuple[str, str]:
+    """
+    从标准格式的文件夹名称中提取 product_name 和 lot_id
+    
+    标准格式：NCETSG7120BAA_FA54-5342@203
+    - product_name: _ 之前的部分 (NCETSG7120BAA)
+    - lot_id: _ 后面到 @ 之间的部分 (FA54-5342)
+    
+    Args:
+        folder_name: 文件夹名称，如 "NCETSG7120BAA_FA54-5342@203"
+    
+    Returns:
+        Tuple[str, str]: (product_name, lot_id)
+        例如: ("NCETSG7120BAA", "FA54-5342")
+    """
+    # 所有批次都遵循标准格式，直接分割即可
+    underscore_pos = folder_name.find('_')
+    at_pos = folder_name.find('@')
+    
+    product_name = folder_name[:underscore_pos]
+    lot_id = folder_name[underscore_pos + 1:at_pos]
+    
+    return product_name, lot_id
 
 def clean_csv_data(data_df: pd.DataFrame, output_dir: str, base_filename_part: str) -> Optional[str]:
     """
@@ -132,8 +156,29 @@ def main():
     parser = argparse.ArgumentParser(description='CSV数据清洗工具 - (DataFrame input mode for testing)')
     parser.add_argument('-od', '--output_dir_test', help='Output directory for test', default="test_output_clean_csv")
     parser.add_argument('-bfn', '--base_filename_test', help='Base filename part for test', default="TEST_LOT_DF")
+    parser.add_argument('--test-lot-id', action='store_true', help='测试lot_id提取功能')
     
     args = parser.parse_args()
+
+    # 测试lot_id提取功能
+    if args.test_lot_id:
+        test_folder_names = [
+            "NCETSG7120BAA_FA54-5342@203",
+            "PRODUCT123_LOT456@789",
+            "TESTPRODUCT_BATCH001@100",
+            "NCETSG7120BAA_FA54-5339@203",
+            "DEMO_TEST123@456",
+        ]
+        
+        print("测试lot_id提取功能（标准格式）:")
+        print("-" * 60)
+        for folder_name in test_folder_names:
+            product_name, lot_id = extract_lot_id_from_folder_name(folder_name)
+            print(f"文件夹名: {folder_name}")
+            print(f"  产品名: {product_name}")
+            print(f"  批次ID: {lot_id}")
+            print()
+        return
 
     sample_input_data = {
         'Lot_ID': ['TEST_LOT_DF'] * 5, 'Wafer_ID': ['W_DF_1'] * 5, 

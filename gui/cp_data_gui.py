@@ -73,10 +73,46 @@ def get_desktop_path():
     return os.path.join(os.path.expanduser("~"), "Desktop")
 
 
+def extract_lot_id_from_folder_name(folder_name: str) -> tuple[str, str]:
+    """
+    从标准格式的文件夹名称中提取 product_name 和 lot_id
+    
+    标准格式：NCETSG7120BAA_FA54-5342@203
+    - product_name: _ 之前的部分 (NCETSG7120BAA)
+    - lot_id: _ 后面到 @ 之间的部分 (FA54-5342)
+    
+    Args:
+        folder_name: 文件夹名称，如 "NCETSG7120BAA_FA54-5342@203"
+    
+    Returns:
+        tuple[str, str]: (product_name, lot_id)
+        例如: ("NCETSG7120BAA", "FA54-5342")
+    """
+    # 所有批次都遵循标准格式，直接分割即可
+    underscore_pos = folder_name.find('_')
+    at_pos = folder_name.find('@')
+    
+    product_name = folder_name[:underscore_pos]
+    lot_id = folder_name[underscore_pos + 1:at_pos]
+    
+    return product_name, lot_id
+
 def extract_first_lot_id(directory_path):
-    """从目录中的文件提取第一个批次号"""
+    """从目录中的文件提取第一个批次号，优先使用文件夹名称规则"""
     try:
         input_path = Path(directory_path)
+        
+        # 优先使用文件夹名称提取规则
+        folder_name = input_path.name
+        product_name, lot_id = extract_lot_id_from_folder_name(folder_name)
+        
+        # 如果提取的lot_id与原始文件夹名不同，说明成功应用了规则
+        if lot_id != folder_name:
+            logger.info(f"从文件夹名 {folder_name} 提取到批次号: {lot_id}")
+            return lot_id
+        
+        # 如果文件夹名称规则无效，尝试从文件内容提取
+        logger.info(f"文件夹名称 {folder_name} 不符合提取规则，尝试从文件内容提取")
         
         # 搜索所有DCP文件
         dcp_files = []
@@ -117,7 +153,15 @@ def extract_first_lot_id(directory_path):
                             
                         logger.info(f"从文件 {first_file.name} 提取到原始批次号: {lot_id_raw}")
                         
-                        # 去掉@后面的内容，保留完整的批次号
+                        # 应用新的提取规则到文件内容获取的批次号
+                        file_product_name, file_extracted_lot_id = extract_lot_id_from_folder_name(lot_id_raw)
+                        
+                        # 如果文件内容的批次号符合提取规则，使用提取后的lot_id
+                        if file_extracted_lot_id != lot_id_raw:
+                            logger.info(f"从文件内容应用提取规则: {lot_id_raw} -> {file_extracted_lot_id}")
+                            return file_extracted_lot_id
+                        
+                        # 否则去掉@后面的内容，保留完整的批次号
                         if '@' in lot_id_raw:
                             lot_id = lot_id_raw.split('@')[0]
                         else:
@@ -128,9 +172,7 @@ def extract_first_lot_id(directory_path):
         except Exception as e:
             logger.warning(f"无法从文件 {first_file} 提取批次号: {e}")
         
-        # 如果无法从文件内容提取，尝试从文件夹名称提取
-        folder_name = input_path.name
-        # 尝试从文件夹名称中提取类似格式的批次号
+        # 最后尝试从文件夹名称中提取类似格式的批次号（保留原有逻辑作为备用）
         match = re.search(r'([A-Z]\d+\.\d+-[A-Z0-9]+-\d+-\d+)', folder_name)
         if match:
             return match.group(1)

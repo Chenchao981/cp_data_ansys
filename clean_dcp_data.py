@@ -296,6 +296,30 @@ def find_dcp_files_in_directory(directory_path, recursive=False):
 
 
 
+def extract_lot_id_from_folder_name(folder_name: str) -> tuple[str, str]:
+    """
+    从标准格式的文件夹名称中提取 product_name 和 lot_id
+    
+    标准格式：NCETSG7120BAA_FA54-5342@203
+    - product_name: _ 之前的部分 (NCETSG7120BAA)
+    - lot_id: _ 后面到 @ 之间的部分 (FA54-5342)
+    
+    Args:
+        folder_name: 文件夹名称，如 "NCETSG7120BAA_FA54-5342@203"
+    
+    Returns:
+        tuple[str, str]: (product_name, lot_id)
+        例如: ("NCETSG7120BAA", "FA54-5342")
+    """
+    # 所有批次都遵循标准格式，直接分割即可
+    underscore_pos = folder_name.find('_')
+    at_pos = folder_name.find('@')
+    
+    product_name = folder_name[:underscore_pos]
+    lot_id = folder_name[underscore_pos + 1:at_pos]
+    
+    return product_name, lot_id
+
 def process_directory(directory_path, output_dir=None, outlier_method='iqr', convert_units=True):
     """处理指定目录中的所有DCP文件"""
     logger.info(f"开始处理目录: {directory_path}")
@@ -312,8 +336,10 @@ def process_directory(directory_path, output_dir=None, outlier_method='iqr', con
         return None
     elif structure_type == 'single':
         # 单层结构：当前目录直接包含DCP文件
-        lot_id = batch_info  # batch_info 是目录名
-        logger.info(f"检测到单层目录结构，批次ID: {lot_id}")
+        folder_name = batch_info  # batch_info 是目录名
+        product_name, lot_id = extract_lot_id_from_folder_name(folder_name)
+        logger.info(f"检测到单层目录结构，文件夹名: {folder_name}")
+        logger.info(f"提取到产品名: {product_name}, 批次ID: {lot_id}")
         
         # 查找DCP文件
         dcp_files = find_dcp_files_in_directory(directory_path, recursive=False)
@@ -329,10 +355,11 @@ def process_directory(directory_path, output_dir=None, outlier_method='iqr', con
             reader = DCPReader(dcp_files)
             lot = reader.read()
             
-            # 设置正确的lot_id
+            # 设置正确的lot_id和product
             if lot:
                 lot.lot_id = lot_id
-                logger.info(f"设置批次ID为: {lot_id}")
+                lot.product = product_name
+                logger.info(f"设置产品名为: {product_name}, 批次ID为: {lot_id}")
             
             # 处理批次数据，使用原始输出目录
             first_dcp_file_for_spec = dcp_files[0] if dcp_files else None
@@ -348,19 +375,31 @@ def process_directory(directory_path, output_dir=None, outlier_method='iqr', con
         subdirs = batch_info  # batch_info 是子目录列表
         logger.info(f"检测到两层目录结构，找到 {len(subdirs)} 个子批次: {subdirs}")
         
-        # 设置主输出目录的名称
-        parent_dir_name = os.path.basename(directory_path)
-        main_lot_id = parent_dir_name if parent_dir_name != "data" else f"Combined_{len(subdirs)}_batches"
-        logger.info(f"主输出目录名称: {main_lot_id}")
+        # 使用第一个子目录的名称作为主输出目录名称
+        first_subdir = subdirs[0] if subdirs else "combined"
+        main_product_name, main_lot_id = extract_lot_id_from_folder_name(first_subdir)
+        
+        # 如果第一个子目录没有符合规则的格式，使用组合名称
+        if main_lot_id == first_subdir:
+            main_lot_id = f"Combined_{len(subdirs)}_batches"
+            main_product_name = "Combined"
+        
+        logger.info(f"主批次ID (取自第一个子目录 {first_subdir}): 产品名={main_product_name}, 批次ID={main_lot_id}")
         
         # 收集所有子目录中的DCP文件，并建立文件到子目录的映射
         all_dcp_files = []
         file_to_subdir_map = {}  # 文件路径 -> 子目录名称的映射
+        subdir_lot_map = {}     # 子目录名称 -> (product_name, lot_id) 的映射
         
         for subdir in subdirs:
             subdir_path = os.path.join(directory_path, subdir)
             subdir_dcp_files = find_dcp_files_in_directory(subdir_path, recursive=False)
             all_dcp_files.extend(subdir_dcp_files)
+            
+            # 提取子目录的lot_id
+            subdir_product_name, subdir_lot_id = extract_lot_id_from_folder_name(subdir)
+            subdir_lot_map[subdir] = (subdir_product_name, subdir_lot_id)
+            logger.info(f"子目录 {subdir} -> 产品名: {subdir_product_name}, 批次ID: {subdir_lot_id}")
             
             # 建立文件到子目录的映射
             for file_path in subdir_dcp_files:
@@ -392,23 +431,28 @@ def process_directory(directory_path, output_dir=None, outlier_method='iqr', con
                     wafer_index += wafer_count_in_subdir
                     logger.info(f"子目录 {subdir}: 晶圆索引范围 {subdir_file_ranges[subdir][0]} - {subdir_file_ranges[subdir][1]-1}")
                 
-                # 为每个晶圆分配lot_id
+                # 为每个晶圆分配lot_id（使用新的提取规则，基于子目录名称）
                 for idx, wafer in enumerate(lot.wafers):
-                    wafer.source_lot_id = subdirs[0]  # 默认值
+                    # 默认值 - 使用第一个子目录的lot_id
+                    default_subdir = subdirs[0]
+                    _, default_lot_id = subdir_lot_map[default_subdir]
+                    wafer.source_lot_id = default_lot_id
                     
                     # 根据晶圆在wafers列表中的位置确定其lot_id
                     for subdir, (start_idx, end_idx) in subdir_file_ranges.items():
                         if start_idx <= idx < end_idx:
-                            wafer.source_lot_id = subdir
-                            logger.info(f"晶圆 {wafer.wafer_id} (索引 {idx}) 设置lot_id为: {wafer.source_lot_id}")
+                            _, subdir_lot_id = subdir_lot_map[subdir]
+                            wafer.source_lot_id = subdir_lot_id
+                            logger.info(f"晶圆 {wafer.wafer_id} (索引 {idx}) 设置lot_id为: {subdir_lot_id} (来自子目录 {subdir})")
                             break
                     
-                    if wafer.source_lot_id == subdirs[0] and idx >= subdir_file_ranges[subdirs[0]][1]:
-                        logger.warning(f"晶圆 {wafer.wafer_id} (索引 {idx}) 无法确定lot_id，使用默认值: {wafer.source_lot_id}")
+                    if wafer.source_lot_id == default_lot_id and idx >= subdir_file_ranges[default_subdir][1]:
+                        logger.warning(f"晶圆 {wafer.wafer_id} (索引 {idx}) 无法确定lot_id，使用默认值: {default_lot_id}")
                 
-                # 设置批次的主ID用于文件命名
+                # 设置批次的主ID和产品名用于文件命名（使用第一个子目录的信息）
                 lot.lot_id = main_lot_id
-                logger.info(f"设置主批次ID为: {main_lot_id}")
+                lot.product = main_product_name
+                logger.info(f"设置主产品名为: {main_product_name}, 主批次ID为: {main_lot_id}")
             
             # 处理批次数据，使用原始输出目录
             first_dcp_file_for_spec = all_dcp_files[0] if all_dcp_files else None
