@@ -77,36 +77,30 @@ class CPLot:
         all_dfs = []
         for wafer in self.wafers:
             if wafer.chip_data is not None and not wafer.chip_data.empty:
-                # 创建包含基础信息的 DataFrame
-                info_df = pd.DataFrame({
-                    'LotID': wafer.source_lot_id if wafer.source_lot_id is not None else self.lot_id,
-                    'WaferID': wafer.wafer_id,
-                    'Seq': wafer.seq if wafer.seq is not None else np.nan,
-                    'Bin': wafer.bin if wafer.bin is not None else np.nan,
-                    'X': wafer.x if wafer.x is not None else np.nan,
-                    'Y': wafer.y if wafer.y is not None else np.nan,
-                    'CONT': np.ones(len(wafer.chip_data)) * 1  # 添加CONT列，默认值为1
-                })
-                # 确保索引与 chip_data 对齐，如果 chip_data 有索引的话
-                if wafer.chip_data.index.name or wafer.chip_data.index.equals(pd.RangeIndex(start=0, stop=len(wafer.chip_data), step=1)):
-                     info_df.index = wafer.chip_data.index
-                else: # 如果 chip_data 索引无效，尝试重置
-                     info_df.index = pd.RangeIndex(start=0, stop=len(info_df), step=1)
-                     wafer.chip_data.index = pd.RangeIndex(start=0, stop=len(wafer.chip_data), step=1)
-
-                # 合并基础信息和参数数据
-                # 假设 chip_data 的列名是参数 ID
-                combined_wafer_df = pd.concat([info_df, wafer.chip_data], axis=1)
-                all_dfs.append(combined_wafer_df)
+                # 简单直接的方法：只添加LotID和WaferID
+                wafer_df = wafer.chip_data.copy()
+                
+                # 添加LotID和WaferID列
+                wafer_df.insert(0, 'LotID', wafer.source_lot_id if wafer.source_lot_id is not None else self.lot_id)
+                wafer_df.insert(1, 'WaferID', wafer.wafer_id)
+                
+                all_dfs.append(wafer_df)
 
         if all_dfs:
             self.combined_data = pd.concat(all_dfs, ignore_index=True)
-            # 确保列顺序符合预期 (LotID, WaferID, Seq, Bin, X, Y, CONT, Params...)
-            param_cols = sorted([p.id for p in self.params])
-            ordered_cols = ['LotID', 'WaferID', 'Seq', 'Bin', 'X', 'Y', 'CONT'] + param_cols
-            # 处理可能在 combined_data 中但不在 ordered_cols 中的列 (例如索引)
-            final_cols = [col for col in ordered_cols if col in self.combined_data.columns]
-            self.combined_data = self.combined_data[final_cols]
+            
+            # 去除重复列（如果存在）
+            cols_to_remove = []
+            for col in self.combined_data.columns:
+                if col in ['Lot_ID', 'Wafer_ID'] and col != 'LotID' and col != 'WaferID':
+                    cols_to_remove.append(col)
+                elif '.' in col and col.split('.')[-1].isdigit():  # 去除pandas自动添加的重复列后缀
+                    original_col = col.split('.')[0]  # 取第一部分作为原始列名
+                    if original_col in self.combined_data.columns:
+                        cols_to_remove.append(col)
+            
+            if cols_to_remove:
+                self.combined_data = self.combined_data.drop(columns=cols_to_remove)
         else:
              self.combined_data = pd.DataFrame()
 

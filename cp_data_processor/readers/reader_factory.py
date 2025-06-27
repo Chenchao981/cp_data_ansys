@@ -9,17 +9,62 @@ from typing import Union, List, Optional
 from cp_data_processor.readers.base_reader import BaseReader
 from cp_data_processor.readers.cw_reader import CWReader
 from cp_data_processor.readers.dcp_reader import DCPReader
-from cp_data_processor.readers.mex_reader import MEXReader
 from cp_data_processor.readers.excel_txt_reader import ExcelTXTReader
+from cp_data_processor.readers.mex_reader import MEXReader
+from cp_data_processor.readers.jt_reader import JTReader
+from .company_adapters.company_config import get_company_config
 
 # 获取日志记录器
 logger = logging.getLogger(__name__)
 
+# 映射字符串名称到Reader类
+READER_MAP = {
+    'DCP': DCPReader,
+    'CW': CWReader,
+    'MEX': MEXReader,
+    'ExcelTxt': ExcelTXTReader,
+    'JTReader': JTReader,
+}
 
-def create_reader(file_paths: Union[str, List[str]], 
-                  format_type: Optional[str] = None, 
-                  pass_bin: int = 1, 
-                  multi_wafer: bool = False) -> BaseReader:
+def create_reader(file_paths: Union[str, List[str]], company: Optional[str] = None, pass_bin: int = 1) -> BaseReader:
+    """
+    根据公司名称或文件扩展名创建合适的Reader实例。
+    """
+    if not isinstance(file_paths, list):
+        file_paths = [file_paths]
+
+    if company:
+        config = get_company_config(company)
+        if config and config.get('reader'):
+            reader_class = READER_MAP.get(config['reader'])
+            if reader_class:
+                return reader_class(file_paths, pass_bin)
+        else:
+            logging.warning(f"未找到公司 '{company}' 的配置或指定的读取器。将尝试自动检测。")
+
+    # 如果没有指定公司，则自动检测
+    first_file = file_paths[0]
+    _, extension = os.path.splitext(first_file)
+    extension = extension.lower()
+
+    if extension in ['.xls', '.xlsx']:
+        # 假设所有Excel文件都由JTReader处理，如果以后有其他Excel格式，需要更复杂的逻辑
+        return JTReader(file_paths, pass_bin)
+    elif extension == '.txt':
+        # 默认为DCP格式，如果需要区分其他TXT格式，需要更复杂的逻辑
+        # 例如，可以检查文件内容来判断
+        return DCPReader(file_paths, pass_bin)
+    elif extension == '.mex':
+        return MEXReader(file_paths, pass_bin)
+    elif extension == '.cw':
+        return CWReader(file_paths, pass_bin)
+    else:
+        raise ValueError(f"不支持的文件类型: {extension}")
+
+def create_reader_by_format(file_paths: Union[str, List[str]], 
+                          format_type: Optional[str] = None, 
+                          pass_bin: int = 1, 
+                          multi_wafer: bool = False) -> BaseReader:
     """
     根据文件格式或指定的格式类型创建对应的读取器。
     

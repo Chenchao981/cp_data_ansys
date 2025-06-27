@@ -12,8 +12,8 @@ from .plotting import BoxPlotter, WaferMapPlotter, ScatterPlotter
 from .exporters import ExcelExporter
 from .processing import DataTransformer
 
-# 导出应用程序入口点
-from .app import CPDataProcessorApp
+# 导出应用程序入口点 - 暂时注释掉，避免导入错误
+# from .app import CPDataProcessorApp
 
 __version__ = '0.1.0'
 

@@ -1,0 +1,21 @@
+{
+  "processing_status": "success",
+  "lot_id": "FA44-4149",
+  "input_files": [
+    "data/jetech/FA44-4149/FA444149-03.xls"
+  ],
+  "output_files": [
+    "output_test\\FA44-4149_cleaned_data.csv",
+    "output_test\\FA444149-03_spec.csv"
+  ],
+  "output_directory": "output_test",
+  "wafer_count": 1,
+  "total_chip_count": 2240,
+  "parameter_count": 23,
+  "processing_config": {
+    "unit_conversion_disabled": true,
+    "outlier_method": "iqr",
+    "field_mapping_count": 5
+  },
+  "processor_version": "1.0.0"
+}
