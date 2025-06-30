@@ -423,7 +423,9 @@ class JTReader:
                 chip_data[field] = values
                 
         # 合并参数数据（确保不包含基础列）
-        basic_column_names = list(basic_data.keys()) + ['Lot_ID', 'Wafer_ID']
+        # 基础列的原始名称（JT格式）+ 映射后的标准名称 + Lot和Wafer ID列
+        basic_column_names = ['DUT_NO', 'SOFT_BIN', 'X_COORD', 'Y_COORD', 'TEST_NUM'] + \
+                           list(basic_data.keys()) + ['Lot_ID', 'Wafer_ID']
         param_only_data = param_data.drop(columns=[col for col in param_data.columns 
                                                   if col in basic_column_names], errors='ignore')
         

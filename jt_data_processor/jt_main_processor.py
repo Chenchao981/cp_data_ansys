@@ -23,6 +23,7 @@ import logging
 import pandas as pd
 from pathlib import Path
 from typing import List, Union, Dict, Any, Optional
+from datetime import datetime
 
 # 添加项目根目录到路径
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -33,9 +34,10 @@ sys.path.insert(0, project_root)
 from jt_data_processor.readers.jt_reader import JTReader
 from jt_data_processor.adapters.jt_adapter import JTAdapter
 from jt_data_processor.config.jt_config import JTConfig, DEFAULT_JT_CONFIG
+from jt_data_processor.utils.jt_directory_detector import JTDirectoryDetector
 
 # 导入现有的数据模型和工具
-from cp_data_processor.data_models.cp_data import CPLot, CPWafer
+from cp_data_processor.data_models.cp_data import CPLot, CPWafer, CPParameter
 from cp_data_processor.exporters.excel_exporter import ExcelExporter
 
 # 设置日志
@@ -87,7 +89,7 @@ class JTDataProcessor:
         处理JT数据文件的完整流程
         
         Args:
-            file_paths: JT Excel文件路径（单个或列表）
+            file_paths: JT Excel文件路径（单个或列表）或目录路径
             output_dir: 输出目录
             pass_bin: 合格bin值，默认为1
             
@@ -97,8 +99,8 @@ class JTDataProcessor:
         self.logger.info("=== 开始JT数据处理流程 ===")
         
         try:
-            # 1. 文件验证
-            validated_files = self._validate_input_files(file_paths)
+            # 1. 智能输入处理（文件或目录）
+            validated_files = self._process_input_paths(file_paths)
             self.logger.info(f"验证通过的文件数: {len(validated_files)}")
             
             # 2. 读取数据
@@ -120,12 +122,16 @@ class JTDataProcessor:
             
             # 6. 生成规格文件
             self.logger.info("步骤4: 生成规格文件...")
-            spec_files = self._generate_spec_files(validated_files, output_path)
+            spec_files = self._generate_spec_files(output_path)
             
-            # 7. 生成处理报告
+            # 7. 生成良率报告
+            self.logger.info("步骤5: 生成良率报告...")
+            yield_files = self._generate_yield_files(output_path)
+            
+            # 8. 生成处理报告
             result_summary = self._generate_processing_report(
                 input_files=validated_files,
-                output_files=csv_files + spec_files,
+                output_files=csv_files + spec_files + yield_files,
                 output_dir=str(output_path)
             )
             
@@ -136,39 +142,89 @@ class JTDataProcessor:
             self.logger.error(f"JT数据处理失败: {e}")
             raise
     
-    def _validate_input_files(self, file_paths: Union[str, List[str]]) -> List[str]:
+    def _process_input_paths(self, input_paths: Union[str, List[str]]) -> List[str]:
         """
-        验证输入文件
+        智能处理输入路径（文件或目录）
+        
+        🔥 新增：支持HH公司风格的目录输入
+        - 单批次：浏览到 .\data\jetech\FA44-4149\ 自动处理该批次
+        - 多批次：浏览到 .\data\jetech\ 自动处理所有子批次
+        - 文件：直接处理指定文件
         
         Args:
-            file_paths: 文件路径
+            input_paths: 输入路径（文件、目录或路径列表）
             
         Returns:
             List[str]: 验证通过的文件路径列表
         """
-        if isinstance(file_paths, str):
-            file_paths = [file_paths]
+        if isinstance(input_paths, str):
+            input_paths = [input_paths]
         
-        validated_files = []
-        supported_extensions = self.config.get('supported_formats', ['.xls', '.xlsx'])
+        all_files = []
+        detector = JTDirectoryDetector()
         
-        for file_path in file_paths:
-            if not os.path.exists(file_path):
-                self.logger.warning(f"文件不存在，跳过: {file_path}")
+        for input_path in input_paths:
+            if not os.path.exists(input_path):
+                self.logger.warning(f"路径不存在，跳过: {input_path}")
                 continue
             
-            file_ext = Path(file_path).suffix.lower()
-            if file_ext not in supported_extensions:
-                self.logger.warning(f"不支持的文件格式 {file_ext}，跳过: {file_path}")
-                continue
+            if os.path.isfile(input_path):
+                # 输入是文件，直接验证
+                if self._is_valid_jt_file(input_path):
+                    all_files.append(input_path)
+                    self.logger.debug(f"文件验证通过: {input_path}")
+                else:
+                    self.logger.warning(f"无效的JT文件，跳过: {input_path}")
             
-            validated_files.append(file_path)
-            self.logger.debug(f"文件验证通过: {file_path}")
+            elif os.path.isdir(input_path):
+                # 输入是目录，使用智能检测
+                self.logger.info(f"🔍 检测目录结构: {input_path}")
+                try:
+                    processing_info_list = detector.scan_and_process_directory(input_path)
+                    
+                    # 收集所有批次的文件
+                    for processing_info in processing_info_list:
+                        batch_files = processing_info['excel_files']
+                        all_files.extend(batch_files)
+                        self.logger.info(f"✅ 收集批次 {processing_info['batch_name']}: {len(batch_files)}个文件")
+                    
+                except Exception as e:
+                    self.logger.error(f"目录检测失败，跳过: {input_path}, 错误: {e}")
+                    continue
+            
+            else:
+                self.logger.warning(f"无效的输入类型，跳过: {input_path}")
         
-        if not validated_files:
+        if not all_files:
             raise ValueError("没有找到有效的JT数据文件")
         
-        return validated_files
+        self.logger.info(f"🎯 输入处理完成，共收集 {len(all_files)} 个有效文件")
+        return all_files
+    
+    def _is_valid_jt_file(self, file_path: str) -> bool:
+        """
+        验证文件是否为有效的JT文件
+        
+        Args:
+            file_path: 文件路径
+            
+        Returns:
+            bool: 是否为有效的JT文件
+        """
+        supported_extensions = self.config.get('supported_formats', ['.xls', '.xlsx'])
+        file_ext = Path(file_path).suffix.lower()
+        return file_ext in supported_extensions
+    
+    def _generate_timestamp(self) -> str:
+        """
+        生成符合HH格式的时间戳
+        
+        格式: 20250627_093853 (年月日_时分秒)
+        
+        Returns:
+            str: 时间戳字符串
+        """
+        return datetime.now().strftime("%Y%m%d_%H%M%S")
     
     def _export_cleaned_data(self, output_dir: Path) -> List[str]:
         """
@@ -183,13 +239,17 @@ class JTDataProcessor:
         csv_files = []
         
         if self.lot and self.lot.combined_data is not None and not self.lot.combined_data.empty:
-            # 生成CSV文件名
+            # 生成标准化CSV文件名（符合HH格式）
             lot_id = self.lot.lot_id
-            csv_filename = f"{lot_id}_cleaned_data.csv"
+            timestamp = self._generate_timestamp()
+            csv_filename = f"{lot_id}_cleaned_{timestamp}.csv"
             csv_path = output_dir / csv_filename
             
-            # 直接导出数据为CSV
-            self.lot.combined_data.to_csv(
+            # 🔥 关键修正：标准化输出格式，确保与HH公司格式兼容
+            standardized_data = self._standardize_output_format(self.lot.combined_data)
+            
+            # 导出标准化后的数据
+            standardized_data.to_csv(
                 csv_path,
                 index=False,
                 encoding=self.config.get('output_config', {}).get('csv_encoding', 'utf-8-sig')
@@ -204,87 +264,256 @@ class JTDataProcessor:
         
         return csv_files
     
-    def _generate_spec_files(self, input_files: List[str], output_dir: Path) -> List[str]:
+    def _standardize_output_format(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        生成规格文件
+        标准化输出格式，确保与HH公司要求一致
+        
+        - WaferID: 转换格式（例如, 从 3.0 变为 3）
+        - Test: 重命名为 Test_d
+        - X, Y: 重命名为 X, Y
         
         Args:
-            input_files: 输入文件列表
+            df: 原始数据框
+            
+        Returns:
+            pd.DataFrame: 标准化后的数据框
+        """
+        if df.empty:
+            return df
+
+        # 内部函数：安全转换WaferID
+        def convert_wafer_id(wafer_id):
+            """安全地将WaferID转换为整数，如果失败则返回原始值"""
+            try:
+                # 检查是否为 'nan' 字符串或Pandas的NA值
+                if pd.isna(wafer_id) or str(wafer_id).strip().lower() == 'nan':
+                    return None
+                # 尝试转换为浮点数再转换为整数
+                return int(float(wafer_id))
+            except (ValueError, TypeError):
+                return wafer_id
+
+        # 复制以避免SettingWithCopyWarning
+        df_copy = df.copy()
+
+        # 应用转换
+        if 'WaferID' in df_copy.columns:
+            df_copy['WaferID'] = df_copy['WaferID'].apply(convert_wafer_id)
+        
+        # 🔥 标准化列名（从JT格式到HH格式）
+        # 这是根据jt_config.py中的字段映射的逆操作
+        # 'TEST': 'Test', 'X': 'X', 'Y': 'Y'
+        rename_map = {
+            'Test': 'Test_d'  # 仅重命名Test
+        }
+        df_copy.rename(columns=rename_map, inplace=True)
+
+        return df_copy
+    
+    def _generate_spec_files(self, output_dir: Path) -> List[str]:
+        """
+        为整个批次生成一个统一的规格（SPEC）文件
+        
+        Args:
             output_dir: 输出目录
             
         Returns:
-            List[str]: 规格文件路径列表
+            List[str]: 生成的规格文件路径列表（仅一个文件）
         """
         spec_files = []
         
-        try:
-            for file_path in input_files:
-                # 获取单位和规格信息
-                if self.reader:
-                    unit_info = self.reader.get_unit_info(file_path)
-                    spec_info = self.reader.get_spec_info(file_path)
-                else:
-                    self.logger.warning("Reader未初始化，跳过规格文件生成")
-                    continue
-                
-                if unit_info and spec_info:
-                    # 生成规格文件
-                    spec_data = self._create_spec_dataframe(unit_info, spec_info)
-                    
-                    # 生成规格文件名
-                    file_stem = Path(file_path).stem
-                    spec_filename = f"{file_stem}_spec.csv"
-                    spec_path = output_dir / spec_filename
-                    
-                    # 保存规格文件
-                    spec_data.to_csv(
-                        spec_path,
-                        index=False,
-                        encoding=self.config.get('output_config', {}).get('csv_encoding', 'utf-8-sig')
-                    )
-                    
-                    spec_files.append(str(spec_path))
-                    self.logger.info(f"规格文件生成完成: {spec_path}")
+        if self.lot is None or not self.lot.params:
+            self.logger.warning("批次数据或参数列表不存在，无法生成规格文件。")
+            return spec_files
         
-        except Exception as e:
-            self.logger.error(f"生成规格文件失败: {e}")
-            # 继续处理，不中断主流程
+        # 1. 直接使用批次的参数列表
+        params_list = self.lot.params
         
+        # 2. 创建规格DataFrame
+        spec_df = self._create_spec_dataframe(params_list)
+        
+        if spec_df.empty:
+            self.logger.warning("创建的规格DataFrame为空，跳过文件生成。")
+            return spec_files
+            
+        # 3. 生成文件名并保存
+        lot_id = self.lot.lot_id
+        timestamp = self._generate_timestamp()
+        spec_filename = f"{lot_id}_spec_{timestamp}.csv"
+        spec_path = output_dir / spec_filename
+        
+        spec_df.to_csv(spec_path, index=False)
+        spec_files.append(str(spec_path))
+        
+        self.logger.info(f"✅ 成功生成统一规格文件: {spec_filename}")
         return spec_files
-    
-    def _create_spec_dataframe(self, unit_info: Dict, spec_info: Dict) -> pd.DataFrame:
+
+    def _create_spec_dataframe(self, params: List[CPParameter]) -> pd.DataFrame:
         """
-        创建规格文件的DataFrame
+        根据参数对象列表创建规格DataFrame
         
         Args:
-            unit_info: 单位信息字典
-            spec_info: 规格信息字典
+            params: CPLot中的参数对象列表 (List[CPParameter])
             
         Returns:
-            pd.DataFrame: 规格数据
+            pd.DataFrame: 包含规格信息的DataFrame
         """
-        spec_config = self.config.get('spec_file_config', {})
-        
-        # 获取参数列表（排除基础列）
-        basic_columns = ['DUT_NO', 'SOFT_BIN', 'X_COORD', 'Y_COORD', 'SITE_NUM', 'PART_ID', 'PASSFG']
-        param_columns = [col for col in unit_info.keys() if col not in basic_columns]
-        
-        # 创建规格数据
         spec_records = []
-        for param in param_columns:
+        
+        for p in params:
             record = {
-                'CONT': param,
-                'Unit': unit_info.get(param, ''),
-                'LimitU': spec_info.get('limit_u', {}).get(param, ''),
-                'LimitL': spec_info.get('limit_l', {}).get(param, ''),
-                'TestCond': spec_config.get('testcond_value', '')  # JT公司测试条件为空
+                "param": p.id,
+                "unit": p.unit if p.unit is not None else "",
+                "lsl": p.sl if p.sl is not None else "",
+                "usl": p.su if p.su is not None else "",
+                "target": ""  # 保留target列，即使为空
             }
             spec_records.append(record)
-        
+
+        if not spec_records:
+            return pd.DataFrame()
+
+        # 直接从记录列表创建DataFrame，避免重复表头
         spec_df = pd.DataFrame(spec_records)
-        self.logger.debug(f"创建规格文件，参数数: {len(spec_records)}")
         
-        return spec_df
+        # 确保列的顺序符合要求
+        spec_df = spec_df[["param", "unit", "lsl", "usl", "target"]]
+        
+        return pd.DataFrame(spec_df)
+    
+    def _generate_yield_files(self, output_dir: Path) -> List[str]:
+        """
+        生成良率报告
+        
+        HH格式：
+        Product_Name,Lot_ID,Wafer_ID,Yield,Total,Pass,Bin3,Bin4,...
+        NCETSG7120BAA,FA54-5339,1,99.30%,142,141,1,0,...
+        
+        Args:
+            output_dir: 输出目录
+            
+        Returns:
+            List[str]: 良率文件路径列表
+        """
+        yield_files = []
+        
+        if not self.lot or not self.lot.wafers:
+            self.logger.warning("没有晶圆数据，跳过良率报告生成")
+            return yield_files
+        
+        try:
+            # 生成良率数据
+            yield_data = self._calculate_yield_statistics()
+            
+            if yield_data:
+                # 生成标准化良率文件名（符合HH格式）
+                lot_id = self.lot.lot_id
+                timestamp = self._generate_timestamp()
+                yield_filename = f"{lot_id}_yield_{timestamp}.csv"
+                yield_path = output_dir / yield_filename
+                
+                # 保存良率文件
+                yield_df = pd.DataFrame(yield_data)
+                yield_df.to_csv(
+                    yield_path,
+                    index=False,
+                    encoding=self.config.get('output_config', {}).get('csv_encoding', 'utf-8-sig')
+                )
+                
+                yield_files.append(str(yield_path))
+                self.logger.info(f"✅ 良率报告生成完成: {yield_path}")
+                self.logger.info(f"良率数据: {len(yield_data)}行晶圆统计")
+        
+        except Exception as e:
+            self.logger.error(f"生成良率报告失败: {e}")
+            # 继续处理，不中断主流程
+        
+        return yield_files
+    
+    def _calculate_yield_statistics(self) -> List[Dict]:
+        """
+        计算每个晶圆的良率统计数据
+        
+        Returns:
+            List[Dict]: 每个晶圆的良率统计
+        """
+        yield_records = []
+        
+        # 产品名称：使用Lot_ID作为产品名称（简化方案）
+        product_name = self.lot.lot_id
+        
+        for wafer in self.lot.wafers:
+            if wafer.chip_data is None or wafer.chip_data.empty:
+                continue
+            
+            # 计算晶圆良率统计
+            total_chips = len(wafer.chip_data)
+            
+            # 统计各Bin的数量
+            bin_counts = wafer.chip_data['Bin'].value_counts().to_dict()
+            
+            # Pass芯片数（Bin=1为合格）
+            pass_chips = bin_counts.get(1, 0)
+            
+            # 良率计算
+            yield_rate = (pass_chips / total_chips * 100) if total_chips > 0 else 0
+            
+            # 构建良率记录
+            yield_record = {
+                'Product_Name': product_name,
+                'Lot_ID': self.lot.lot_id,
+                'Wafer_ID': wafer.wafer_id,
+                'Yield': f"{yield_rate:.2f}%",
+                'Total': total_chips,
+                'Pass': pass_chips
+            }
+            
+            # 添加各个失效Bin的统计（Bin 2-9）
+            for bin_num in range(2, 10):
+                bin_key = f"Bin{bin_num}"
+                yield_record[bin_key] = bin_counts.get(bin_num, 0)
+            
+            yield_records.append(yield_record)
+            self.logger.debug(f"晶圆 {wafer.wafer_id}: 良率 {yield_rate:.2f}%, 总数 {total_chips}, 合格 {pass_chips}")
+        
+        # 添加总计行（ALL）
+        if yield_records:
+            total_record = self._calculate_lot_total_yield(yield_records)
+            yield_records.append(total_record)
+        
+        self.logger.info(f"✅ 良率统计完成: {len(yield_records)}条记录（含总计）")
+        return yield_records
+    
+    def _calculate_lot_total_yield(self, yield_records: List[Dict]) -> Dict:
+        """
+        计算批次总良率
+        
+        Args:
+            yield_records: 各晶圆良率记录
+            
+        Returns:
+            Dict: 批次总良率记录
+        """
+        total_chips = sum(record['Total'] for record in yield_records)
+        total_pass = sum(record['Pass'] for record in yield_records)
+        total_yield = (total_pass / total_chips * 100) if total_chips > 0 else 0
+        
+        # 总计各Bin数量
+        total_record = {
+            'Product_Name': self.lot.lot_id,
+            'Lot_ID': 'ALL',
+            'Wafer_ID': 'ALL', 
+            'Yield': f"{total_yield:.2f}%",
+            'Total': total_chips,
+            'Pass': total_pass
+        }
+        
+        # 统计各失效Bin总数
+        for bin_num in range(2, 10):
+            bin_key = f"Bin{bin_num}"
+            total_record[bin_key] = sum(record.get(bin_key, 0) for record in yield_records)
+        
+        return total_record
     
     def _generate_processing_report(self, input_files: List[str], 
                                   output_files: List[str], 
@@ -347,15 +576,15 @@ class JTDataProcessor:
 
 
 # 便捷函数
-def process_jt_files(file_paths: Union[str, List[str]], 
-                    output_dir: str = "jt_output",
+def process_jt_files(input_paths: Union[str, List[str]], 
+                    output_dir: str = "output",
                     pass_bin: int = 1,
                     config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
-    处理JT文件的便捷函数
+    处理JT文件的便捷函数（支持HH公司风格的目录输入）
     
     Args:
-        file_paths: JT文件路径
+        input_paths: JT文件路径或目录路径（支持混合输入）
         output_dir: 输出目录
         pass_bin: 合格bin值
         config: 自定义配置
@@ -364,16 +593,19 @@ def process_jt_files(file_paths: Union[str, List[str]],
         Dict[str, Any]: 处理结果
     """
     processor = JTDataProcessor(config)
-    return processor.process_files(file_paths, output_dir, pass_bin)
+    return processor.process_files(input_paths, output_dir, pass_bin)
 
 
 if __name__ == "__main__":
     # 命令行接口
     import argparse
     
-    parser = argparse.ArgumentParser(description='JT数据处理器')
-    parser.add_argument('files', nargs='+', help='JT Excel文件路径')
-    parser.add_argument('-o', '--output', default='jt_output', help='输出目录')
+    parser = argparse.ArgumentParser(description='JT数据处理器 - 支持HH公司风格的目录处理')
+    parser.add_argument('inputs', nargs='+', help='JT Excel文件路径或目录路径\n' +
+                       '  单批次: .\\data\\jetech\\FA44-4149\\\n' +
+                       '  多批次: .\\data\\jetech\\\n' +
+                       '  文件: .\\data\\jetech\\FA44-4149\\*.xls')
+    parser.add_argument('-o', '--output', default='output', help='输出目录')
     parser.add_argument('-b', '--pass-bin', type=int, default=1, help='合格bin值')
     parser.add_argument('-v', '--verbose', action='store_true', help='详细输出')
     
@@ -385,12 +617,13 @@ if __name__ == "__main__":
     
     # 处理文件
     try:
-        print(f"开始处理JT文件: {args.files}")
+        print(f"🔬 JT数据处理器 - HH公司风格目录处理")
+        print(f"输入路径: {args.inputs}")
         print(f"输出目录: {args.output}")
         print(f"合格bin值: {args.pass_bin}")
-        print("-" * 50)
+        print("-" * 60)
         
-        result = process_jt_files(args.files, args.output, args.pass_bin)
+        result = process_jt_files(args.inputs, args.output, args.pass_bin)
         
         print("\n=== 处理完成 ===")
         print(f"批次ID: {result['lot_id']}")
