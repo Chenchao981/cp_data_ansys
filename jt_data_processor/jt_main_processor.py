@@ -350,36 +350,53 @@ class JTDataProcessor:
 
     def _create_spec_dataframe(self, params: List[CPParameter]) -> pd.DataFrame:
         """
-        根据参数对象列表创建规格DataFrame
+        根据参数对象列表创建规格DataFrame（JT列格式）
+        
+        🔥 新格式：按列输出，方便查看所有参数规格
+        格式：
+        Parameter    TEST_NUM    UIS_KELVIN    UIS_BVDSS    ...
+        Unit                     V             V            ...
+        LimitL                   -1            20.00        ...
+        LimitU                   1             80.00        ...
         
         Args:
             params: CPLot中的参数对象列表 (List[CPParameter])
             
         Returns:
-            pd.DataFrame: 包含规格信息的DataFrame
+            pd.DataFrame: 包含规格信息的DataFrame（JT列格式）
         """
-        spec_records = []
-        
-        for p in params:
-            record = {
-                "param": p.id,
-                "unit": p.unit if p.unit is not None else "",
-                "lsl": p.sl if p.sl is not None else "",
-                "usl": p.su if p.su is not None else "",
-                "target": ""  # 保留target列，即使为空
-            }
-            spec_records.append(record)
-
-        if not spec_records:
+        if not params:
+            # 返回空DataFrame
             return pd.DataFrame()
 
-        # 直接从记录列表创建DataFrame，避免重复表头
-        spec_df = pd.DataFrame(spec_records)
+        # 提取参数名称列表（按顺序）
+        param_names = [p.id for p in params]
         
-        # 确保列的顺序符合要求
-        spec_df = spec_df[["param", "unit", "lsl", "usl", "target"]]
+        # 构建列格式的数据
+        data = {}
         
-        return pd.DataFrame(spec_df)
+        # 第一列为行标识（去掉Parameter行）
+        data['Parameter'] = ['Unit', 'LimitL', 'LimitU']
+        
+        # 为每个参数添加一列
+        for param in params:
+            param_data = [
+                param.unit if param.unit is not None else "",  # 单位
+                param.sl if param.sl is not None else "",  # 下限
+                param.su if param.su is not None else ""   # 上限
+            ]
+            data[param.id] = param_data
+        
+        # 创建DataFrame
+        spec_df = pd.DataFrame(data)
+        
+        # 设置第一列作为行索引（可选，让输出更清晰）
+        # spec_df.set_index('Parameter', inplace=True)
+        
+        self.logger.info(f"✅ 创建列格式spec DataFrame: {len(params)}个参数")
+        self.logger.debug(f"参数列表: {param_names[:5]}{'...' if len(param_names) > 5 else ''}")
+        
+        return spec_df
     
     def _generate_yield_files(self, output_dir: Path) -> List[str]:
         """

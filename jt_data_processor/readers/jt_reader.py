@@ -153,7 +153,7 @@ class JTReader:
             self.logger.debug(f"从 {file_path} 提取Wafer ID...")
             
             # 读取Summary information工作表
-            summary_df = pd.read_excel(file_path, sheet_name='Summary information', header=None)
+            summary_df = pd.read_excel(file_path, sheet_name='Summary information', header=None, engine='xlrd')
             
             # 根据用户确认：第9行获取WAFER_ID（索引为8）
             if len(summary_df) > 8:
@@ -239,7 +239,7 @@ class JTReader:
             self.logger.debug(f"读取 {file_path} 的DUT_DATA工作表...")
             
             # 读取DUT_DATA工作表的所有数据
-            full_df = pd.read_excel(file_path, sheet_name='DUT_DATA', header=None)
+            full_df = pd.read_excel(file_path, sheet_name='DUT_DATA', header=None, engine='xlrd')
             
             if len(full_df) < 6:
                 raise ValueError("DUT_DATA工作表数据不足，至少需要6行")
@@ -350,16 +350,27 @@ class JTReader:
     
     def _create_cp_parameters(self, param_data: pd.DataFrame, unit_info: Dict, spec_info: Dict) -> None:
         """
-        为参数数据创建CPParameter对象
+        为参数数据创建CPParameter对象（支持去重）
+        
+        🔥 修复：避免多文件处理时重复创建相同参数
         
         Args:
             param_data: 参数数据DataFrame
             unit_info: 单位信息字典
             spec_info: 规格信息字典
         """
+        # 获取已存在的参数ID列表，用于去重
+        existing_param_ids = {param.id for param in self.lot.params}
+        new_params_count = 0
+        
         for param_name in param_data.columns:
             # 跳过基础列（如果还有的话）
             if param_name in ['Lot_ID', 'Wafer_ID', 'Seq', 'Bin', 'X', 'Y', 'CONT']:
+                continue
+            
+            # 🔥 去重检查：如果参数已存在，跳过创建
+            if param_name in existing_param_ids:
+                self.logger.debug(f"参数 {param_name} 已存在，跳过重复创建")
                 continue
                 
             # 获取参数信息
@@ -387,11 +398,13 @@ class JTReader:
                 test_cond=[]  # JT公司测试条件为空
             )
             
-            # 添加到批次参数列表
+            # 添加到批次参数列表（仅新参数）
             self.lot.params.append(cp_param)
-            self.logger.debug(f"创建参数: {param_name}, 单位: {unit}, 下限: {sl}, 上限: {su}")
+            existing_param_ids.add(param_name)  # 更新已存在参数集合
+            new_params_count += 1
+            self.logger.debug(f"✅ 新增参数: {param_name}, 单位: {unit}, 下限: {sl}, 上限: {su}")
         
-        self.logger.info(f"成功创建 {len(param_data.columns)} 个CPParameter对象")
+        self.logger.info(f"✅ 参数创建完成: 新增 {new_params_count} 个参数，总计 {len(self.lot.params)} 个参数")
     
     def _create_cp_wafer(self, wafer_id: str, file_path: str, 
                         basic_data: Dict, param_data: pd.DataFrame) -> CPWafer:

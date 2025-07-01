@@ -6,7 +6,9 @@
       "Bash(mv:*)",
       "Bash(grep:*)",
       "Bash(rm:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(rg:*)",
+      "Bash(pip install:*)"
     ],
     "deny": []
   }
