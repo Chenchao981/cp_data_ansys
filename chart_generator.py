@@ -78,7 +78,17 @@ def main():
         logger.warning("⚠️ 未能保存任何 YieldChart 内置图表")
 
     # 4. 生成自定义 Plotly Express 图表
-    cleaned_df = yield_analyzer.cleaned_data
+    # 尝试加载cleaned数据
+    cleaned_df = None
+    cleaned_files = [f for f in Path(data_input_dir).glob("*_cleaned_*.csv")]
+    
+    if cleaned_files:
+        try:
+            cleaned_file = cleaned_files[0]  # 使用第一个找到的cleaned文件
+            cleaned_df = pd.read_csv(cleaned_file)
+            logger.info(f"📄 加载清洗数据: {cleaned_file.name}")
+        except Exception as e:
+            logger.error(f"❌ 清洗数据加载失败: {e}")
 
     if cleaned_df is None or cleaned_df.empty:
         logger.warning("⚠️ Cleaned data 未加载或为空，跳过自定义图表生成")
@@ -97,17 +107,19 @@ def generate_custom_plotly_charts(cleaned_df, yield_analyzer, output_base_dir):
     custom_output_dir.mkdir(parents=True, exist_ok=True)
 
     # 获取可用参数
-    params_from_yield_chart = yield_analyzer.get_available_parameters()
-    if params_from_yield_chart:
-        plot_params = [p for p in params_from_yield_chart
-                      if p in cleaned_df.columns and cleaned_df[p].dtype in ['int64', 'float64']]
-    else:
-        # 备选方案：从 cleaned_df 推断参数
-        plot_params = [
-            col for col in cleaned_df.columns
-            if col not in ['Lot_ID', 'Wafer_ID', 'Seq', 'Bin', 'X', 'Y']
-            and cleaned_df[col].dtype in ['int64', 'float64']
-        ]
+    excluded_cols = ['LotID', 'WaferID', 'Lot_ID', 'Wafer_ID', 'Seq', 'Bin', 'X', 'Y', 'CONT']
+    
+    # 直接从cleaned CSV推断参数，因为YieldChart的参数来自yield文件，与cleaned文件不匹配
+    plot_params = [
+        col for col in cleaned_df.columns
+        if col not in excluded_cols and cleaned_df[col].dtype in ['int64', 'float64']
+    ]
+    logger.info(f"📊 使用CSV推断参数列表")
+    
+    logger.info(f"🔍 CSV列名: {list(cleaned_df.columns)}")
+    logger.info(f"📊 排除列表: {excluded_cols}")
+    logger.info(f"📊 数值列: {[col for col in cleaned_df.columns if cleaned_df[col].dtype in ['int64', 'float64']]}")
+    logger.info(f"📊 筛选后参数: {plot_params}")
 
     if not plot_params:
         logger.warning("⚠️ 未找到合适的数值参数，跳过自定义图表生成")
@@ -116,7 +128,10 @@ def generate_custom_plotly_charts(cleaned_df, yield_analyzer, output_base_dir):
     logger.info(f"🎯 将为以下 {len(plot_params)} 个参数生成图表: {plot_params}")
 
     # 提取批次信息用于分组
-    if 'Lot_ID' in cleaned_df.columns:
+    if 'LotID' in cleaned_df.columns:
+        cleaned_df['Short_Lot_ID'] = cleaned_df['LotID'].str.extract(r'(FA\d{2}-\d+)', expand=False).fillna('Unknown')
+        color_group = 'Short_Lot_ID'
+    elif 'Lot_ID' in cleaned_df.columns:
         cleaned_df['Short_Lot_ID'] = cleaned_df['Lot_ID'].str.extract(r'(FA\d{2}-\d+)', expand=False).fillna('Unknown')
         color_group = 'Short_Lot_ID'
     else:
@@ -184,7 +199,7 @@ def generate_custom_plotly_charts(cleaned_df, yield_analyzer, output_base_dir):
                             param1: f"{param1}{unit1}",
                             param2: f"{param2}{unit2}"
                         },
-                        hover_data=['Wafer_ID'] if 'Wafer_ID' in cleaned_df.columns else None
+                        hover_data=['WaferID'] if 'WaferID' in cleaned_df.columns else ['Wafer_ID'] if 'Wafer_ID' in cleaned_df.columns else None
                     )
 
                     # 美化图表

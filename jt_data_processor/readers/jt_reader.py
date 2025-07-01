@@ -81,6 +81,45 @@ class JTReader:
         
         self.logger.info(f"文件验证通过，共 {len(self.file_paths)} 个有效文件")
     
+    def _read_excel_safe(self, file_path: str, sheet_name: str, **kwargs) -> pd.DataFrame:
+        """
+        安全地读取Excel文件，自动处理引擎兼容性问题
+        
+        Args:
+            file_path: Excel文件路径
+            sheet_name: 工作表名称
+            **kwargs: 其他pandas.read_excel参数
+            
+        Returns:
+            pd.DataFrame: 读取的数据
+        """
+        file_ext = Path(file_path).suffix.lower()
+        
+        if file_ext == '.xls':
+            # 对于.xls文件，只使用xlrd引擎，但不指定引擎让pandas自动处理
+            try:
+                # 首先尝试不指定引擎，让pandas自动选择
+                return pd.read_excel(file_path, sheet_name=sheet_name, **kwargs)
+            except Exception as e:
+                self.logger.debug(f"自动引擎读取.xls失败: {e}")
+                # 如果失败，尝试明确指定xlrd
+                try:
+                    return pd.read_excel(file_path, sheet_name=sheet_name, engine='xlrd', **kwargs)
+                except Exception as e2:
+                    self.logger.debug(f"xlrd引擎读取.xls失败: {e2}")
+                    raise e2
+        elif file_ext == '.xlsx':
+            # 对于.xlsx文件，优先使用openpyxl
+            try:
+                return pd.read_excel(file_path, sheet_name=sheet_name, engine='openpyxl', **kwargs)
+            except Exception as e:
+                self.logger.debug(f"openpyxl引擎读取.xlsx失败: {e}")
+                # 回退到自动选择
+                return pd.read_excel(file_path, sheet_name=sheet_name, **kwargs)
+        else:
+            # 其他格式让pandas自动选择
+            return pd.read_excel(file_path, sheet_name=sheet_name, **kwargs)
+
     def read(self) -> CPLot:
         """
         读取所有JT Excel文件并生成CPLot对象
@@ -252,8 +291,9 @@ class JTReader:
             unit_info = dict(zip(headers, units))
             
             # 提取规格信息（第3-4行，索引2-3）
-            limit_u = full_df.iloc[2].tolist()  # 上限
-            limit_l = full_df.iloc[3].tolist()  # 下限
+            # 修复：第3行实际是下限，第4行实际是上限
+            limit_l = full_df.iloc[2].tolist()  # 下限 - 第3行（索引2）
+            limit_u = full_df.iloc[3].tolist()  # 上限 - 第4行（索引3）
             spec_info = {
                 'limit_u': dict(zip(headers, limit_u)),
                 'limit_l': dict(zip(headers, limit_l))
