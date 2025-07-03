@@ -493,6 +493,58 @@ class JTDataProcessor:
 
         return df_copy
     
+    def _standardize_wafer_id(self, wafer_id) -> int:
+        """
+        标准化 Wafer_ID 为整数类型
+        
+        将字符串格式的 Wafer_ID（如 "03", "04"）转换为整数（如 3, 4）
+        确保与数字格式的 Wafer_ID（如 10, 11）保持一致的数据类型
+        
+        Args:
+            wafer_id: 原始 Wafer_ID（可能是字符串或数字）
+            
+        Returns:
+            int: 标准化后的整数 Wafer_ID
+        """
+        try:
+            # 检查是否为 NaN 或 None
+            if pd.isna(wafer_id) or wafer_id is None:
+                self.logger.warning(f"Wafer_ID 为空值，使用默认值 0")
+                return 0
+            
+            # 转换为字符串以处理各种输入类型
+            wafer_id_str = str(wafer_id).strip()
+            
+            # 检查是否为空字符串或 'nan'
+            if not wafer_id_str or wafer_id_str.lower() == 'nan':
+                self.logger.warning(f"Wafer_ID 为空字符串或 'nan'，使用默认值 0")
+                return 0
+            
+            # 尝试转换为整数
+            # 这会自动处理 "03" -> 3, "10" -> 10, 3.0 -> 3 等情况
+            standardized_id = int(float(wafer_id_str))
+            
+            self.logger.debug(f"Wafer_ID 标准化: {wafer_id} -> {standardized_id}")
+            return standardized_id
+            
+        except (ValueError, TypeError) as e:
+            self.logger.error(f"无法标准化 Wafer_ID: {wafer_id}, 错误: {e}")
+            # 如果转换失败，尝试提取数字部分
+            try:
+                import re
+                # 提取字符串中的数字部分
+                numbers = re.findall(r'\d+', str(wafer_id))
+                if numbers:
+                    fallback_id = int(numbers[0])
+                    self.logger.warning(f"使用数字提取作为备用方案: {wafer_id} -> {fallback_id}")
+                    return fallback_id
+                else:
+                    self.logger.error(f"无法从 {wafer_id} 中提取数字，使用默认值 0")
+                    return 0
+            except Exception as fallback_error:
+                self.logger.error(f"备用方案也失败: {fallback_error}，使用默认值 0")
+                return 0
+    
     def _generate_spec_files(self, output_dir: Path) -> List[str]:
         """
         为整个批次生成一个统一的规格（SPEC）文件
@@ -658,11 +710,14 @@ class JTDataProcessor:
             # 良率计算
             yield_rate = (pass_chips / total_chips * 100) if total_chips > 0 else 0
             
+            # 🔥 标准化 Wafer_ID 为整数类型（将 "03" 转换为 3）
+            standardized_wafer_id = self._standardize_wafer_id(wafer.wafer_id)
+            
             # 构建良率记录
             yield_record = {
                 'Product_Name': product_name,
                 'Lot_ID': self.lot.lot_id if self.lot else 'unknown',
-                'Wafer_ID': wafer.wafer_id,
+                'Wafer_ID': standardized_wafer_id,
                 'Yield': f"{yield_rate:.2f}%",
                 'Total': total_chips,
                 'Pass': pass_chips
