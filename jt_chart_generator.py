@@ -4,6 +4,11 @@
 JT公司图表生成器 - 复用HH公司前端图表模块
 基于JT公司的3个清洗CSV文件(*_cleaned_*.csv, *_spec_*.csv, *_yield_*.csv)
 生成与HH公司相同的前端HTML图表
+
+功能特性：
+1. 📈 良率图表：批次良率趋势、失效类型分析、批次良率对比
+2. 📦 参数箱体图：单独生成所有测量参数的箱体图和散点图
+3. 📋 汇总图表：在一个页面中显示良率图和所有参数的汇总分析
 """
 
 import logging
@@ -18,6 +23,7 @@ sys.path.insert(0, str(project_root))
 # 导入HH公司的前端图表模块
 from frontend.charts.yield_chart import YieldChart
 from frontend.charts.boxplot_chart import BoxplotChart
+from frontend.charts.summary_chart import SummaryChart
 
 # 配置日志记录
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -61,7 +67,15 @@ def main():
     logger.info("📦 开始生成箱体图和散点图...")
     generate_boxplot_charts(jt_data_dir, jt_output_dir)
     
+    # 4. 使用HH的SummaryChart生成汇总图表
+    logger.info("📋 开始生成汇总图表...")
+    generate_summary_chart(jt_data_dir, jt_output_dir)
+    
     logger.info("🎉 JT公司图表生成完成！")
+    logger.info("📊 生成的图表类型包括：")
+    logger.info("   📈 良率图表 (3个): 趋势分析、失效分析、批次对比")
+    logger.info("   📦 参数箱体图 (多个): 每个测量参数的独立分析")
+    logger.info("   📋 汇总图表 (1个): 包含良率图和所有参数的综合分析")
     logger.info(f"📁 所有图表已保存到: {jt_output_dir}")
 
 def standardize_jt_csv_columns(data_dir: Path):
@@ -166,6 +180,32 @@ def generate_boxplot_charts(data_dir: Path, output_dir: Path):
             
     except Exception as e:
         logger.error(f"❌ 箱体图生成失败: {e}")
+
+def generate_summary_chart(data_dir: Path, output_dir: Path):
+    """
+    使用HH的SummaryChart模块生成包含良率图和所有参数的汇总图表
+    """
+    try:
+        # 先进行JT到HH的列名标准化转换
+        standardize_jt_csv_columns(data_dir)
+        
+        # 初始化HH的SummaryChart
+        summary_analyzer = SummaryChart(data_dir=str(data_dir))
+        
+        if not summary_analyzer.load_data():
+            logger.error("❌ 汇总图表数据加载失败")
+            return
+        
+        # 生成并保存汇总图表
+        saved_chart = summary_analyzer.save_summary_chart(output_dir=str(output_dir))
+        
+        if saved_chart:
+            logger.info(f"✅ 汇总图表已保存: {saved_chart.name}")
+        else:
+            logger.warning("⚠️ 未能保存汇总图表")
+            
+    except Exception as e:
+        logger.error(f"❌ 汇总图表生成失败: {e}")
 
 
 if __name__ == "__main__":

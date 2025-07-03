@@ -14,7 +14,7 @@
 
 ## 项目概览
 
-本项目是原始 VBA CP 数据处理宏的 Python 转换版本，专注于复刻和升级读取多种 CP 测试数据格式 (MEX, DCP, CW)、处理数据、计算统计数据和良率、生成分析图表的核心功能。
+本项目是原始 VBA CP 数据处理宏的 Python 转换版本，专注于复刻和升级读取多种 CP 测试数据格式 (MEX, DCP, CW, JT Excel)、处理数据、计算统计数据和良率、生成分析图表的核心功能。
 
 ### 🔄 重构背景
 
@@ -23,21 +23,24 @@
 1. **维护困难**：代码耦合度高，模块间依赖复杂
 2. **性能瓶颈**：脚本执行效率低，难以处理大量数据
 3. **平台限制**：依赖Windows和MS Office，跨平台支持困难
+4. **公司适配**：缺乏多公司数据格式支持
 
 通过Python重构提供了模块化、可扩展、高效的解决方案。
 
 ### 📊 当前版本状态
 
-**版本**：v1.2  
+**版本**：v1.3  
 **最后更新**：2025-01-06  
 **主要特性**：
 
 - ✅ 完整的GUI界面（PyQt5）
+- ✅ 多公司数据格式支持（HH、JT）
 - ✅ YieldChart良率分析模块
 - ✅ BoxplotChart参数分析模块
 - ✅ 汇总图表功能
 - ✅ 智能数据清洗
 - ✅ .pyz打包发布
+- 🆕 JT公司完整数据处理流程
 
 ## 系统架构
 
@@ -46,25 +49,77 @@
 ```
 CP数据处理器
 ├── 🗂️ 数据读取层 (readers)       # 解析不同格式的原始数据
+│   ├── HH公司格式 (DCP, CW, MEX)
+│   └── 🆕 JT公司格式 (Excel)
 ├── 📊 数据模型层 (data_models)   # 定义核心数据结构
 ├── ⚙️ 数据处理层 (processing)   # 数据清洗、转换、计算
+├── 🏭 公司适配层 (adapters)     # 多公司数据格式适配
+│   ├── HH公司适配器
+│   └── 🆕 JT公司适配器
 ├── 📈 数据分析层 (analysis)     # 统计分析、良率计算
 ├── 🎨 数据可视化层 (plotting)   # 生成各类交互式图表
 ├── 📤 数据导出层 (exporters)    # 将结果保存为文件
 ├── 🖥️ 应用层 (app/cli/gui)     # 用户接口和主流程控制
-└── 🎯 前端图表 (frontend)       # 现代化图表组件
+├── 🎯 前端图表 (frontend)       # 现代化图表组件
+└── 🆕 多公司处理器              # 专门的公司数据处理器
+    ├── HH数据处理器
+    └── JT数据处理器
 ```
 
 ### 核心架构原则
 
 - **关注点分离**：每个模块负责特定功能
 - **松耦合设计**：模块间通过明确接口交互
-- **可扩展性**：易于添加新功能和支持新数据格式
+- **多公司扩展**：易于添加新公司数据格式支持
 - **可测试性**：组件易于单独测试
 
 ## 最新功能实现
 
-> 基于功能实现总结.md的内容整合
+> 基于功能实现总结.md的内容整合 + JT公司新功能
+
+### 🆕 JT公司数据处理模块
+
+#### 1. JT数据处理器 (JTDataProcessor)
+
+- **设计理念**：基于HH公司成熟技术，专门适配JT公司需求
+- **核心特性**：
+  - 智能目录结构检测（单层/双层目录支持）
+  - 禁用单位转换（JT数据rawdata已与unit匹配）
+  - IQR四分位法异常值处理
+  - 完整的数据清洗和规格文件生成
+- **输入格式**：JT Excel文件 (FA*.xls/xlsx)
+- **输出格式**：标准CSV三件套
+
+#### 2. JT图表生成器 (jt_chart_generator.py)
+
+- **实现方法**：复用HH公司前端图表模块
+- **功能特点**：
+  - 📈 良率图表：批次趋势、失效分析、批次对比
+  - 📦 参数箱体图：所有测量参数的独立分析
+  - 📋 汇总图表：良率图和参数图的综合展示
+- **智能适配**：自动进行JT到HH格式的列名标准化
+
+#### 3. JT专用组件
+
+**JTReader** - Excel文件读取器：
+- 从Summary information工作表提取Lot ID和Wafer ID
+- 从DUT_DATA工作表读取测试数据和规格信息
+- 智能跳过无效数据，支持多文件批量处理
+
+**JTAdapter** - 数据适配器：
+- 字段映射：DUT_NO→Seq, SOFT_BIN→Bin等
+- 禁用单位转换逻辑
+- 应用IQR四分位法数据清洗
+
+**JTConfig** - 配置管理：
+- 完整的JT公司配置参数
+- 字段映射关系定义
+- 数据清洗配置
+
+**JTDirectoryDetector** - 目录结构检测：
+- 智能检测单层/双层目录结构
+- 支持批量文件收集和处理
+- 批次ID自动提取
 
 ### ✅ YieldChart 模块实现
 
@@ -119,7 +174,8 @@ CP数据处理器
 
 #### 支持的数据格式
 
-- **输入格式**：DCP, CW, MEX
+- **HH公司格式**：DCP, CW, MEX
+- **🆕 JT公司格式**：Excel (.xls/.xlsx)
 - **输出格式**：
   - `*_yield_*.csv` - 良率数据
   - `*_spec_*.csv` - 规格数据
@@ -127,10 +183,11 @@ CP数据处理器
 
 #### 处理能力
 
+- **多公司支持**：HH、JT公司数据格式全覆盖
 - **批次处理**：支持多批次数据同时分析
 - **参数支持**：11个标准参数的完整分析
 - **异常处理**：IQR方法异常值检测
-- **单位转换**：自动单位标准化
+- **单位转换**：自动单位标准化（JT公司除外）
 
 ## 模块详细说明
 
@@ -138,19 +195,31 @@ CP数据处理器
 
 负责从不同格式文件提取CP测试数据，采用工厂模式设计。
 
-#### 关键组件
+#### HH公司读取器
 
 - **BaseReader**：定义统一接口
 - **DCPReader**：处理DCP格式数据
 - **CWReader**：处理CSV/CW格式数据
 - **MEXReader**：处理Excel/MEX格式数据
 
+#### 🆕 JT公司读取器
+
+- **JTReader**：专门处理JT Excel格式
+  - 支持多工作表数据提取
+  - 智能元数据解析
+  - 批量文件处理
+
 #### 使用示例
 
 ```python
-# 使用读取器工厂
+# HH公司读取器
 reader = create_reader("dcp")
 data = reader.read("path/to/file.txt")
+
+# JT公司读取器
+from jt_data_processor import JTReader
+jt_reader = JTReader(["FA44-4149.xlsx"], pass_bin=1)
+jt_data = jt_reader.read()
 ```
 
 ### 2. 数据模型模块 (data_models)
@@ -163,7 +232,26 @@ data = reader.read("path/to/file.txt")
 - **CPWafer**：表示单个晶圆的测试数据
 - **CPParameter**：表示测试参数的定义和规格
 
-### 3. 数据处理模块 (processing)
+### 3. 🆕 公司适配器模块 (company_adapters)
+
+#### HH公司适配器
+- 标准的字段映射和单位转换
+- 支持所有传统数据格式
+
+#### JT公司适配器
+- **JTAdapter**：专门的JT数据适配
+  - 字段映射：DUT_NO→Seq, SOFT_BIN→Bin等
+  - 禁用单位转换
+  - IQR数据清洗
+
+```python
+from jt_data_processor import JTAdapter, JTConfig
+
+adapter = JTAdapter('JT', JTConfig.get_complete_config())
+processed_lot = adapter.transform_to_standard_format(jt_lot)
+```
+
+### 4. 数据处理模块 (processing)
 
 负责数据清洗、转换和增强。
 
@@ -182,7 +270,23 @@ transformer.clean_outliers(method='iqr', threshold=1.5)
 processed_data = transformer.data
 ```
 
-### 4. 前端图表模块 (frontend)
+### 5. 🆕 多公司数据处理器
+
+#### JT数据处理器
+
+```python
+from jt_data_processor import JTDataProcessor
+
+# 完整的JT数据处理流程
+processor = JTDataProcessor()
+result = processor.process_files(
+    file_paths="path/to/jt/files",
+    output_dir="output",
+    pass_bin=1
+)
+```
+
+### 6. 前端图表模块 (frontend)
 
 现代化的图表生成系统，基于Plotly构建。
 
@@ -192,12 +296,20 @@ processed_data = transformer.data
 - **BoxplotChart**：参数分布分析
 - **SummaryChart**：汇总分析图表
 
+#### 🆕 JT图表生成
+
+```python
+# JT图表生成（复用HH前端模块）
+python jt_chart_generator.py
+```
+
 #### 特性
 
 - 交互式HTML图表
 - 响应式设计
 - 本地化JavaScript嵌入
 - 统一的样式系统
+- 多公司数据格式兼容
 
 ## 开发指南
 
@@ -214,7 +326,27 @@ pip install -r requirements.txt
 python --version
 ```
 
-### 🆕 添加新功能
+### 🆕 添加新公司支持
+
+#### 创建新公司数据处理器
+
+1. 在相应目录创建公司模块：
+   ```
+   new_company_data_processor/
+   ├── __init__.py
+   ├── readers/
+   ├── adapters/
+   ├── config/
+   └── main_processor.py
+   ```
+
+2. 参考JT公司实现：
+   ```python
+   class NewCompanyProcessor:
+       def process_files(self, file_paths, output_dir):
+           # 实现公司特定处理逻辑
+           pass
+   ```
 
 #### 支持新数据格式
 
@@ -252,13 +384,19 @@ python -m pytest tests/
 
 # 运行特定模块测试
 python -m pytest tests/test_readers.py
+
+# 测试JT模块
+python -m pytest jt_data_processor/tests/
 ```
 
 #### 集成测试
 
 ```bash
-# 测试完整流程
+# 测试HH完整流程
 python chart_generator.py
+
+# 测试JT完整流程
+python jt_chart_generator.py
 ```
 
 ### 📝 代码规范
@@ -267,10 +405,42 @@ python chart_generator.py
 - 添加详细文档字符串
 - 使用类型注解
 - 编写单元测试
+- 公司模块独立性
 
 ## 版本演进记录
 
-### v1.2 (2025-01-06) - 当前版本
+### v1.3 (2025-01-06) - 当前版本
+
+**🆕 JT公司支持**：
+
+- 🏭 **JT数据处理器**：完整的JT Excel数据处理流程
+- 📊 **JT图表生成器**：复用HH前端模块生成图表
+- 🔧 **智能目录检测**：支持单层/双层目录结构
+- ⚙️ **专用配置管理**：JT公司特有的处理配置
+
+**技术特性**：
+
+```python
+# JT数据处理示例
+from jt_data_processor import process_jt_files
+
+result = process_jt_files(
+    input_paths="data/JT_files/",
+    output_dir="output",
+    pass_bin=1
+)
+
+# JT图表生成
+python jt_chart_generator.py
+```
+
+**重要修复**：
+
+- 🎯 **X轴显示修复**：修复良率图表X轴范围限制问题
+- 🔧 **汇总图表集成**：添加完整的汇总分析功能
+- 📦 **打包系统更新**：使用.pyz打包替代conda-pack
+
+### v1.2 (2025-01-06) - 图表优化版本
 
 **重要修复**：
 
@@ -312,6 +482,12 @@ range=[x_range_start, x_range_end]
 ## 后续迭代计划
 
 ### 🎯 近期目标 (Q1 2025)
+
+#### 多公司扩展
+
+- [ ] **新公司支持**：添加第三家公司数据格式
+- [ ] **统一配置管理**：多公司配置模板化
+- [ ] **智能格式识别**：自动识别公司数据格式
 
 #### 性能优化
 
@@ -359,12 +535,14 @@ range=[x_range_start, x_range_end]
 
 - **工厂模式**：读取器创建
 - **策略模式**：数据处理算法
+- **适配器模式**：多公司数据格式转换
 - **观察者模式**：状态更新通知
 - **装饰器模式**：功能增强
 
 ### 扩展点设计
 
 - **数据源扩展**：新格式支持
+- **公司扩展**：新公司数据格式
 - **算法扩展**：新分析方法
 - **可视化扩展**：新图表类型
 - **导出扩展**：新输出格式
@@ -373,6 +551,7 @@ range=[x_range_start, x_range_end]
 
 ```
 需求：[简要描述]
+公司：[目标公司，如HH/JT/新公司]
 模块：[相关代码模块]
 输入：[期望输入格式]
 输出：[期望输出格式]
@@ -394,6 +573,7 @@ range=[x_range_start, x_range_end]
 - 符合项目编码规范
 - 添加必要的文档说明
 - 性能影响评估
+- 多公司兼容性测试
 
 ### 发布流程
 
@@ -406,4 +586,4 @@ range=[x_range_start, x_range_end]
 
 **维护者**：chao  
 **技术支持**：通过Issues系统提交问题  
-**文档版本**：v1.2 - 2025-06-06
+**文档版本**：v1.3 - 2025-06-06
