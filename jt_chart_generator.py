@@ -55,13 +55,11 @@ def main():
     
     # 2. 使用HH的YieldChart生成良率图表
     logger.info("📈 开始生成良率图表...")
-    yield_chart_dir = jt_output_dir / "yield_charts"
-    generate_yield_charts(jt_data_dir, yield_chart_dir)
+    generate_yield_charts(jt_data_dir, jt_output_dir)
     
     # 3. 使用HH的BoxplotChart生成箱体图
     logger.info("📦 开始生成箱体图和散点图...")
-    boxplot_chart_dir = jt_output_dir / "boxplot_charts"
-    generate_boxplot_charts(jt_data_dir, boxplot_chart_dir)
+    generate_boxplot_charts(jt_data_dir, jt_output_dir)
     
     logger.info("🎉 JT公司图表生成完成！")
     logger.info(f"📁 所有图表已保存到: {jt_output_dir}")
@@ -113,8 +111,6 @@ def generate_yield_charts(data_dir: Path, output_dir: Path):
     使用HH的YieldChart模块生成良率图表
     """
     try:
-        output_dir.mkdir(parents=True, exist_ok=True)
-        
         # 初始化HH的YieldChart
         yield_analyzer = YieldChart(data_dir=str(data_dir))
         
@@ -140,8 +136,6 @@ def generate_boxplot_charts(data_dir: Path, output_dir: Path):
     使用HH的BoxplotChart模块生成箱体图和散点图
     """
     try:
-        output_dir.mkdir(parents=True, exist_ok=True)
-        
         # 先进行JT到HH的列名标准化转换
         standardize_jt_csv_columns(data_dir)
         
