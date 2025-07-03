@@ -30,7 +30,7 @@ def main():
     """
     # 1. 配置JT公司数据目录
     jt_data_dir = Path("output")  # JT公司的CSV文件目录
-    jt_output_dir = Path("jt_frontend_charts")  # JT专用输出目录
+    jt_output_dir = Path("output")  # JT图表输出目录，与CSV文件保存在同一目录
     jt_output_dir.mkdir(parents=True, exist_ok=True)
     
     logger.info(f"📂 JT数据目录: {jt_data_dir.resolve()}")

@@ -22,7 +22,7 @@ import sys
 import logging
 import pandas as pd
 from pathlib import Path
-from typing import List, Union, Dict, Any, Optional
+from typing import List, Union, Dict, Any, Optional, Tuple
 from datetime import datetime
 
 # 添加项目根目录到路径
@@ -115,6 +115,7 @@ class JTDataProcessor:
             # 4. 创建输出目录
             output_path = Path(output_dir)
             output_path.mkdir(parents=True, exist_ok=True)
+            self.logger.info(f"输出目录设置为: {output_path.resolve()}")
             
             # 5. 输出清洗后的数据
             self.logger.info("步骤3: 输出清洗数据...")
@@ -144,12 +145,11 @@ class JTDataProcessor:
     
     def _process_input_paths(self, input_paths: Union[str, List[str]]) -> List[str]:
         """
-        智能处理输入路径（文件或目录）
+        智能处理输入路径（采用HH公司的2层目录结构检测逻辑）
         
-        🔥 新增：支持HH公司风格的目录输入
-        - 单批次：浏览到 .\data\jetech\FA44-4149\ 自动处理该批次
-        - 多批次：浏览到 .\data\jetech\ 自动处理所有子批次
-        - 文件：直接处理指定文件
+        🔥 参考HH公司逻辑：支持单层和双层目录结构
+        - 单层: .\data\FA44-4149\ (目录直接包含JT Excel文件)
+        - 双层: .\data\ (包含多个批次子目录，每个子目录包含JT Excel文件)
         
         Args:
             input_paths: 输入路径（文件、目录或路径列表）
@@ -161,7 +161,6 @@ class JTDataProcessor:
             input_paths = [input_paths]
         
         all_files = []
-        detector = JTDirectoryDetector()
         
         for input_path in input_paths:
             if not os.path.exists(input_path):
@@ -177,19 +176,31 @@ class JTDataProcessor:
                     self.logger.warning(f"无效的JT文件，跳过: {input_path}")
             
             elif os.path.isdir(input_path):
-                # 输入是目录，使用智能检测
+                # 输入是目录，使用HH公司风格的目录结构检测
                 self.logger.info(f"🔍 检测目录结构: {input_path}")
                 try:
-                    processing_info_list = detector.scan_and_process_directory(input_path)
+                    structure_type, batch_info = self._detect_directory_structure(input_path)
                     
-                    # 收集所有批次的文件
-                    for processing_info in processing_info_list:
-                        batch_files = processing_info['excel_files']
-                        all_files.extend(batch_files)
-                        self.logger.info(f"✅ 收集批次 {processing_info['batch_name']}: {len(batch_files)}个文件")
+                    if structure_type == 'none':
+                        self.logger.warning(f"在 {input_path} 中没有找到JT Excel文件")
+                        continue
+                    elif structure_type == 'single':
+                        # 单层结构：当前目录直接包含JT Excel文件
+                        jt_files = self._find_jt_files_in_directory(input_path, recursive=False)
+                        all_files.extend(jt_files)
+                        self.logger.info(f"✅ 单层结构，收集到 {len(jt_files)} 个文件")
+                    elif structure_type == 'double':
+                        # 双层结构：子目录包含JT Excel文件
+                        subdirs = batch_info if batch_info is not None else []
+                        for subdir in subdirs:
+                            subdir_path = os.path.join(input_path, subdir)
+                            subdir_files = self._find_jt_files_in_directory(subdir_path, recursive=False)
+                            all_files.extend(subdir_files)
+                            self.logger.info(f"✅ 子目录 {subdir} 收集到 {len(subdir_files)} 个文件")
+                        self.logger.info(f"✅ 双层结构，总共收集到 {len(all_files)} 个文件")
                     
                 except Exception as e:
-                    self.logger.error(f"目录检测失败，跳过: {input_path}, 错误: {e}")
+                    self.logger.error(f"目录结构检测失败，跳过: {input_path}, 错误: {e}")
                     continue
             
             else:
@@ -199,6 +210,176 @@ class JTDataProcessor:
             raise ValueError("没有找到有效的JT数据文件")
         
         self.logger.info(f"🎯 输入处理完成，共收集 {len(all_files)} 个有效文件")
+        return all_files
+    
+    def _detect_directory_structure(self, directory_path: str) -> Tuple[str, Union[str, List[str], None]]:
+        """
+        检测目录结构类型（参考HH公司逻辑）
+        
+        Args:
+            directory_path: 输入目录路径
+            
+        Returns:
+            tuple: (structure_type, batch_info)
+            - structure_type: 'single', 'double', 或 'none'
+            - batch_info: 单层时为目录名，双层时为子目录列表，无文件时为None
+        """
+        directory_path = os.path.abspath(directory_path)
+        
+        # 检查当前目录是否直接包含JT Excel文件
+        has_jt_files_in_current = False
+        has_subdirs_with_jt = False
+        subdirs_with_jt = []
+        
+        self.logger.debug(f"检测目录结构: {directory_path}")
+        
+        # 检查当前目录中的直接文件
+        try:
+            for file in os.listdir(directory_path):
+                file_path = os.path.join(directory_path, file)
+                if os.path.isfile(file_path) and self._is_valid_jt_file(file_path):
+                    has_jt_files_in_current = True
+                    self.logger.debug(f"在当前目录找到JT Excel文件: {file}")
+                    break
+        except PermissionError:
+            self.logger.warning(f"无权限访问目录: {directory_path}")
+            return 'none', None
+        
+        # 如果当前目录没有JT Excel文件，检查子目录
+        if not has_jt_files_in_current:
+            try:
+                for item in os.listdir(directory_path):
+                    item_path = os.path.join(directory_path, item)
+                    if os.path.isdir(item_path):
+                        # 检查子目录中是否有JT Excel文件
+                        subdir_has_jt = False
+                        try:
+                            for file in os.listdir(item_path):
+                                file_path = os.path.join(item_path, file)
+                                if os.path.isfile(file_path) and self._is_valid_jt_file(file_path):
+                                    subdir_has_jt = True
+                                    self.logger.debug(f"在子目录 {item} 找到JT Excel文件: {file}")
+                                    break
+                        except PermissionError:
+                            self.logger.warning(f"无法访问子目录: {item_path}")
+                            continue
+                        
+                        if subdir_has_jt:
+                            has_subdirs_with_jt = True
+                            subdirs_with_jt.append(item)
+            except PermissionError:
+                self.logger.warning(f"无权限访问目录: {directory_path}")
+                return 'none', None
+        
+        # 根据检测结果返回结构类型
+        if has_jt_files_in_current:
+            # 单层结构：当前目录直接包含JT Excel文件
+            dir_name = os.path.basename(directory_path)
+            self.logger.info(f"✅ 检测到单层结构，批次文件夹: {dir_name}")
+            return 'single', dir_name
+        elif has_subdirs_with_jt:
+            # 双层结构：子目录包含JT Excel文件
+            self.logger.info(f"✅ 检测到双层结构，{len(subdirs_with_jt)}个批次: {subdirs_with_jt}")
+            return 'double', subdirs_with_jt
+        else:
+            # 没有找到JT Excel文件
+            self.logger.warning(f"❌ 未找到JT Excel文件")
+            return 'none', None
+    
+    def _find_jt_files_in_directory(self, directory_path: str, recursive: bool = False) -> List[str]:
+        """
+        查找指定目录中的JT Excel文件（参考HH公司逻辑）
+        
+        Args:
+            directory_path: 目录路径
+            recursive: 是否递归查找（默认False，只查找当前目录）
+            
+        Returns:
+            List[str]: JT Excel文件路径列表
+        """
+        jt_files = []
+        
+        if recursive:
+            # 递归查找（保留原有逻辑以备将来使用）
+            for root, dirs, files in os.walk(directory_path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    if self._is_valid_jt_file(file_path):
+                        jt_files.append(file_path)
+                        self.logger.debug(f"找到JT文件: {file}")
+        else:
+            # 只查找当前目录
+            try:
+                for file in os.listdir(directory_path):
+                    file_path = os.path.join(directory_path, file)
+                    if os.path.isfile(file_path) and self._is_valid_jt_file(file_path):
+                        jt_files.append(file_path)
+                        self.logger.debug(f"找到JT文件: {file}")
+            except PermissionError:
+                self.logger.error(f"无法访问目录 {directory_path}")
+            except OSError as e:
+                self.logger.error(f"访问目录时发生错误 {directory_path}: {e}")
+        
+        return jt_files
+    
+    def _recursive_search_jt_files(self, directory_path: str, max_depth: int = 3, current_depth: int = 0) -> List[str]:
+        """
+        递归搜索JT Excel文件（最多3层深度）
+        
+        Args:
+            directory_path: 搜索目录路径
+            max_depth: 最大递归深度
+            current_depth: 当前递归深度
+            
+        Returns:
+            List[str]: 找到的JT Excel文件路径列表
+        """
+        all_files = []
+        
+        if current_depth >= max_depth:
+            self.logger.debug(f"已达到最大递归深度 {max_depth}，停止搜索: {directory_path}")
+            return all_files
+        
+        try:
+            items = os.listdir(directory_path)
+            self.logger.debug(f"搜索目录 (深度{current_depth}): {directory_path} - {len(items)} 个项目")
+            
+            # 首先收集当前目录的JT Excel文件
+            current_files = []
+            subdirs = []
+            
+            for item in items:
+                item_path = os.path.join(directory_path, item)
+                
+                if os.path.isfile(item_path):
+                    # 检查是否为JT Excel文件
+                    if self._is_valid_jt_file(item_path):
+                        current_files.append(item_path)
+                        self.logger.debug(f"找到JT文件: {item_path}")
+                elif os.path.isdir(item_path):
+                    # 记录子目录，稍后递归
+                    subdirs.append(item_path)
+            
+            # 如果当前目录有JT文件，说明这是一个批次目录
+            if current_files:
+                all_files.extend(current_files)
+                batch_name = os.path.basename(directory_path)
+                self.logger.info(f"📂 发现批次目录: {batch_name} - {len(current_files)} 个文件")
+            
+            # 递归搜索子目录
+            for subdir in subdirs:
+                try:
+                    sub_files = self._recursive_search_jt_files(subdir, max_depth, current_depth + 1)
+                    all_files.extend(sub_files)
+                except Exception as e:
+                    self.logger.warning(f"递归搜索子目录失败: {subdir}, 错误: {e}")
+                    continue
+                    
+        except PermissionError:
+            self.logger.warning(f"无权限访问目录: {directory_path}")
+        except Exception as e:
+            self.logger.error(f"搜索目录失败: {directory_path}, 错误: {e}")
+        
         return all_files
     
     def _is_valid_jt_file(self, file_path: str) -> bool:
@@ -214,6 +395,8 @@ class JTDataProcessor:
         supported_extensions = self.config.get('supported_formats', ['.xls', '.xlsx'])
         file_ext = Path(file_path).suffix.lower()
         return file_ext in supported_extensions
+    
+
     
     def _generate_timestamp(self) -> str:
         """
@@ -457,9 +640,9 @@ class JTDataProcessor:
         yield_records = []
         
         # 产品名称：使用Lot_ID作为产品名称（简化方案）
-        product_name = self.lot.lot_id
+        product_name = self.lot.lot_id if self.lot else 'unknown'
         
-        for wafer in self.lot.wafers:
+        for wafer in (self.lot.wafers if self.lot else []):
             if wafer.chip_data is None or wafer.chip_data.empty:
                 continue
             
@@ -478,7 +661,7 @@ class JTDataProcessor:
             # 构建良率记录
             yield_record = {
                 'Product_Name': product_name,
-                'Lot_ID': self.lot.lot_id,
+                'Lot_ID': self.lot.lot_id if self.lot else 'unknown',
                 'Wafer_ID': wafer.wafer_id,
                 'Yield': f"{yield_rate:.2f}%",
                 'Total': total_chips,
@@ -517,7 +700,7 @@ class JTDataProcessor:
         
         # 总计各Bin数量
         total_record = {
-            'Product_Name': self.lot.lot_id,
+            'Product_Name': self.lot.lot_id if self.lot else 'unknown',
             'Lot_ID': 'ALL',
             'Wafer_ID': 'ALL', 
             'Yield': f"{total_yield:.2f}%",
@@ -563,12 +746,35 @@ class JTDataProcessor:
             'processor_version': '1.0.0'
         }
         
-        # 保存处理报告
-        report_path = Path(output_dir) / f"{report['lot_id']}_processing_report.json"
+        # 保存处理报告为TXT格式
+        report_path = Path(output_dir) / f"{report['lot_id']}_processing_report.txt"
         try:
-            import json
             with open(report_path, 'w', encoding='utf-8') as f:
-                json.dump(report, f, indent=2, ensure_ascii=False)
+                f.write("=== JT数据处理报告 ===\n\n")
+                f.write(f"处理状态: {report['processing_status']}\n")
+                f.write(f"批次ID: {report['lot_id']}\n")
+                f.write(f"输出目录: {report['output_directory']}\n")
+                f.write(f"晶圆数量: {report['wafer_count']}\n")
+                f.write(f"芯片总数: {report['total_chip_count']}\n")
+                f.write(f"参数数量: {report['parameter_count']}\n")
+                f.write(f"处理器版本: {report['processor_version']}\n\n")
+                
+                f.write("=== 处理配置 ===\n")
+                f.write(f"单位转换禁用: {report['processing_config']['unit_conversion_disabled']}\n")
+                f.write(f"异常值处理方法: {report['processing_config']['outlier_method']}\n")
+                f.write(f"字段映射数量: {report['processing_config']['field_mapping_count']}\n\n")
+                
+                f.write("=== 输入文件 ===\n")
+                for i, file_path in enumerate(report['input_files'], 1):
+                    f.write(f"{i}. {file_path}\n")
+                
+                f.write("\n=== 输出文件 ===\n")
+                for i, file_path in enumerate(report['output_files'], 1):
+                    f.write(f"{i}. {file_path}\n")
+                
+                f.write(f"\n=== 处理完成时间 ===\n")
+                f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                
             self.logger.info(f"处理报告保存: {report_path}")
         except Exception as e:
             self.logger.warning(f"保存处理报告失败: {e}")
