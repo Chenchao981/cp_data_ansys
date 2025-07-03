@@ -185,12 +185,22 @@ class BoxplotChart:
             # 处理数值类型的限制值
             try:
                 if info['limit_upper'] is not None and str(info['limit_upper']).strip():
-                    info['limit_upper'] = float(info['limit_upper'])
+                    upper_val = float(info['limit_upper'])
+                    # 检查是否为NaN
+                    if np.isnan(upper_val):
+                        info['limit_upper'] = None
+                    else:
+                        info['limit_upper'] = upper_val
                 else:
                     info['limit_upper'] = None
                     
                 if info['limit_lower'] is not None and str(info['limit_lower']).strip():
-                    info['limit_lower'] = float(info['limit_lower'])
+                    lower_val = float(info['limit_lower'])
+                    # 检查是否为NaN
+                    if np.isnan(lower_val):
+                        info['limit_lower'] = None
+                    else:
+                        info['limit_lower'] = lower_val
                 else:
                     info['limit_lower'] = None
             except (ValueError, TypeError):

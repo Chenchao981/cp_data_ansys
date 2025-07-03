@@ -165,3 +165,6 @@ environment.tar.gz
 # 日志文件
 *.log
 logs/ 
+
+# YoYo AI version control directory
+.yoyo/
