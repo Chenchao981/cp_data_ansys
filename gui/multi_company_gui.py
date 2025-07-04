@@ -91,11 +91,12 @@ class MultiCompanyCPDataGUI(QMainWindow):
     def create_navigation_widget(self):
         """创建导航栏组件"""
         nav_widget = QWidget()
-        nav_widget.setFixedWidth(200)
+        nav_widget.setFixedWidth(220)  # 稍微增加宽度以适应新按钮
         nav_widget.setStyleSheet("""
             QWidget {
-                background-color: #f5f5f5;
-                border-right: 1px solid #ddd;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #fafafa, stop:1 #f0f0f0);
+                border-right: 1px solid #e0e0e0;
             }
         """)
         
@@ -107,20 +108,26 @@ class MultiCompanyCPDataGUI(QMainWindow):
         title_label = QLabel("公司选择")
         title_label.setStyleSheet("""
             QLabel {
-                font-weight: bold;
-                font-size: 16px;
-                color: #333;
-                padding: 15px 10px;
-                background-color: #e8e8e8;
-                border-bottom: 1px solid #ddd;
+                font-weight: 600;
+                font-size: 27px;
+                font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+                color: #2c3e50;
+                padding: 25px 15px;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #ecf0f1, stop:1 #d5dbdb);
+                border-bottom: 2px solid #bdc3c7;
+                letter-spacing: 0.8px;
             }
         """)
         title_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(title_label)
         
+        # 添加一些顶部间距
+        layout.addSpacing(15)
+        
         # 公司选择按钮
-        self.hh_button = self.create_nav_button("HuaHong", "huahong", True)
-        self.jt_button = self.create_nav_button("JeTech", "jetech", False)
+        self.hh_button = self.create_nav_button("🏢 HuaHong", "huahong", True)
+        self.jt_button = self.create_nav_button("🏭 JeTech", "jetech", False)
         
         layout.addWidget(self.hh_button)
         layout.addWidget(self.jt_button)
@@ -132,9 +139,12 @@ class MultiCompanyCPDataGUI(QMainWindow):
         version_label = QLabel("版本: v2.0")
         version_label.setStyleSheet("""
             QLabel {
-                color: #666;
-                font-size: 12px;
-                padding: 10px;
+                color: #7f8c8d;
+                font-size: 11px;
+                font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+                padding: 15px;
+                background-color: rgba(189, 195, 199, 0.1);
+                border-top: 1px solid #ecf0f1;
             }
         """)
         version_label.setAlignment(Qt.AlignCenter)
@@ -145,7 +155,8 @@ class MultiCompanyCPDataGUI(QMainWindow):
     def create_nav_button(self, text, company_id, is_selected=False):
         """创建导航按钮"""
         button = QPushButton(text)
-        button.setFixedHeight(60)
+        button.setFixedHeight(65)  # 增加30%：50 * 1.3 = 65
+        button.setFixedWidth(200)  # 适应新的导航栏宽度
         button.company_id = company_id
         button.setCheckable(True)
         button.setChecked(is_selected)
@@ -159,37 +170,69 @@ class MultiCompanyCPDataGUI(QMainWindow):
         return button
     
     def update_button_style(self, button, is_selected):
-        """更新按钮样式"""
+        """更新按钮样式 - 现代商务风格"""
         if is_selected:
             button.setStyleSheet("""
                 QPushButton {
-                    background-color: #2196F3;
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #64B5F6, stop:1 #1976D2);
                     color: white;
                     border: none;
+                    border-left: 5px solid #0D47A1;
                     text-align: left;
-                    padding-left: 20px;
-                    font-size: 14px;
-                    font-weight: bold;
+                    font-size: 21px;
+                    font-weight: 600;
+                    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+                    margin: 8px 10px;
+                    border-radius: 12px;
+                    padding-left: 18px;
+                    padding-right: 12px;
+                    min-height: 60px;
+                    box-shadow: 0 3px 10px rgba(25, 118, 210, 0.25);
                 }
                 QPushButton:hover {
-                    background-color: #1976D2;
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #42A5F5, stop:1 #1565C0);
+                    box-shadow: 0 5px 15px rgba(25, 118, 210, 0.35);
+                    border-left: 5px solid #0D47A1;
+                }
+                QPushButton:pressed {
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #1565C0, stop:1 #0D47A1);
+                    box-shadow: 0 2px 6px rgba(25, 118, 210, 0.2);
                 }
             """)
         else:
             button.setStyleSheet("""
                 QPushButton {
-                    background-color: transparent;
-                    color: #333;
-                    border: none;
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #ffffff, stop:1 #f8f9fa);
+                    color: #495057;
+                    border: 1px solid #dee2e6;
                     text-align: left;
-                    padding-left: 20px;
-                    font-size: 14px;
+                    font-size: 21px;
+                    font-weight: 500;
+                    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+                    margin: 8px 10px;
+                    border-radius: 12px;
+                    padding-left: 18px;
+                    padding-right: 12px;
+                    min-height: 60px;
+                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
                 }
                 QPushButton:hover {
-                    background-color: #e3f2fd;
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #ffffff, stop:1 #e9ecef);
+                    color: #212529;
+                    border: 1px solid #adb5bd;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+                    border-left: 4px solid #6c757d;
                 }
                 QPushButton:pressed {
-                    background-color: #bbdefb;
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #f8f9fa, stop:1 #e9ecef);
+                    border: 1px solid #6c757d;
+                    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
                 }
             """)
     
@@ -208,45 +251,71 @@ class MultiCompanyCPDataGUI(QMainWindow):
         self.create_placeholder_widgets()
     
     def create_placeholder_widgets(self):
-        """创建占位界面（后续会替换为实际的公司界面）"""
-        # HuaHong占位界面
-        hh_placeholder = QWidget()
-        hh_layout = QVBoxLayout(hh_placeholder)
-        hh_label = QLabel("HuaHong界面")
-        hh_label.setAlignment(Qt.AlignCenter)
-        hh_label.setStyleSheet("""
-            QLabel {
-                font-size: 24px;
-                color: #666;
-                padding: 50px;
-            }
-        """)
-        hh_layout.addWidget(hh_label)
-        
-        # JeTech占位界面
-        jt_placeholder = QWidget()
-        jt_layout = QVBoxLayout(jt_placeholder)
-        jt_label = QLabel("JeTech界面")
-        jt_label.setAlignment(Qt.AlignCenter)
-        jt_label.setStyleSheet("""
-            QLabel {
-                font-size: 24px;
-                color: #666;
-                padding: 50px;
-            }
-        """)
-        jt_layout.addWidget(jt_label)
-        
-        # 添加到堆栈
-        self.content_stack.addWidget(hh_placeholder)
-        self.content_stack.addWidget(jt_placeholder)
-        
-        # 存储组件引用
-        self.company_widgets["huahong"] = hh_placeholder
-        self.company_widgets["jetech"] = jt_placeholder
-        
-        # 默认显示HuaHong界面
-        self.content_stack.setCurrentWidget(hh_placeholder)
+        """创建实际的公司界面组件"""
+        try:
+            # 导入HuaHong界面组件
+            from gui.widgets.huahong_widget import HuaHongWidget
+            hh_widget = HuaHongWidget()
+            
+            # 导入JeTech界面组件
+            from gui.widgets.jetech_widget import JeTechWidget
+            jt_widget = JeTechWidget()
+            
+            # 添加到堆栈
+            self.content_stack.addWidget(hh_widget)
+            self.content_stack.addWidget(jt_widget)
+            
+            # 存储组件引用
+            self.company_widgets["huahong"] = hh_widget
+            self.company_widgets["jetech"] = jt_widget
+            
+            # 默认显示HuaHong界面
+            self.content_stack.setCurrentWidget(hh_widget)
+            
+            logger.info("公司界面组件创建成功")
+            
+        except ImportError as e:
+            logger.warning(f"导入公司界面组件失败，使用占位界面: {e}")
+            
+            # 使用占位界面作为备用方案
+            # HuaHong占位界面
+            hh_placeholder = QWidget()
+            hh_layout = QVBoxLayout(hh_placeholder)
+            hh_label = QLabel("HuaHong界面\n（组件加载失败）")
+            hh_label.setAlignment(Qt.AlignCenter)
+            hh_label.setStyleSheet("""
+                QLabel {
+                    font-size: 24px;
+                    color: #666;
+                    padding: 50px;
+                }
+            """)
+            hh_layout.addWidget(hh_label)
+            
+            # JeTech占位界面
+            jt_placeholder = QWidget()
+            jt_layout = QVBoxLayout(jt_placeholder)
+            jt_label = QLabel("JeTech界面\n（组件加载失败）")
+            jt_label.setAlignment(Qt.AlignCenter)
+            jt_label.setStyleSheet("""
+                QLabel {
+                    font-size: 24px;
+                    color: #666;
+                    padding: 50px;
+                }
+            """)
+            jt_layout.addWidget(jt_label)
+            
+            # 添加到堆栈
+            self.content_stack.addWidget(hh_placeholder)
+            self.content_stack.addWidget(jt_placeholder)
+            
+            # 存储组件引用
+            self.company_widgets["huahong"] = hh_placeholder
+            self.company_widgets["jetech"] = jt_placeholder
+            
+            # 默认显示HuaHong界面
+            self.content_stack.setCurrentWidget(hh_placeholder)
     
     def setup_status_bar(self):
         """设置状态栏"""
