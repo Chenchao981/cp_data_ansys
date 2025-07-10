@@ -195,37 +195,66 @@ class JTDataProcessingThread(QThread):
             return
         
         try:
-            # 导入JT图表生成器
-            import sys
-            project_root = str(Path(__file__).parent.parent.parent)
-            if project_root not in sys.path:
-                sys.path.insert(0, project_root)
+            # 🔥 关键修复：先进行JT到HH的列名标准化转换
+            self.progress_updated.emit("🔄 正在标准化JT数据列名...")
+            self._standardize_jt_csv_columns(output_path)
+            self.progress_updated.emit("✅ JT数据列名标准化完成")
             
-            from jt_chart_generator import main as generate_jt_charts
+            # 直接使用前端图表模块生成JT图表（与HuaHong相同的逻辑）
+            self.progress_updated.emit("📈 正在生成JT良率分析图表...")
             
-            # 切换到输出目录（JT图表生成器期望在当前工作目录找到CSV文件）
-            original_cwd = os.getcwd()
-            try:
-                os.chdir(self.output_dir)
-                self.progress_updated.emit("📈 正在调用JT图表生成器...")
-                
-                # 生成JT图表
-                generate_jt_charts()
-                
-                # 检查生成的HTML文件
-                html_files = list(Path('.').glob("*.html"))
-                self.progress_updated.emit(f"✅ 生成了 {len(html_files)} 个HTML图表文件")
-                
+            yield_chart_files = []
+            boxplot_chart_files = []
+            summary_chart_files = []
+            
+            # 生成良率图表
+            from frontend.charts.yield_chart import YieldChart
+            yield_chart = YieldChart(data_dir=self.output_dir)
+            if yield_chart.load_data():
+                yield_chart_files = yield_chart.save_all_charts(output_dir=self.output_dir)
+                self.progress_updated.emit(f"✅ JT良率图表生成完成: {len(yield_chart_files)} 个文件")
+            else:
+                self.progress_updated.emit("⚠️ JT良率图表数据加载失败")
+            
+            # 生成箱体图表
+            self.progress_updated.emit("📦 正在生成JT箱体统计图表...")
+            from frontend.charts.boxplot_chart import BoxplotChart
+            boxplot_chart = BoxplotChart(data_dir=self.output_dir)
+            if boxplot_chart.load_data():
+                boxplot_chart_files = boxplot_chart.save_all_charts(output_dir=self.output_dir)
+                self.progress_updated.emit(f"✅ JT箱体图表生成完成: {len(boxplot_chart_files)} 个文件")
+            else:
+                self.progress_updated.emit("⚠️ JT箱体图表数据加载失败")
+            
+            # 生成汇总图表
+            self.progress_updated.emit("📋 正在生成JT汇总图表...")
+            from frontend.charts.summary_chart import SummaryChart
+            summary_chart = SummaryChart(data_dir=self.output_dir)
+            if summary_chart.load_data():
+                summary_file = summary_chart.save_summary_chart(output_dir=self.output_dir)
+                if summary_file:
+                    summary_chart_files = [summary_file]
+                    self.progress_updated.emit(f"✅ JT汇总图表生成完成: {summary_file}")
+                else:
+                    self.progress_updated.emit("⚠️ JT汇总图表生成失败")
+            else:
+                self.progress_updated.emit("⚠️ JT汇总图表数据加载失败")
+            
+            # 统计总文件数
+            total_files = len(yield_chart_files) + len(boxplot_chart_files) + len(summary_chart_files)
+            
+            if total_files > 0:
                 self.progress_updated.emit("🎉 JT图表生成完成！")
                 chart_msg = f"JT图表生成成功：\n" \
-                           f"- HTML图表文件: {len(html_files)}个\n" \
+                           f"- 良率图表: {len(yield_chart_files)}个\n" \
+                           f"- 箱体图表: {len(boxplot_chart_files)}个\n" \
+                           f"- 汇总图表: {len(summary_chart_files)}个\n" \
+                           f"- 总计: {total_files}个HTML文件\n" \
                            f"- 保存位置: {self.output_dir}"
                 
                 self.finished.emit(True, chart_msg)
-                
-            finally:
-                # 恢复原始工作目录
-                os.chdir(original_cwd)
+            else:
+                self.finished.emit(False, "JT图表生成失败：无法生成任何图表文件")
                 
         except ImportError as ie:
             logger.error(f"JT图表生成器导入失败: {ie}")
@@ -270,6 +299,52 @@ class JTDataProcessingThread(QThread):
         except Exception as e:
             logger.error(f"JT图表生成失败: {e}")
             self.finished.emit(False, f"JT图表生成失败: {str(e)}")
+    
+    def _standardize_jt_csv_columns(self, data_dir):
+        """
+        标准化JT的CSV列名以匹配HH的格式
+        转换: LotID -> Lot_ID, WaferID -> Wafer_ID
+        这是确保BoxplotChart能正确识别参数的关键步骤
+        """
+        try:
+            import pandas as pd
+            
+            # 找到cleaned文件
+            cleaned_files = list(data_dir.glob("*_cleaned_*.csv"))
+            if not cleaned_files:
+                logger.warning("⚠️ 未找到需要标准化的cleaned文件")
+                return
+            
+            cleaned_file = cleaned_files[0]
+            logger.info(f"🔄 标准化CSV列名: {cleaned_file.name}")
+            
+            # 读取CSV
+            df = pd.read_csv(cleaned_file)
+            
+            # 检查并转换列名
+            column_mapping = {
+                'LotID': 'Lot_ID',
+                'WaferID': 'Wafer_ID'
+            }
+            
+            renamed_columns = {}
+            for old_name, new_name in column_mapping.items():
+                if old_name in df.columns:
+                    renamed_columns[old_name] = new_name
+            
+            if renamed_columns:
+                df.rename(columns=renamed_columns, inplace=True)
+                logger.info(f"✅ 列名转换: {renamed_columns}")
+                
+                # 保存标准化后的文件
+                df.to_csv(cleaned_file, index=False)
+                logger.info(f"✅ 标准化完成: {cleaned_file.name}")
+            else:
+                logger.info("ℹ️ 无需列名转换")
+                
+        except Exception as e:
+            logger.error(f"❌ 列名标准化失败: {e}")
+            raise
 
 
 class JeTechWidget(QWidget):
