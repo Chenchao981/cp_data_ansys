@@ -9,6 +9,7 @@ import sys
 import os
 from pathlib import Path
 from datetime import datetime
+import re
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QLineEdit, QPushButton, QTextEdit, QFileDialog, 
                              QMessageBox, QProgressBar)
@@ -27,36 +28,88 @@ def get_desktop_path():
     return os.path.join(os.path.expanduser("~"), "Desktop")
 
 
-def generate_jt_output_folder_name(input_dir):
-    """生成JT输出文件夹名称：JT_Analysis_YYYYMMDD_HHMMSS"""
+def extract_jt_lot_id_from_folder(input_dir):
+    """从JT输入文件夹中提取批次号"""
     try:
-        # 从输入目录名称提取信息
         input_path = Path(input_dir)
+        
+        # 方法1: 从文件夹名称提取
         folder_name = input_path.name
         
-        # 尝试从文件夹名称中提取标识信息
-        if "jt" in folder_name.lower() or "jetech" in folder_name.lower():
-            prefix = folder_name
-        else:
-            prefix = "JT_Analysis"
+        # JT文件夹命名模式: FA44-4149, FA123-456 等
+        import re
+        pattern = r'^(FA\d+-\d+)'
+        match = re.match(pattern, folder_name)
+        if match:
+            lot_id = match.group(1)
+            logger.info(f"从JT文件夹名提取批次号: {lot_id}")
+            return lot_id
+        
+        # 方法2: 从Excel文件名提取
+        excel_files = []
+        excel_files.extend(list(input_path.rglob("*.xls")))
+        excel_files.extend(list(input_path.rglob("*.xlsx")))
+        excel_files.extend(list(input_path.rglob("*.XLS")))
+        excel_files.extend(list(input_path.rglob("*.XLSX")))
+        
+        if excel_files:
+            # 从第一个Excel文件名提取
+            first_file = excel_files[0]
+            file_name = first_file.stem  # 去掉扩展名
+            
+            # 模式: FA444149-03, FA123456-01 等
+            pattern = r'(FA\d+)-?\d+'
+            match = re.search(pattern, file_name)
+            if match:
+                lot_id = match.group(1)
+                # 格式化为标准格式: FA444149 -> FA44-4149
+                if len(lot_id) > 4:
+                    formatted_lot_id = f"{lot_id[:4]}-{lot_id[4:]}"
+                    logger.info(f"从JT文件名提取并格式化批次号: {formatted_lot_id}")
+                    return formatted_lot_id
+                else:
+                    logger.info(f"从JT文件名提取批次号: {lot_id}")
+                    return lot_id
+        
+        # 如果都没找到，返回文件夹名作为默认值
+        logger.warning(f"无法从JT数据中提取批次号，使用文件夹名: {folder_name}")
+        return folder_name
+        
+    except Exception as e:
+        logger.error(f"提取JT批次号失败: {e}")
+        return "JT_Analysis"
+
+
+def generate_jt_output_folder_name(input_dir):
+    """生成JT输出文件夹名称：批次号_YYYYMMDD_HHMMSS"""
+    try:
+        from datetime import datetime
+        import re
+        
+        # 提取批次号
+        lot_id = extract_jt_lot_id_from_folder(input_dir)
+        if not lot_id:
+            lot_id = "JT_Analysis"
         
         # 生成时间戳
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
         # 组合文件夹名称
-        output_folder_name = f"{prefix}_{timestamp}"
+        folder_name = f"{lot_id}_{timestamp}"
         
         # 确保文件夹名称是有效的Windows文件名
-        import re
-        output_folder_name = re.sub(r'[<>:"/\\|?*]', '_', output_folder_name)
+        folder_name = re.sub(r'[<>:"/\\|?*]', '_', folder_name)
         
-        return output_folder_name
+        return folder_name
         
     except Exception as e:
         logger.error(f"生成JT输出文件夹名称失败: {e}")
         # 备用方案
+        from datetime import datetime
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"JT_Analysis_{timestamp}"
+
+
 
 
 class JTDataProcessingThread(QThread):
@@ -521,11 +574,36 @@ class JeTechWidget(QWidget):
             self.input_path_edit.setText(dir_path)
     
     def browse_output_dir(self):
-        """浏览输出目录"""
+        """浏览输出目录并创建基于lot_id+时间戳的文件夹"""
         start_dir = get_desktop_path()
-        dir_path = QFileDialog.getExistingDirectory(self, "选择JT输出文件夹", start_dir)
-        if dir_path:
-            self.output_path_edit.setText(dir_path)
+        parent_dir = QFileDialog.getExistingDirectory(self, "选择JT输出文件夹的父目录", start_dir)
+        if parent_dir:
+            # 如果用户已选择输入目录，尝试生成基于lot_id的文件夹名
+            if self.input_dir:
+                folder_name = generate_jt_output_folder_name(self.input_dir)
+                suggested_output_dir = os.path.join(parent_dir, folder_name)
+                
+                # 显示建议的完整路径给用户确认
+                reply = QMessageBox.question(
+                    self, 
+                    "确认输出文件夹", 
+                    f"将在以下位置创建输出文件夹：\n\n{suggested_output_dir}\n\n继续吗？",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                
+                if reply == QMessageBox.Yes:
+                    self.output_path_edit.setText(suggested_output_dir)
+                else:
+                    # 用户取消，使用选择的父目录
+                    self.output_path_edit.setText(parent_dir)
+            else:
+                # 如果没有输入目录，提示用户先选择输入目录
+                QMessageBox.information(
+                    self, 
+                    "提示", 
+                    "建议先选择输入文件夹，这样可以自动生成基于批次号+时间戳的输出文件夹名称。\n\n当前将使用您选择的文件夹作为输出目录。"
+                )
+                self.output_path_edit.setText(parent_dir)
     
     def on_input_path_changed(self):
         """输入路径变化时的处理"""

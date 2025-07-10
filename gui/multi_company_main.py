@@ -37,7 +37,7 @@ def main():
         app.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
         
         # 导入并创建主窗口
-        from multi_company_gui import MultiCompanyCPDataGUI
+        from .multi_company_gui import MultiCompanyCPDataGUI
         
         logger.info("正在启动多公司CP数据分析工具...")
         

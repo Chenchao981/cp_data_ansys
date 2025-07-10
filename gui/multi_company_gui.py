@@ -254,11 +254,11 @@ class MultiCompanyCPDataGUI(QMainWindow):
         """创建实际的公司界面组件"""
         try:
             # 导入HuaHong界面组件
-            from gui.widgets.huahong_widget import HuaHongWidget
+            from .widgets.huahong_widget import HuaHongWidget
             hh_widget = HuaHongWidget()
             
             # 导入JeTech界面组件
-            from gui.widgets.jetech_widget import JeTechWidget
+            from .widgets.jetech_widget import JeTechWidget
             jt_widget = JeTechWidget()
             
             # 添加到堆栈

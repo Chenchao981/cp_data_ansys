@@ -432,11 +432,36 @@ class HuaHongWidget(QWidget):
             self.input_path_edit.setText(dir_path)
     
     def browse_output_dir(self):
-        """浏览输出目录"""
+        """浏览输出目录并创建基于lot_id+时间戳的文件夹"""
         start_dir = get_desktop_path()
-        dir_path = QFileDialog.getExistingDirectory(self, "选择华虹输出文件夹", start_dir)
-        if dir_path:
-            self.output_path_edit.setText(dir_path)
+        parent_dir = QFileDialog.getExistingDirectory(self, "选择华虹输出文件夹的父目录", start_dir)
+        if parent_dir:
+            # 如果用户已选择输入目录，尝试生成基于lot_id的文件夹名
+            if self.input_dir:
+                folder_name = generate_output_folder_name(self.input_dir)
+                suggested_output_dir = os.path.join(parent_dir, folder_name)
+                
+                # 显示建议的完整路径给用户确认
+                reply = QMessageBox.question(
+                    self, 
+                    "确认输出文件夹", 
+                    f"将在以下位置创建输出文件夹：\n\n{suggested_output_dir}\n\n继续吗？",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+                
+                if reply == QMessageBox.Yes:
+                    self.output_path_edit.setText(suggested_output_dir)
+                else:
+                    # 用户取消，使用选择的父目录
+                    self.output_path_edit.setText(parent_dir)
+            else:
+                # 如果没有输入目录，提示用户先选择输入目录
+                QMessageBox.information(
+                    self, 
+                    "提示", 
+                    "建议先选择输入文件夹，这样可以自动生成基于批次号+时间戳的输出文件夹名称。\n\n当前将使用您选择的文件夹作为输出目录。"
+                )
+                self.output_path_edit.setText(parent_dir)
     
     def on_input_path_changed(self):
         """输入路径变化时的处理"""
