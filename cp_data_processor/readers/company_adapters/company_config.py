@@ -37,7 +37,8 @@ COMPANY_CONFIGS: Dict[str, Dict[str, Any]] = {
         'file_patterns': {
             'path_patterns': ['/HH_data/', '/hh/', '_hh_'],
             'filename_patterns': ['*_HH_*', 'HH_*'],
-            'content_signatures': ['# HH Format', 'HH_VERSION']
+            'content_signatures': ['# HH Format', 'HH_VERSION'],
+            'file_extensions': ['.dcp', '.cw', '.mex', '.txt']
         },
         
         # 数据质量配置
@@ -53,23 +54,43 @@ COMPANY_CONFIGS: Dict[str, Dict[str, Any]] = {
     
     'JT': {
         'name': 'JT-Semiconductor',
-        'default_format': 'excel',
-        'reader': 'JTReader',
-        'adapter': 'JTAdapter',
-        'supported_formats': ['.xls', '.xlsx'],
+        'description': 'Jetech公司Excel格式CP测试数据',
+        'supported_formats': ['JT_EXCEL'],
+        'default_format': 'JT_EXCEL',
+        'version': '1.0.0',
+        
+        # JT字段到标准字段的映射
         'field_mapping': {
             'SOFT_BIN': 'Bin',
-            'X_COORD': 'X',
+            'X_COORD': 'X', 
             'Y_COORD': 'Y',
-            'DUT_NO': 'Seq'
-            # 在此添加更多JT参数到标准参数的映射
-            # 'RDSON1': 'RDSon'
+            'DUT_NO': 'Seq',
+            'LOT_ID': 'Lot_ID',
+            'WAFER_ID': 'Wafer_ID'
         },
+        
+        # 单位转换配置
         'unit_conversion': {
-            'RDSON1': {'factor': 0.001} # mOhm to Ohm
-            # 在此添加更多需要转换单位的参数
+            'RDSON1': {'factor': 0.001, 'offset': 0.0}  # mOhm to Ohm
         },
-        'file_pattern': r'^FA\d{4}-\d{4}-\d{2}\.xls$' # 匹配 FA444149-03.xls 这样的文件名
+        
+        # 文件识别特征
+        'file_patterns': {
+            'path_patterns': ['/JT_data/', '/jt/', '_jt_', '/jetech/'],
+            'filename_patterns': ['*_JT_*', 'JT_*', 'FA*-*.xls*'],
+            'content_signatures': [],
+            'file_extensions': ['.xls', '.xlsx']
+        },
+        
+        # 数据质量配置
+        'data_validation': {
+            'required_fields': ['LOT_ID', 'WAFER_ID', 'DUT_NO', 'SOFT_BIN', 'X_COORD', 'Y_COORD'],
+            'optional_fields': [],
+            'bin_values': {
+                'pass_bins': [1],
+                'fail_bins': [2, 3, 4, 5, 6, 7, 8, 9]
+            }
+        }
     }
 }
 

@@ -167,4 +167,81 @@ class BaseCompanyAdapter(ABC):
             'supported_formats': self.get_supported_formats(),
             'default_format': self.config.get('default_format'),
             'version': self.config.get('version', '1.0.0')
-        } 
+        }
+    
+    @abstractmethod
+    def can_process_file(self, file_path: str) -> bool:
+        """
+        检查是否能处理指定文件
+        
+        Args:
+            file_path: 文件路径
+            
+        Returns:
+            bool: 能处理返回True，否则返回False
+        """
+        pass
+    
+    def standardize_data(self, lot: CPLot) -> CPLot:
+        """
+        标准化数据流程：字段映射 → 单位转换 → 数据验证
+        
+        Args:
+            lot: 原始CPLot对象
+            
+        Returns:
+            CPLot: 标准化后的CPLot对象
+        """
+        try:
+            self.logger.info(f"开始标准化{self.company_name}公司数据")
+            
+            # 1. 执行厂商特定的转换
+            standardized_lot = self.transform_to_standard_format(lot)
+            
+            # 2. 应用字段映射和单位转换到所有晶圆数据
+            for wafer in standardized_lot.wafers:
+                if hasattr(wafer, 'chip_data') and wafer.chip_data is not None:
+                    # 应用字段映射
+                    wafer.chip_data = self.apply_field_mapping(wafer.chip_data)
+                    # 应用单位转换
+                    wafer.chip_data = self.convert_units(wafer.chip_data)
+            
+            # 3. 更新参数信息
+            if hasattr(standardized_lot, 'params') and standardized_lot.params:
+                self._standardize_parameters(standardized_lot)
+            
+            # 4. 验证标准化后的数据
+            if not self.validate_data_format(standardized_lot):
+                raise ValueError(f"{self.company_name}数据标准化后验证失败")
+            
+            self.logger.info(f"{self.company_name}公司数据标准化完成")
+            return standardized_lot
+            
+        except Exception as e:
+            self.logger.error(f"{self.company_name}数据标准化失败: {e}")
+            raise
+    
+    def _standardize_parameters(self, lot: CPLot):
+        """
+        标准化参数信息
+        
+        Args:
+            lot: CPLot对象
+        """
+        field_mapping = self.get_field_mapping()
+        
+        for param in lot.params:
+            # 映射参数ID
+            if param.id in field_mapping:
+                param.id = field_mapping[param.id]
+            
+            # 应用单位转换到参数规格
+            if param.id in self.unit_conversion:
+                conversion = self.unit_conversion[param.id]
+                factor = conversion.get('factor', 1.0)
+                offset = conversion.get('offset', 0.0)
+                
+                if hasattr(param, 'sl') and param.sl is not None:
+                    param.sl = (param.sl * factor) + offset
+                if hasattr(param, 'su') and param.su is not None:
+                    param.su = (param.su * factor) + offset 

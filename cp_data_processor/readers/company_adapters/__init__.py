@@ -12,11 +12,19 @@
 
 from .base_company_adapter import BaseCompanyAdapter
 from .company_config import COMPANY_CONFIGS, get_company_config
+from .company_registry import CompanyRegistry, get_company_registry, get_adapter_for_file
+from .hh_adapter import HHAdapter
+from .jt_adapter import JTAdapter
 
 __all__ = [
     'BaseCompanyAdapter',
     'COMPANY_CONFIGS', 
-    'get_company_config'
+    'get_company_config',
+    'CompanyRegistry',
+    'get_company_registry',
+    'get_adapter_for_file',
+    'HHAdapter',
+    'JTAdapter'
 ]
 
 __version__ = '1.0.0' 

@@ -69,6 +69,43 @@ class HHAdapter(BaseCompanyAdapter):
         """
         return self.field_mapping
     
+    def can_process_file(self, file_path: str) -> bool:
+        """
+        检查是否能处理指定文件
+        
+        Args:
+            file_path: 文件路径
+            
+        Returns:
+            bool: 能处理返回True，否则返回False
+        """
+        from pathlib import Path
+        
+        # 检查文件扩展名
+        file_ext = Path(file_path).suffix.lower()
+        supported_extensions = self.config.get('file_patterns', {}).get('file_extensions', [])
+        
+        if file_ext not in supported_extensions:
+            return False
+        
+        # 检查文件名模式
+        filename = Path(file_path).name
+        filename_patterns = self.config.get('file_patterns', {}).get('filename_patterns', [])
+        
+        for pattern in filename_patterns:
+            pattern_clean = pattern.replace('*', '')
+            if pattern_clean.lower() in filename.lower():
+                return True
+        
+        # 检查路径模式
+        path_patterns = self.config.get('file_patterns', {}).get('path_patterns', [])
+        for pattern in path_patterns:
+            if pattern.lower() in file_path.lower():
+                return True
+        
+        # 如果文件扩展名匹配且没有特定模式要求，默认可以处理
+        return file_ext in supported_extensions
+    
     def _ensure_data_integrity(self, lot: CPLot) -> None:
         """
         确保HH格式数据的完整性
