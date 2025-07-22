@@ -389,7 +389,7 @@ class StandardCSVGenerator:
             'Wafer_ID': wafer.wafer_id,
             'Gross_die': 0,
             'Good_die': 0,
-            'Yield': 0.0
+            'Yield': '0.0%'
         }
         
         # 首先尝试从summary_data中获取准确的yield数据
@@ -402,13 +402,12 @@ class StandardCSVGenerator:
             if 'good_die' in summary_data:
                 stats['Good_die'] = summary_data['good_die']
             if 'yield' in summary_data:
-                # yield格式如"99.40%"，提取数值部分
+                # yield格式如"99.40%"，保持百分比格式
                 yield_str = str(summary_data['yield'])
                 if '%' in yield_str:
-                    try:
-                        stats['Yield'] = float(yield_str.replace('%', ''))
-                    except ValueError:
-                        stats['Yield'] = 0.0
+                    stats['Yield'] = yield_str
+                else:
+                    stats['Yield'] = '0.0%'
             
             # 添加参数失败计数（从SBin信息中提取）
             if 'param_counts' in summary_data:
@@ -436,13 +435,10 @@ class StandardCSVGenerator:
                     good_chips = bin_counts.get(1, 0)
                     stats['Good_die'] = good_chips
                 
-                # 如果summary_data中没有yield，计算yield
-                if stats['Yield'] == 0.0 and stats['Gross_die'] > 0:
-                    stats['Yield'] = (stats['Good_die'] / stats['Gross_die'] * 100)
-                
-                # 添加各个Bin的统计（保持向后兼容性）
-                for bin_num in sorted(bin_counts.index):
-                    stats[f'Bin_{bin_num}'] = bin_counts[bin_num]
+                # 如果summary_data中没有yield，计算yield并添加百分比符号
+                if stats['Yield'] == '0.0%' and stats['Gross_die'] > 0:
+                    yield_value = (stats['Good_die'] / stats['Gross_die'] * 100)
+                    stats['Yield'] = f"{yield_value:.2f}%"
         
         return stats
     
