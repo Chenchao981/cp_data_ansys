@@ -91,6 +91,47 @@ COMPANY_CONFIGS: Dict[str, Dict[str, Any]] = {
                 'fail_bins': [2, 3, 4, 5, 6, 7, 8, 9]
             }
         }
+    },
+    
+    'LION': {
+        'name': 'Lion公司',
+        'description': 'Lion公司Excel格式CP测试数据',
+        'supported_formats': ['LION_EXCEL'],
+        'default_format': 'LION_EXCEL',
+        'version': '1.0.0',
+        
+        # Lion字段到标准字段的映射
+        'field_mapping': {
+            'PART_INDEX': 'Seq',
+            'SOFT_BIN': 'Bin', 
+            'X_COORD': 'X',
+            'Y_COORD': 'Y',
+            'PASSFG': 'CONT'
+        },
+        
+        # 单位转换配置（如需要）
+        'unit_conversion': {
+            # 示例：如果需要单位转换
+            # 'VF_10A': {'factor': 1.0, 'offset': 0.0}
+        },
+        
+        # 文件识别特征
+        'file_patterns': {
+            'path_patterns': ['/data/', '/lion/', '_lion_'],
+            'filename_patterns': ['F*.xlsx', '*_lion_*', 'LION_*'],
+            'content_signatures': [],
+            'file_extensions': ['.xlsx', '.xls']
+        },
+        
+        # 数据质量配置
+        'data_validation': {
+            'required_fields': ['PART_INDEX', 'SOFT_BIN', 'X_COORD', 'Y_COORD'],
+            'optional_fields': ['PASSFG', 'T_TIME', 'SITE_NUM'],
+            'bin_values': {
+                'pass_bins': [1],
+                'fail_bins': [2, 3, 4, 5, 6, 7, 8, 9]
+            }
+        }
     }
 }
 

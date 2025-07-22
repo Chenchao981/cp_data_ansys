@@ -166,6 +166,13 @@ class CompanyRegistry:
         except ImportError as e:
             self.logger.warning(f"无法加载JT适配器: {e}")
         
+        # 加载Lion适配器
+        try:
+            from .lion_adapter import LIONAdapter
+            self.register_company('LION', LIONAdapter)
+        except ImportError as e:
+            self.logger.warning(f"无法加载Lion适配器: {e}")
+        
         # 可以继续添加其他适配器的自动加载
         self._load_dynamic_adapters()
     

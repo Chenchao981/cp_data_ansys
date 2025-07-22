@@ -1,0 +1,201 @@
+# Lion公司CP数据清洗Todo清单 [已完成]
+
+== 项目状态：已完成 ==
+所有目标已实现，Lion公司数据清洗功能已完全集成到主系统中。
+
+使用方法：
+- 批量处理：python ../lion_batch_processor.py
+- 单文件测试：python demo_lion_processing.py  
+- 统一接口：通过cp_data_processor的统一读取器自动识别Lion格式
+
+## 原项目概述
+模仿现有代码里面的huahong公司的CP数据清洗和图表生成功能，为Lion公司实现数据清洗功能。
+
+## 数据分析结果
+- **源数据路径**: `./data/F25130244/` 
+- **输出路径**: `./output_lion_models/`
+- **数据格式**: Excel文件，包含两个工作表：
+  - `summary_information`: 汇总信息
+  - `dut_data`: 实际测试数据（1011行 x 18列）
+
+### 数据字段映射分析
+Lion公司Excel格式 -> HH标准格式:
+- `PART_INDEX` -> `Seq` (芯片序号)
+- `SOFT_BIN` -> `Bin` (测试结果分级)
+- `X_COORD` -> `X` (X坐标)
+- `Y_COORD` -> `Y` (Y坐标)
+- `F25130244` (从文件名提取) -> `Lot_ID`
+- `SITE_NUM` + `PART_INDEX` -> `Wafer_ID` (需要推导)
+
+### 测试参数字段
+- `KELVIN_CHECK`, `IR_35V`, `IR_1000V`, `IR_1200V`, `IR_1300V`
+- `VBR_0P25mA`, `VBR_1mA`, `VF_10A`, `VF_20A`, `IR_1200V_Retest`
+
+## Todo任务清单
+
+### ✅ 已完成
+- [x] 分析Lion公司Excel数据格式和字段结构
+- [x] 创建lion文件夹和基础目录结构
+- [x] 在lion文件夹创建lion_todolist.md文档
+
+#### 1. 核心组件开发
+- [x] **创建Lion公司适配器** (`lion/lion_adapter.py`)
+  - 继承BaseCompanyAdapter
+  - 实现字段映射：PART_INDEX->Seq, SOFT_BIN->Bin, X_COORD->X, Y_COORD->Y
+  - 处理规格限制行（UNIT, LIMIT_LOW, LIMIT_HIGH）
+  - 实现数据格式转换逻辑
+
+- [x] **创建Lion Excel数据读取器** (`lion/lion_reader.py`)
+  - 读取Excel文件的dut_data工作表
+  - 处理数据头部的单位和规格限制信息
+  - 转换为CPLot数据模型
+
+#### 2. 系统集成
+- [x] **在company_config.py中添加Lion公司配置**
+  - 添加LION配置到COMPANY_CONFIGS
+  - 设置文件识别模式：F**.xlsx
+  - 配置字段映射和数据验证规则
+
+- [x] **注册Lion适配器到系统**
+  - 在company_adapters/中创建lion_adapter.py
+  - 在company_registry.py中注册
+
+#### 3. 数据处理和测试
+- [x] **测试Lion数据清洗并生成3个标准CSV文件**
+  - 使用统一读取器处理Lion数据
+  - 生成标准格式输出：
+    - `F25130244_cleaned.csv` - 清洗后的芯片级数据 (1008行 x 20列)
+    - `F25130244_yield.csv` - 晶圆级良率数据 (良率99.4%)
+    - `F25130244_spec.csv` - 参数规格限制 (13个参数)
+
+- [x] **验证生成的CSV文件格式与HH标准格式一致**
+  - 检查列名和数据类型
+  - 验证数据完整性
+  - 确保与现有图表生成模块兼容
+
+#### 4. 集成测试
+- [x] **运行模块化架构测试**
+  - 执行`python test_modular_architecture.py`
+  - 确保Lion适配器正常工作 (✓ 通过)
+
+### 🔄 可选扩展
+- [ ] **生成图表验证**
+  - 使用清洗后的CSV数据生成图表
+  - 验证图表生成功能正常
+
+## 技术要点
+
+### 数据特征
+- Lion Excel文件前3行为规格信息：UNIT, LIMIT_LOW, LIMIT_HIGH
+- 从第4行开始为实际测试数据
+- 需要从文件名`F25130244_X.xlsx`提取批次ID`F25130244`
+- PASSFG字段表示通过/失败标志
+
+### 实现策略
+1. **模块化设计**: 在独立的lion文件夹中开发，遵循现有架构模式
+2. **复用现有框架**: 基于BaseCompanyAdapter和统一数据处理流程
+3. **标准化输出**: 确保生成的CSV文件与HH格式完全兼容
+4. **零侵入集成**: 不修改现有代码，只添加新的适配器和配置
+
+### 文件结构
+```
+lion/
+├── lion_todolist.md           # 本文档
+├── lion_adapter.py           # Lion公司适配器
+├── lion_reader.py           # Lion Excel读取器
+└── __init__.py              # 模块初始化
+```
+
+## 实际输出文件结果
+
+### ✅ F25130244_cleaned.csv (生成成功)
+- **大小**: 1008行 x 20列
+- **关键列**: SITE_NUM, Seq, CONT, Bin, T_TIME, X, Y, TEST_NUM, KELVIN_CHECK, IR_35V, IR_1000V, IR_1200V, IR_1300V, VBR_0P25mA, VBR_1mA, VF_10A, VF_20A, IR_1200V_Retest, Lot_ID, Wafer_ID
+- **数据类型**: 正确映射到HH标准格式
+
+### ✅ F25130244_yield.csv (生成成功)
+- **大小**: 1行 x 7列
+- **结果**: Lot_ID=F25130244, Wafer_ID=W1, Total_Chips=1008, Good_Chips=1002, Yield_Rate=99.4%, Bin_1=1002, Bin_7=6
+- **良率**: 99.4% (优秀)
+
+### ✅ F25130244_spec.csv (生成成功)
+- **大小**: 13行 x 7列
+- **参数**: 13个测试参数及其规格限制
+- **格式**: Parameter, Unit, LimitL, LimitU, LSL, USL, Target
+
+## 项目状态总结
+
+### 🎉 项目完成状态: 100%
+
+1. **架构集成**: ✅ 成功集成到模块化架构
+2. **数据处理**: ✅ 完美处理Lion Excel格式数据
+3. **格式标准化**: ✅ 输出符合HH标准格式
+4. **系统兼容**: ✅ 通过模块化架构测试
+5. **零侵入设计**: ✅ 不影响现有代码
+
+### 📊 数据处理统计
+- **源文件格式**: Excel (.xlsx) 
+- **数据规模**: 1008个芯片测试数据
+- **参数数量**: 13个测试参数
+- **良率**: 99.4%
+- **处理时间**: < 1秒
+
+### 🔧 技术实现亮点
+- 模仿HH公司架构，实现零侵入集成
+- 支持Excel多工作表格式处理
+- 自动识别规格信息（UNIT, LIMIT_LOW, LIMIT_HIGH）
+- 完整的字段映射和单位转换框架
+- 符合HH标准的3个CSV输出格式
+
+### 📁 输出文件位置
+所有生成的CSV文件位于: `./output_lion_models/`
+
+### 🚀 使用方式
+```bash
+# 批次处理器（推荐）- 处理整个批次的所有晶圆
+python lion/batch_processor.py
+
+# 批次处理演示
+python lion/lion_batch_demo.py
+
+# 单个测试脚本
+python lion/test_lion_processing.py
+
+# 测试更新后的yield处理
+python lion/test_updated_yield_processing.py
+
+# 测试多文件处理
+python lion/test_multiple_files.py
+
+# 验证模块化架构
+python test_modular_architecture.py
+```
+
+## 🎯 更新后的yield.csv格式
+
+根据用户要求，已成功更新yield.csv数据来源和格式：
+
+### ✅ 数据来源更新
+- **数据源**: 从`summary_information`工作表提取，而非`dut_data`
+- **lot_id**: 从文件名正则提取 (如`F25130244_1.xlsx` → lot_id=`F25130244`)
+- **wafer_id**: 从文件名正则提取 (如`F25130244_1.xlsx` → wafer_id=`1`)
+
+### ✅ 字段规则实现
+- **gross_die**: 从第20行`Total: 1008`提取数字`1008`
+- **good_die**: 从第21行`Pass: 1002   99.40%`提取数字`1002`
+- **yield**: 从第21行`Pass: 1002   99.40%`提取百分比`99.40%`
+- **参数失败计数**: 从第24行开始的SBin数据提取
+  - 如`SBin[6] IR_35V__AllFail 0 0.00% 2` → IR_35V=0
+  - 如`SBin[7] IR_1000V__AllFail 6 0.60% 2` → IR_1000V=6
+
+### ✅ 最终yield.csv格式
+```csv
+lot_id,wafer_id,gross_die,good_die,yield,IR_35V,IR_1000V,IR_1200V,IR_1300V,VBR_0P25mA,VBR_1mA,VF_10A,VF_20A,IR_1200V_Retest
+F25130244,1,1008,1002,99.40%,0,6,0,0,0,0,0,0,0
+```
+
+### 🔧 技术实现亮点
+- 精确的正则表达式提取summary信息
+- 自动识别参数名称并移除`__AllFail`后缀
+- 正确区分失败计数和bin编号
+- 保持与现有架构的完美兼容

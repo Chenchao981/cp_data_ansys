@@ -12,6 +12,7 @@ import pandas as pd
 from typing import Optional, List, Dict, Any
 from pathlib import Path
 import logging
+from datetime import datetime
 
 from cp_data_processor.data_models.cp_data import CPLot, CPWafer, CPParameter
 
@@ -29,6 +30,15 @@ class StandardCSVGenerator:
     def __init__(self):
         """初始化CSV生成器"""
         self.logger = logging.getLogger(__name__)
+    
+    def _generate_timestamp(self) -> str:
+        """
+        生成时间戳字符串
+        
+        Returns:
+            str: 格式为YYYYMMDD_HHMM的时间戳
+        """
+        return datetime.now().strftime("%Y%m%d_%H%M")
     
     def generate_standard_csvs(self, lot: CPLot, output_dir: str) -> Dict[str, str]:
         """
@@ -48,21 +58,22 @@ class StandardCSVGenerator:
         os.makedirs(output_dir, exist_ok=True)
         
         lot_id = lot.lot_id
-        self.logger.info(f"开始生成{lot_id}的标准CSV文件")
+        timestamp = self._generate_timestamp()
+        self.logger.info(f"开始生成{lot_id}的标准CSV文件 (时间戳: {timestamp})")
         
         file_paths = {}
         
         try:
             # 1. 生成清洗数据CSV
-            cleaned_path = self.generate_cleaned_csv(lot, output_dir)
+            cleaned_path = self.generate_cleaned_csv(lot, output_dir, timestamp)
             file_paths['cleaned'] = cleaned_path
             
             # 2. 生成良率数据CSV
-            yield_path = self.generate_yield_csv(lot, output_dir)
+            yield_path = self.generate_yield_csv(lot, output_dir, timestamp)
             file_paths['yield'] = yield_path
             
             # 3. 生成规格数据CSV
-            spec_path = self.generate_spec_csv(lot, output_dir)
+            spec_path = self.generate_spec_csv(lot, output_dir, timestamp)
             file_paths['spec'] = spec_path
             
             self.logger.info(f"标准CSV文件生成完成: {lot_id}")
@@ -72,7 +83,7 @@ class StandardCSVGenerator:
             self.logger.error(f"生成标准CSV文件失败 {lot_id}: {e}")
             raise
     
-    def generate_cleaned_csv(self, lot: CPLot, output_dir: str) -> str:
+    def generate_cleaned_csv(self, lot: CPLot, output_dir: str, timestamp: str = None) -> str:
         """
         生成清洗后的测试数据CSV
         
@@ -114,14 +125,32 @@ class StandardCSVGenerator:
         # 合并所有数据
         combined_data = pd.concat(all_chip_data, ignore_index=True)
         
+        # 标准化列名映射（将原始列名映射到标准列名）
+        column_mapping = {
+            'X_COORD': 'X',
+            'Y_COORD': 'Y', 
+            'PART_INDEX': 'Seq',
+            'SOFT_BIN': 'Bin'
+        }
+        
+        # 应用列名映射
+        combined_data = combined_data.rename(columns=column_mapping)
+        
+        # 按wafer_id进行自然整数排序
+        if 'Wafer_ID' in combined_data.columns:
+            combined_data = combined_data.sort_values('Wafer_ID', key=lambda x: pd.to_numeric(x, errors='coerce'))
+        
         # 确保列顺序：基本字段在前，测试参数在后
         basic_columns = ['Lot_ID', 'Wafer_ID', 'X', 'Y', 'Seq', 'Bin']
         param_columns = [col for col in combined_data.columns if col not in basic_columns]
         ordered_columns = [col for col in basic_columns if col in combined_data.columns] + param_columns
         combined_data = combined_data[ordered_columns]
         
-        # 生成文件路径
-        filename = f"{lot.lot_id}_cleaned.csv"
+        # 生成文件路径（带时间戳）
+        if timestamp:
+            filename = f"{lot.lot_id}_cleaned_{timestamp}.csv"
+        else:
+            filename = f"{lot.lot_id}_cleaned.csv"
         file_path = os.path.join(output_dir, filename)
         
         # 保存文件
@@ -130,15 +159,16 @@ class StandardCSVGenerator:
         
         return file_path
     
-    def generate_yield_csv(self, lot: CPLot, output_dir: str) -> str:
+    def generate_yield_csv(self, lot: CPLot, output_dir: str, timestamp: str = None) -> str:
         """
         生成良率统计数据CSV
         
-        格式: Lot_ID,Wafer_ID,Total_Chips,Good_Chips,Yield_Rate,Bin_1,Bin_2,...
+        格式: Lot_ID,Wafer_ID,Gross_die,Good_die,Yield,Parameter_Fail_Counts...
         
         Args:
             lot: CPLot对象
             output_dir: 输出目录
+            timestamp: 时间戳（可选）
             
         Returns:
             str: 生成的文件路径
@@ -160,11 +190,15 @@ class StandardCSVGenerator:
         if 'Wafer_ID' in yield_df.columns:
             yield_df['Wafer_ID'] = self._standardize_wafer_id(yield_df['Wafer_ID'])
         
-        # 按Wafer_ID排序
-        yield_df = yield_df.sort_values('Wafer_ID')
+        # 按Wafer_ID进行自然整数排序
+        if 'Wafer_ID' in yield_df.columns:
+            yield_df = yield_df.sort_values('Wafer_ID', key=lambda x: pd.to_numeric(x, errors='coerce'))
         
-        # 生成文件路径
-        filename = f"{lot.lot_id}_yield.csv"
+        # 生成文件路径（带时间戳）
+        if timestamp:
+            filename = f"{lot.lot_id}_yield_{timestamp}.csv"
+        else:
+            filename = f"{lot.lot_id}_yield.csv"
         file_path = os.path.join(output_dir, filename)
         
         # 保存文件
@@ -173,19 +207,36 @@ class StandardCSVGenerator:
         
         return file_path
     
-    def generate_spec_csv(self, lot: CPLot, output_dir: str) -> str:
+    def generate_spec_csv(self, lot: CPLot, output_dir: str, timestamp: str = None) -> str:
         """
         生成参数规格数据CSV
         
-        格式: Parameter,Unit,LimitL,LimitU,LSL,USL,Target
+        Lion格式: 
+        第一行: Parameter, TEST_NUM, KELVIN_CHECK, IR_35V, ...
+        第二行: UNIT, mV, mA, uA, ...
+        第三行: LIMIT_LOW, 0, 0, 0, ...
+        第四行: LIMIT_HIGH, 1, 10, 0.1, ...
         
         Args:
             lot: CPLot对象
             output_dir: 输出目录
+            timestamp: 时间戳（可选）
             
         Returns:
             str: 生成的文件路径
         """
+        
+        # 检查是否是Lion数据（通过检查参数信息）
+        if hasattr(lot, 'params') and lot.params:
+            # 检查是否包含Lion特有的参数（如TEST_NUM等）
+            param_ids = [param.id for param in lot.params]
+            lion_indicators = ['TEST_NUM', 'KELVIN_CHECK', 'IR_35V', 'VBR_0P25mA', 'VBR_1mA']
+            
+            if any(indicator in param_ids for indicator in lion_indicators):
+                # 这是Lion数据，使用Lion专用格式
+                return self._generate_lion_spec_csv(lot, output_dir, timestamp)
+        
+        # 使用标准格式
         spec_data = []
         
         if hasattr(lot, 'params') and lot.params:
@@ -235,13 +286,90 @@ class StandardCSVGenerator:
         # 创建DataFrame
         spec_df = pd.DataFrame(spec_data)
         
-        # 生成文件路径
-        filename = f"{lot.lot_id}_spec.csv"
+        # 生成文件路径（带时间戳）
+        if timestamp:
+            filename = f"{lot.lot_id}_spec_{timestamp}.csv"
+        else:
+            filename = f"{lot.lot_id}_spec.csv"
         file_path = os.path.join(output_dir, filename)
         
         # 保存文件
         spec_df.to_csv(file_path, index=False)
         self.logger.info(f"生成规格数据CSV: {file_path} ({len(spec_df)}行)")
+        
+        return file_path
+    
+    def _generate_lion_spec_csv(self, lot: CPLot, output_dir: str, timestamp: str = None) -> str:
+        """
+        生成Lion专用格式的规格CSV文件
+        
+        格式:
+        第一行: Parameter, TEST_NUM, KELVIN_CHECK, IR_35V, ...
+        第二行: UNIT, mV, mA, uA, ...
+        第三行: LIMIT_LOW, 0, 0, 0, ...  
+        第四行: LIMIT_HIGH, 1, 10, 0.1, ...
+        
+        Args:
+            lot: CPLot对象
+            output_dir: 输出目录
+            timestamp: 时间戳（可选）
+            
+        Returns:
+            str: 生成的文件路径
+        """
+        # 按照用户要求的顺序排列参数
+        ordered_params = ['TEST_NUM', 'KELVIN_CHECK', 'IR_35V', 'IR_1000V', 'IR_1200V', 
+                         'IR_1300V', 'VBR_0P25mA', 'VBR_1mA', 'VF_10A', 'VF_20A', 'IR_1200V_Retest']
+        
+        # 从lot.params中获取信息
+        param_dict = {}
+        if hasattr(lot, 'params') and lot.params:
+            for param in lot.params:
+                param_dict[param.id] = param
+        
+        # 构建横向排列的数据
+        param_row = ['Parameter']  # 第一行：参数标题
+        unit_row = ['UNIT']        # 第二行：单位
+        limit_low_row = ['LIMIT_LOW']   # 第三行：下限
+        limit_high_row = ['LIMIT_HIGH'] # 第四行：上限
+        
+        # 按顺序处理参数
+        for param_name in ordered_params:
+            if param_name in param_dict:
+                param = param_dict[param_name]
+                param_row.append(param_name)
+                # 对于TEST_NUM等参数，如果unit为空或"Unknown"，保留空值
+                unit_value = getattr(param, 'unit', '')
+                if unit_value == 'Unknown':
+                    unit_value = ''
+                unit_row.append(unit_value)
+                limit_low_row.append(getattr(param, 'sl', ''))
+                limit_high_row.append(getattr(param, 'su', ''))
+            elif param_name == 'VBR_0P25mA':
+                # 处理VBR_0P25mA可能在数据中显示为VBR_250uA的情况
+                if 'VBR_250uA' in param_dict:
+                    param = param_dict['VBR_250uA']
+                    param_row.append('VBR_250uA')
+                    unit_value = getattr(param, 'unit', '')
+                    if unit_value == 'Unknown':
+                        unit_value = ''
+                    unit_row.append(unit_value)
+                    limit_low_row.append(getattr(param, 'sl', ''))
+                    limit_high_row.append(getattr(param, 'su', ''))
+        
+        # 创建DataFrame（4行数据，参数横向排列）
+        spec_df = pd.DataFrame([param_row, unit_row, limit_low_row, limit_high_row])
+        
+        # 生成文件路径（带时间戳）
+        if timestamp:
+            filename = f"{lot.lot_id}_spec_{timestamp}.csv"
+        else:
+            filename = f"{lot.lot_id}_spec.csv"
+        file_path = os.path.join(output_dir, filename)
+        
+        # 保存文件（不包含index，不包含header）
+        spec_df.to_csv(file_path, index=False, header=False)
+        self.logger.info(f"生成Lion格式规格数据CSV: {file_path} ({len(spec_df)}行)")
         
         return file_path
     
@@ -259,28 +387,60 @@ class StandardCSVGenerator:
         stats = {
             'Lot_ID': lot_id,
             'Wafer_ID': wafer.wafer_id,
-            'Total_Chips': 0,
-            'Good_Chips': 0,
-            'Yield_Rate': 0.0
+            'Gross_die': 0,
+            'Good_die': 0,
+            'Yield': 0.0
         }
         
+        # 首先尝试从summary_data中获取准确的yield数据
+        if hasattr(wafer, 'summary_data') and wafer.summary_data:
+            summary_data = wafer.summary_data
+            
+            # 从summary_data获取gross_die, good_die, yield
+            if 'gross_die' in summary_data:
+                stats['Gross_die'] = summary_data['gross_die']
+            if 'good_die' in summary_data:
+                stats['Good_die'] = summary_data['good_die']
+            if 'yield' in summary_data:
+                # yield格式如"99.40%"，提取数值部分
+                yield_str = str(summary_data['yield'])
+                if '%' in yield_str:
+                    try:
+                        stats['Yield'] = float(yield_str.replace('%', ''))
+                    except ValueError:
+                        stats['Yield'] = 0.0
+            
+            # 添加参数失败计数（从SBin信息中提取）
+            if 'param_counts' in summary_data:
+                param_counts = summary_data['param_counts']
+                for param_name, count in param_counts.items():
+                    # 移除__AllFail后缀，保留参数名称
+                    clean_param_name = param_name.replace('__AllFail', '')
+                    stats[clean_param_name] = count
+        
+        # 如果summary_data中没有数据，使用chip_data计算
         if hasattr(wafer, 'chip_data') and wafer.chip_data is not None:
             chip_data = wafer.chip_data
             total_chips = len(chip_data)
+            
+            # 如果summary_data中没有gross_die，使用chip_data计算
+            if stats['Gross_die'] == 0:
+                stats['Gross_die'] = total_chips
             
             if 'Bin' in chip_data.columns:
                 # 计算各个Bin的数量
                 bin_counts = chip_data['Bin'].value_counts()
                 
-                # 计算good chips (通常Bin=1是良品)
-                good_chips = bin_counts.get(1, 0)
+                # 如果summary_data中没有good_die，计算good chips (通常Bin=1是良品)
+                if stats['Good_die'] == 0:
+                    good_chips = bin_counts.get(1, 0)
+                    stats['Good_die'] = good_chips
                 
-                # 更新统计信息
-                stats['Total_Chips'] = total_chips
-                stats['Good_Chips'] = good_chips
-                stats['Yield_Rate'] = (good_chips / total_chips * 100) if total_chips > 0 else 0.0
+                # 如果summary_data中没有yield，计算yield
+                if stats['Yield'] == 0.0 and stats['Gross_die'] > 0:
+                    stats['Yield'] = (stats['Good_die'] / stats['Gross_die'] * 100)
                 
-                # 添加各个Bin的统计
+                # 添加各个Bin的统计（保持向后兼容性）
                 for bin_num in sorted(bin_counts.index):
                     stats[f'Bin_{bin_num}'] = bin_counts[bin_num]
         

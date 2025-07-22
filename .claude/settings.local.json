@@ -11,7 +11,8 @@
       "Bash(pip install:*)",
       "Bash(ls:*)",
       "Bash(cp:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(cat:*)"
     ],
     "deny": []
   }

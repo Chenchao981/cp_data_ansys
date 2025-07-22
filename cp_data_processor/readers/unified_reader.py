@@ -199,6 +199,18 @@ class UnifiedReader:
                 reader = JTReader([file_path])
             else:
                 raise ValueError(f"JT公司不支持的文件格式: {file_ext}")
+                
+        elif company_code == 'LION':
+            if file_ext in ['.xls', '.xlsx']:
+                # Lion公司使用LionExcelReader
+                import sys
+                from pathlib import Path as PathLib
+                lion_path = PathLib(__file__).parent.parent.parent / "lion"
+                sys.path.insert(0, str(lion_path))
+                from lion_reader import LionExcelReader
+                reader = LionExcelReader([file_path])
+            else:
+                raise ValueError(f"Lion公司不支持的文件格式: {file_ext}")
         else:
             raise ValueError(f"不支持的公司: {company_code}")
         
