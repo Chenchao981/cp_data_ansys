@@ -8,9 +8,9 @@ Lion公司多批次数据批量处理器
     python lion_batch_processor.py
 
 输出:
-    ./output/combined_cleaned.csv  - 所有批次合并的测试数据
-    ./output/combined_yield.csv   - 所有批次合并的良率数据  
-    ./output/combined_spec.csv    - 所有批次合并的参数规格数据
+    ./output/{第一个批次号}_cleaned.csv  - 所有批次合并的测试数据
+    ./output/{第一个批次号}_yield.csv   - 所有批次合并的良率数据  
+    ./output/{第一个批次号}_spec.csv    - 所有批次合并的参数规格数据
 """
 
 import os
@@ -339,9 +339,10 @@ def main():
             # 生成汇总的标准CSV文件
             generator = StandardCSVGenerator()
             
-            # 覆盖lot_id以生成combined_*的文件名
+            # 使用第一个批次的lot_id替换"combined"
             original_lot_id = combined_lot.lot_id
-            combined_lot.lot_id = "combined"
+            first_batch_lot_id = all_batch_lots[0].lot_id
+            combined_lot.lot_id = first_batch_lot_id
             
             file_paths_generated = generator.generate_standard_csvs(combined_lot, str(output_dir))
             
@@ -374,10 +375,10 @@ def main():
     print(f"\n📁 输出目录: {output_dir}")
     
     # 显示生成的汇总文件
-    combined_csv_files = list(output_dir.glob("combined_*.csv"))
-    if combined_csv_files:
+    csv_files = list(output_dir.glob("*_cleaned.csv")) + list(output_dir.glob("*_yield.csv")) + list(output_dir.glob("*_spec.csv"))
+    if csv_files:
         print(f"📄 生成的汇总CSV文件:")
-        for csv_file in sorted(combined_csv_files):
+        for csv_file in sorted(csv_files):
             file_size = csv_file.stat().st_size / 1024  # KB
             print(f"     {csv_file.name} ({file_size:.1f} KB)")
     
