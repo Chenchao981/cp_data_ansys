@@ -409,13 +409,27 @@ class StandardCSVGenerator:
                 else:
                     stats['Yield'] = '0.0%'
             
-            # 添加参数失败计数（从SBin信息中提取）
-            if 'param_counts' in summary_data:
-                param_counts = summary_data['param_counts']
-                for param_name, count in param_counts.items():
-                    # 移除__AllFail后缀，保留参数名称
-                    clean_param_name = param_name.replace('__AllFail', '')
-                    stats[clean_param_name] = count
+            # 添加参数测量数据的平均值
+            if hasattr(wafer, 'chip_data') and wafer.chip_data is not None:
+                chip_data = wafer.chip_data
+                # 定义需要计算平均值的参数列表
+                param_columns = ['KELVIN_CHECK', 'IR_35V', 'IR_1000V', 'IR_1200V', 'IR_1300V', 
+                               'VBR_0P25mA', 'VBR_1mA', 'VF_10A', 'VF_20A', 'IR_1200V_Retest']
+                
+                for param in param_columns:
+                    if param in chip_data.columns:
+                        # 计算参数的平均值，排除异常值（NaN和inf）
+                        param_values = chip_data[param].dropna()
+                        param_values = param_values[~param_values.isin([float('inf'), float('-inf')])]
+                        
+                        if len(param_values) > 0:
+                            # 计算平均值并保留适当的小数位数
+                            mean_value = param_values.mean()
+                            stats[param] = round(mean_value, 4) if pd.notna(mean_value) else 0
+                        else:
+                            stats[param] = 0
+                    else:
+                        stats[param] = 0
         
         # 如果summary_data中没有数据，使用chip_data计算
         if hasattr(wafer, 'chip_data') and wafer.chip_data is not None:
@@ -439,6 +453,26 @@ class StandardCSVGenerator:
                 if stats['Yield'] == '0.0%' and stats['Gross_die'] > 0:
                     yield_value = (stats['Good_die'] / stats['Gross_die'] * 100)
                     stats['Yield'] = f"{yield_value:.2f}%"
+            
+            # 如果之前没有计算参数平均值（当没有summary_data时）
+            param_columns = ['KELVIN_CHECK', 'IR_35V', 'IR_1000V', 'IR_1200V', 'IR_1300V', 
+                           'VBR_0P25mA', 'VBR_1mA', 'VF_10A', 'VF_20A', 'IR_1200V_Retest']
+            
+            for param in param_columns:
+                if param not in stats:  # 如果之前没有设置过这个参数
+                    if param in chip_data.columns:
+                        # 计算参数的平均值，排除异常值（NaN和inf）
+                        param_values = chip_data[param].dropna()
+                        param_values = param_values[~param_values.isin([float('inf'), float('-inf')])]
+                        
+                        if len(param_values) > 0:
+                            # 计算平均值并保留适当的小数位数
+                            mean_value = param_values.mean()
+                            stats[param] = round(mean_value, 4) if pd.notna(mean_value) else 0
+                        else:
+                            stats[param] = 0
+                    else:
+                        stats[param] = 0
         
         return stats
     
