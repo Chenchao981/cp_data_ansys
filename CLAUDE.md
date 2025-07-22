@@ -7,6 +7,9 @@
 ### 快速开始
 
 ```bash
+# 多批次合并分析（新功能 - 推荐）
+python generate_combined_analysis.py           # 将./data目录下所有批次合并为3个CSV文件
+
 # 快速演示（从 output/ 目录生成所有图表）
 python chart_generator.py                      # HH公司数据图表生成
 python jt_chart_generator.py                   # JT公司数据图表生成
@@ -42,13 +45,21 @@ python -m jt_data_processor.jt_main_processor <JT文件路径或目录> --output
 ### 数据处理工具
 
 ```bash
-# 数据清洗工具
-python clean_dcp_data.py     # 清洗 DCP 格式数据
-python clean_csv_data.py     # 清洗 CSV 格式数据
+# 多批次数据合并分析（推荐使用）
+python generate_combined_analysis.py           # 自动合并./data下所有批次为3个标准CSV文件
+
+# 公司专用数据清洗工具（奥卡姆剃刀原则 - 人工确认公司类型）
+python lion_batch_processor.py                 # Lion公司多批次合并清洗（简化版：人工确认Lion数据）
+python clean_lion_data.py ./data               # Lion公司多批次合并清洗（默认：生成3个合并CSV）
+python clean_lion_data.py ./data --individual  # Lion公司多批次独立清洗（每批次3个CSV）
+python clean_lion_data.py ./data/F25130244     # Lion公司单批次数据清洗
+python lion_quick_start.py ./data/F25130244    # Lion公司快速处理（适合GUI调用）
+python clean_dcp_data.py                       # 清洗 DCP 格式数据（HH公司）
+python clean_csv_data.py                       # 清洗 CSV 格式数据
 
 # 规格提取和单位转换
-python dcp_spec_extractor.py # 从 DCP 文件提取规格
-python cp_unit_converter.py  # 转换测量单位
+python dcp_spec_extractor.py                   # 从 DCP 文件提取规格
+python cp_unit_converter.py                    # 转换测量单位
 ```
 
 ### 开发和测试
@@ -158,6 +169,11 @@ CPParameter (测试参数)
 
 - **JT公司** (Jetech 半导体)
   - JT_EXCEL - 专用 Excel 结构（FA*.xls/xlsx）
+
+- **Lion公司** (Lion 半导体)
+  - Lion_EXCEL - 专用 Excel 格式（F*.xlsx），包含summary_information和dut_data工作表
+  - 数据特点：dut_data前3行为规格信息(UNIT, LIMIT_LOW, LIMIT_HIGH)，第4行开始为测试数据
+  - 字段映射：PART_INDEX→Seq, SOFT_BIN→Bin, X_COORD→X, Y_COORD→Y
 
 #### 新公司集成
 通过 `cp_data_processor/readers/company_adapters/` 中的适配器系统：

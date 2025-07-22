@@ -6,6 +6,7 @@
 
 from typing import Dict, Any, Optional
 import logging
+import fnmatch
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +119,7 @@ COMPANY_CONFIGS: Dict[str, Dict[str, Any]] = {
         # 文件识别特征
         'file_patterns': {
             'path_patterns': ['/data/', '/lion/', '_lion_'],
-            'filename_patterns': ['F*.xlsx', '*_lion_*', 'LION_*'],
+            'filename_patterns': ['F*.xlsx', 'V*.xlsx', '*_lion_*', 'LION_*'],
             'content_signatures': [],
             'file_extensions': ['.xlsx', '.xls']
         },
@@ -245,9 +246,8 @@ def detect_company_from_filename(filename: str) -> Optional[str]:
     for company_name, config in COMPANY_CONFIGS.items():
         patterns = config.get('file_patterns', {}).get('filename_patterns', [])
         for pattern in patterns:
-            # 简单的通配符匹配
-            pattern_lower = pattern.lower().replace('*', '')
-            if pattern_lower in filename_lower:
+            # 正确的通配符匹配
+            if fnmatch.fnmatch(filename_lower, pattern.lower()):
                 logger.info(f"从文件名 '{filename}' 检测到厂商: {company_name}")
                 return company_name
                 

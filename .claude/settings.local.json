@@ -12,7 +12,11 @@
       "Bash(ls:*)",
       "Bash(cp:*)",
       "Bash(echo:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(awk:*)",
+      "Bash(for file in debug_*.py)",
+      "Bash(do mv \"$file\" \"$file.bak\")",
+      "Bash(done)"
     ],
     "deny": []
   }

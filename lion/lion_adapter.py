@@ -163,6 +163,10 @@ class LionAdapter(BaseCompanyAdapter):
         if hasattr(wafer, 'summary_data'):
             processed_wafer.summary_data = wafer.summary_data
         
+        # 保留spec数据（重要！用于生成spec.csv）
+        if hasattr(wafer, 'spec_data'):
+            processed_wafer.spec_data = wafer.spec_data
+        
         return processed_wafer
     
     def _extract_parameters(self, original_lot: CPLot, param_names: set) -> List[CPParameter]:
