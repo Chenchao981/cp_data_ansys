@@ -760,18 +760,18 @@ class BoxplotChart:
             
         fig.update_yaxes(**y_axis_updates)
         
-        # 添加Lot_ID的二级X轴标签（通过annotation实现）
-        for lot_id_text, pos_info in lot_positions.items(): # lot_positions is keyed by True_Lot_ID
-            mid_position = (pos_info['start'] + pos_info['end']) / 2
-            fig.add_annotation(
-                x=mid_position,
-                y=-0.15,  # 位置在主X轴下方
-                text=str(lot_id_text), # Text for annotation is True_Lot_ID
-                showarrow=False,
-                xref="x",
-                yref="paper",
-                font=dict(size=10, color="blue")
-            )
+        # 注释掉Lot_ID的底部标签 - 改用图例区分批次
+        # for lot_id_text, pos_info in lot_positions.items(): # lot_positions is keyed by True_Lot_ID
+        #     mid_position = (pos_info['start'] + pos_info['end']) / 2
+        #     fig.add_annotation(
+        #         x=mid_position,
+        #         y=-0.15,  # 位置在主X轴下方
+        #         text=str(lot_id_text), # Text for annotation is True_Lot_ID
+        #         showarrow=False,
+        #         xref="x",
+        #         yref="paper",
+        #         font=dict(size=10, color="blue")
+        #     )
         
         return fig
     
@@ -1040,18 +1040,18 @@ class BoxplotChart:
             
         fig.update_yaxes(**y_axis_updates)
         
-        # 添加Lot_ID的二级X轴标签（通过annotation实现）
-        for lot_id_text, pos_info in lot_positions.items(): # lot_positions is keyed by True_Lot_ID
-            mid_position = (pos_info['start'] + pos_info['end']) / 2
-            fig.add_annotation(
-                x=mid_position,
-                y=-0.15,  # 位置在主X轴下方
-                text=str(lot_id_text), # Text for annotation is True_Lot_ID
-                showarrow=False,
-                xref="x",
-                yref="paper",
-                font=dict(size=10, color="blue")
-            )
+        # 注释掉Lot_ID的底部标签 - 改用图例区分批次
+        # for lot_id_text, pos_info in lot_positions.items(): # lot_positions is keyed by True_Lot_ID
+        #     mid_position = (pos_info['start'] + pos_info['end']) / 2
+        #     fig.add_annotation(
+        #         x=mid_position,
+        #         y=-0.15,  # 位置在主X轴下方
+        #         text=str(lot_id_text), # Text for annotation is True_Lot_ID
+        #         showarrow=False,
+        #         xref="x",
+        #         yref="paper",
+        #         font=dict(size=10, color="blue")
+        #     )
         
         return fig
     

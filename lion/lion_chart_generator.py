@@ -408,7 +408,7 @@ def standardize_lion_csv_columns(data_dir: Path):
 
 def generate_lion_yield_trend_chart(data_dir: Path, output_dir: Path) -> bool:
     """
-    生成Lion公司专用的良率趋势图
+    生成Lion公司专用的良率趋势图 - 批次在X轴方向展开，每个wafer显示垂直虚线
     基于yield.csv文件中的Yield列数据
     
     Args:
@@ -441,102 +441,172 @@ def generate_lion_yield_trend_chart(data_dir: Path, output_dir: Path) -> bool:
             logger.error("❌ 未找到Yield列")
             return False
         
-        # 按Wafer_ID排序
+        # 按Lot_ID和Wafer_ID排序
         if 'Wafer_ID' in yield_data.columns:
             yield_data['Wafer_ID_Numeric'] = pd.to_numeric(yield_data['Wafer_ID'], errors='coerce')
-            yield_data = yield_data.sort_values('Wafer_ID_Numeric')
+            yield_data = yield_data.sort_values(['Lot_ID', 'Wafer_ID_Numeric'])
         
         logger.info(f"✅ 成功加载 {len(yield_data)} 个晶圆的良率数据")
         logger.info(f"📊 良率范围: {yield_data['Yield_Numeric'].min():.2f}% - {yield_data['Yield_Numeric'].max():.2f}%")
         
-        # 3. 创建良率趋势图
+        # 3. 按批次分组数据并在X轴方向展开
+        lot_groups = yield_data.groupby('Lot_ID') if 'Lot_ID' in yield_data.columns else {'Unknown': yield_data}
+        if not isinstance(lot_groups, dict):
+            lot_groups = dict(list(lot_groups))
+        
+        # 4. 创建良率趋势图 - 批次在X轴方向连续展开
         fig = go.Figure()
         
-        # 添加良率趋势线
-        fig.add_trace(go.Scatter(
-            x=yield_data['Wafer_ID'],
-            y=yield_data['Yield_Numeric'],
-            mode='lines+markers',
-            name='晶圆良率',
-            line=dict(color='#1f77b4', width=2),
-            marker=dict(size=8, color='#1f77b4'),
-            hovertemplate='<b>晶圆 %{x}</b><br>良率: %{y:.2f}%<extra></extra>'
-        ))
+        # 定义批次颜色
+        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f']
         
-        # 添加平均良率线
-        avg_yield = yield_data['Yield_Numeric'].mean()
-        fig.add_hline(
-            y=avg_yield,
-            line_dash="dash",
-            line_color="red",
-            annotation_text=f"平均良率: {avg_yield:.2f}%",
-            annotation_position="top right"
-        )
+        x_position = 1  # 全局X轴位置计数器
+        x_labels = []   # X轴标签
+        x_positions = []  # X轴位置
+        lot_boundaries = []  # 批次边界位置
         
-        # 添加95%良率基准线
-        fig.add_hline(
-            y=95.0,
-            line_dash="dot",
-            line_color="green",
-            annotation_text="95%基准线",
-            annotation_position="bottom right"
-        )
+        for i, (lot_id, lot_data) in enumerate(lot_groups.items()):
+            color = colors[i % len(colors)]
+            lot_start_pos = x_position
+            
+            # 确定该批次的wafer_id范围（1到最大wafer_id）
+            actual_wafer_ids = lot_data['Wafer_ID'].unique()
+            min_wafer_id = min(actual_wafer_ids)
+            max_wafer_id = max(actual_wafer_ids)
+            
+            # 为当前批次的每个wafer位置分配X轴位置（包括缺失的wafer）
+            lot_x_positions = []
+            lot_wafer_ids = []
+            lot_yields = []
+            
+            # 遍历完整的wafer_id范围（1到24）
+            for wafer_id in range(min_wafer_id, max_wafer_id + 1):
+                # 添加X轴标签（显示wafer_id本身）
+                x_labels.append(str(wafer_id))
+                x_positions.append(x_position)
+                
+                # 为每个wafer位置添加垂直虚线
+                fig.add_vline(
+                    x=x_position,
+                    line_dash="dot",
+                    line_color='rgba(128, 128, 128, 0.5)',
+                    line_width=1
+                )
+                
+                # 检查该wafer_id是否有数据
+                wafer_data = lot_data[lot_data['Wafer_ID'] == wafer_id]
+                if not wafer_data.empty:
+                    # 有数据的wafer添加到图表中
+                    lot_x_positions.append(x_position)
+                    lot_wafer_ids.append(wafer_id)
+                    lot_yields.append(wafer_data['Yield_Numeric'].iloc[0])
+                
+                x_position += 1
+            
+            # 为每个批次添加良率趋势线
+            fig.add_trace(go.Scatter(
+                x=lot_x_positions,
+                y=lot_yields,
+                mode='lines+markers',
+                name=f'批次 {lot_id}',
+                line=dict(color=color, width=3),
+                marker=dict(size=8, symbol='circle', color=color),
+                showlegend=True,
+                hovertemplate=f'<b>批次: {lot_id}</b><br>晶圆: %{{customdata}}<br>良率: %{{y:.2f}}%<extra></extra>',
+                customdata=lot_wafer_ids
+            ))
+            
+            # 记录批次边界（用于添加批次分隔）
+            if i < len(lot_groups) - 1:  # 不在最后一个批次后添加分隔线
+                lot_boundaries.append(x_position - 0.5)
         
-        # 4. 图表布局设置
-        lot_id = yield_data['Lot_ID'].iloc[0] if 'Lot_ID' in yield_data.columns else 'Unknown'
+        # 添加批次分隔线
+        for boundary in lot_boundaries:
+            fig.add_vline(
+                x=boundary,
+                line_dash="solid",
+                line_color='rgba(0, 0, 0, 0.3)',
+                line_width=2
+            )
         
+        # 5. 图表布局设置 - 匹配参数图表样式
         fig.update_layout(
+            # 标题样式
             title=dict(
-                text=f"🦁 Lion公司良率趋势分析 - 批次: {lot_id}",
-                font=dict(size=18, color='darkblue'),
-                x=0.5
+                text="📈 Wafer良率趋势分析",
+                font=dict(size=16, color='black'),
+                x=0.02,
+                y=0.95,
+                xanchor='left'
             ),
+            # X轴设置 - 显示所有wafer ID（1-24等）
             xaxis=dict(
-                title="晶圆编号",
-                titlefont=dict(size=14),
-                tickfont=dict(size=12),
-                gridcolor='lightgray',
-                gridwidth=1
+                title="Wafer ID",
+                titlefont=dict(size=12, color='black'),
+                tickfont=dict(size=10, color='black'),
+                tickmode='array',
+                tickvals=x_positions,
+                ticktext=x_labels,
+                showgrid=True,
+                gridcolor='rgba(128, 128, 128, 0.3)',
+                gridwidth=1,
+                showline=True,
+                linecolor='black',
+                linewidth=1,
+                range=[0.5, x_position - 0.5]  # 设置X轴范围
             ),
+            # Y轴设置 - 匹配参数图表样式
             yaxis=dict(
                 title="良率 (%)",
-                titlefont=dict(size=14),
-                tickfont=dict(size=12),
-                gridcolor='lightgray',
+                titlefont=dict(size=12, color='black'),
+                tickfont=dict(size=12, color='black'),
+                showgrid=True,
+                gridcolor='rgba(128, 128, 128, 0.3)',
                 gridwidth=1,
-                range=[
-                    max(0, yield_data['Yield_Numeric'].min() - 5),
-                    min(100, yield_data['Yield_Numeric'].max() + 5)
-                ]
+                showline=True,
+                linecolor='black',
+                linewidth=1
             ),
+            # 背景设置 - 匹配参数图表
             plot_bgcolor='white',
             paper_bgcolor='white',
+            # 尺寸设置 - 宽度根据wafer数量动态调整
             height=600,
-            width=1000,
+            width=max(1200, len(yield_data) * 40),  # 每个wafer分配40像素宽度
+            # 显示图例以区分不同批次
             showlegend=True,
             legend=dict(
-                x=0.02,
-                y=0.98,
+                x=1.02,
+                y=1,
+                xanchor='left',
+                yanchor='top',
                 bgcolor='rgba(255,255,255,0.8)',
-                bordercolor='gray',
+                bordercolor='black',
                 borderwidth=1
             ),
             hovermode='x unified'
         )
         
-        # 5. 保存图表
-        chart_filename = output_dir / f"{lot_id}_yield_trend_chart.html"
+        # 6. 保存图表
+        chart_filename = output_dir / "Wafer良率趋势分析_yield_chart.html"
         fig.write_html(
             str(chart_filename),
             include_plotlyjs=get_embedded_plotly_js(),
-            config={'displayModeBar': True, 'displaylogo': False}
+            config={
+                'displayModeBar': True, 
+                'displaylogo': False,
+                'modeBarButtonsToRemove': ['pan2d', 'lasso2d', 'select2d'],
+                'scrollZoom': True  # 启用滚动缩放
+            }
         )
         
         logger.info(f"✅ Lion良率趋势图已保存: {chart_filename.name}")
         
-        # 6. 生成数据统计信息
+        # 7. 生成数据统计信息
+        avg_yield = yield_data['Yield_Numeric'].mean()
         stats_info = {
             '总晶圆数': len(yield_data),
+            '批次数量': len(lot_groups),
             '平均良率': f"{avg_yield:.2f}%",
             '最高良率': f"{yield_data['Yield_Numeric'].max():.2f}%",
             '最低良率': f"{yield_data['Yield_Numeric'].min():.2f}%",
