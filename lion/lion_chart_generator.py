@@ -19,6 +19,8 @@ from pathlib import Path
 import pandas as pd
 from typing import List, Dict, Optional, Tuple, Any
 import numpy as np
+import plotly.graph_objects as go
+import plotly.express as px
 
 # 添加项目路径以导入HH的前端模块
 project_root = Path(__file__).parent.parent
@@ -28,6 +30,15 @@ sys.path.insert(0, str(project_root))
 from frontend.charts.yield_chart import YieldChart
 from frontend.charts.boxplot_chart import BoxplotChart
 from frontend.charts.summary_chart import SummaryChart
+
+# 导入JavaScript嵌入工具
+def get_embedded_plotly_js():
+    """获取嵌入式Plotly.js内容"""
+    try:
+        from frontend.charts.js_embedder import get_embedded_plotly_js as _get_embedded_plotly_js
+        return _get_embedded_plotly_js()
+    except ImportError:
+        return 'https://unpkg.com/plotly.js@2.26.0/dist/plotly.min.js'
 
 # 配置日志记录
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -395,9 +406,10 @@ def standardize_lion_csv_columns(data_dir: Path):
         logger.error(f"❌ 列名标准化失败: {e}")
 
 
-def generate_yield_charts(data_dir: Path, output_dir: Path) -> bool:
+def generate_lion_yield_trend_chart(data_dir: Path, output_dir: Path) -> bool:
     """
-    使用HH的YieldChart模块生成良率图表
+    生成Lion公司专用的良率趋势图
+    基于yield.csv文件中的Yield列数据
     
     Args:
         data_dir: 数据目录路径
@@ -407,25 +419,158 @@ def generate_yield_charts(data_dir: Path, output_dir: Path) -> bool:
         bool: 生成成功返回True
     """
     try:
-        # 初始化HH的YieldChart
-        yield_analyzer = YieldChart(data_dir=str(data_dir))
-        
-        if not yield_analyzer.load_data():
-            logger.error("❌ 良率数据加载失败")
+        # 1. 查找并加载yield数据
+        yield_files = list(data_dir.glob("*_yield_*.csv"))
+        if not yield_files:
+            logger.error("❌ 未找到yield数据文件")
             return False
         
-        # 生成所有良率图表
-        saved_charts = yield_analyzer.save_all_charts(output_dir=str(output_dir))
+        yield_file = yield_files[0]
+        logger.info(f"📄 加载良率数据: {yield_file.name}")
+        yield_data = pd.read_csv(yield_file)
         
-        if saved_charts:
-            logger.info(f"✅ 良率图表已保存 ({len(saved_charts)}个):")
-            for i, chart_path in enumerate(saved_charts, 1):
-                logger.info(f"  {i}. {chart_path.name}")
-            return True
+        if yield_data.empty:
+            logger.error("❌ 良率数据为空")
+            return False
+        
+        # 2. 数据预处理
+        # 转换yield为数值（去掉百分号）
+        if 'Yield' in yield_data.columns:
+            yield_data['Yield_Numeric'] = yield_data['Yield'].str.rstrip('%').astype(float)
         else:
-            logger.warning("⚠️ 未能保存良率图表")
+            logger.error("❌ 未找到Yield列")
             return False
-            
+        
+        # 按Wafer_ID排序
+        if 'Wafer_ID' in yield_data.columns:
+            yield_data['Wafer_ID_Numeric'] = pd.to_numeric(yield_data['Wafer_ID'], errors='coerce')
+            yield_data = yield_data.sort_values('Wafer_ID_Numeric')
+        
+        logger.info(f"✅ 成功加载 {len(yield_data)} 个晶圆的良率数据")
+        logger.info(f"📊 良率范围: {yield_data['Yield_Numeric'].min():.2f}% - {yield_data['Yield_Numeric'].max():.2f}%")
+        
+        # 3. 创建良率趋势图
+        fig = go.Figure()
+        
+        # 添加良率趋势线
+        fig.add_trace(go.Scatter(
+            x=yield_data['Wafer_ID'],
+            y=yield_data['Yield_Numeric'],
+            mode='lines+markers',
+            name='晶圆良率',
+            line=dict(color='#1f77b4', width=2),
+            marker=dict(size=8, color='#1f77b4'),
+            hovertemplate='<b>晶圆 %{x}</b><br>良率: %{y:.2f}%<extra></extra>'
+        ))
+        
+        # 添加平均良率线
+        avg_yield = yield_data['Yield_Numeric'].mean()
+        fig.add_hline(
+            y=avg_yield,
+            line_dash="dash",
+            line_color="red",
+            annotation_text=f"平均良率: {avg_yield:.2f}%",
+            annotation_position="top right"
+        )
+        
+        # 添加95%良率基准线
+        fig.add_hline(
+            y=95.0,
+            line_dash="dot",
+            line_color="green",
+            annotation_text="95%基准线",
+            annotation_position="bottom right"
+        )
+        
+        # 4. 图表布局设置
+        lot_id = yield_data['Lot_ID'].iloc[0] if 'Lot_ID' in yield_data.columns else 'Unknown'
+        
+        fig.update_layout(
+            title=dict(
+                text=f"🦁 Lion公司良率趋势分析 - 批次: {lot_id}",
+                font=dict(size=18, color='darkblue'),
+                x=0.5
+            ),
+            xaxis=dict(
+                title="晶圆编号",
+                titlefont=dict(size=14),
+                tickfont=dict(size=12),
+                gridcolor='lightgray',
+                gridwidth=1
+            ),
+            yaxis=dict(
+                title="良率 (%)",
+                titlefont=dict(size=14),
+                tickfont=dict(size=12),
+                gridcolor='lightgray',
+                gridwidth=1,
+                range=[
+                    max(0, yield_data['Yield_Numeric'].min() - 5),
+                    min(100, yield_data['Yield_Numeric'].max() + 5)
+                ]
+            ),
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            height=600,
+            width=1000,
+            showlegend=True,
+            legend=dict(
+                x=0.02,
+                y=0.98,
+                bgcolor='rgba(255,255,255,0.8)',
+                bordercolor='gray',
+                borderwidth=1
+            ),
+            hovermode='x unified'
+        )
+        
+        # 5. 保存图表
+        chart_filename = output_dir / f"{lot_id}_yield_trend_chart.html"
+        fig.write_html(
+            str(chart_filename),
+            include_plotlyjs=get_embedded_plotly_js(),
+            config={'displayModeBar': True, 'displaylogo': False}
+        )
+        
+        logger.info(f"✅ Lion良率趋势图已保存: {chart_filename.name}")
+        
+        # 6. 生成数据统计信息
+        stats_info = {
+            '总晶圆数': len(yield_data),
+            '平均良率': f"{avg_yield:.2f}%",
+            '最高良率': f"{yield_data['Yield_Numeric'].max():.2f}%",
+            '最低良率': f"{yield_data['Yield_Numeric'].min():.2f}%",
+            '良率标准差': f"{yield_data['Yield_Numeric'].std():.2f}%",
+            '>=95%良率晶圆数': len(yield_data[yield_data['Yield_Numeric'] >= 95]),
+            '<95%良率晶圆数': len(yield_data[yield_data['Yield_Numeric'] < 95])
+        }
+        
+        logger.info("📊 良率数据统计:")
+        for key, value in stats_info.items():
+            logger.info(f"   {key}: {value}")
+        
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Lion良率趋势图生成失败: {e}")
+        return False
+
+
+def generate_yield_charts(data_dir: Path, output_dir: Path) -> bool:
+    """
+    生成Lion公司专用良率趋势图表
+    
+    Args:
+        data_dir: 数据目录路径
+        output_dir: 输出目录路径
+        
+    Returns:
+        bool: 生成成功返回True
+    """
+    try:
+        # 直接生成Lion专用良率趋势图
+        return generate_lion_yield_trend_chart(data_dir, output_dir)
+        
     except Exception as e:
         logger.error(f"❌ 良率图表生成失败: {e}")
         return False
