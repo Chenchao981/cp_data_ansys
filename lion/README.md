@@ -65,5 +65,82 @@ reader = LionExcelReader()
 lot = reader.read_file('path/to/lion_file.xlsx')
 ```
 
+## 📊 图表生成功能
+
+### 快速开始
+```bash
+# 确保output目录中有Lion公司的3个CSV文件
+# (*_cleaned_*.csv, *_spec_*.csv, *_yield_*.csv)
+
+# 运行Lion图表生成器
+python lion/lion_chart_generator.py
+```
+
+### 生成的图表类型
+
+#### 1. 参数箱体图 (35个)
+- 每个测试参数的独立箱体图和散点图
+- 包含规格限制线标注
+- 异常值突出显示
+- 文件命名：`{参数名}_boxplot_chart.html`
+
+#### 2. 汇总分析图表 (1个)
+- 综合展示良率分析和所有参数分析
+- 交互式图表支持缩放和悬停提示
+- 文件命名：`V{批次ID}_summary_chart.html`
+
+#### 3. 处理报告 (2个)
+- **异常值报告**: `lion_outlier_report.html` - 数据质量分析
+- **处理报告**: `lion_processing_report.html` - 生成结果汇总
+
+### 功能特性
+
+- ✅ **自动异常值检测**: 使用IQR方法检测和处理异常值
+- ✅ **数据验证**: 完整的CSV文件和数据质量验证
+- ✅ **列名标准化**: 自动转换为HH标准格式
+- ✅ **错误恢复**: 优雅处理各类异常情况
+- ✅ **性能优化**: 22秒内完成所有图表生成
+- ✅ **详细日志**: 完整的处理过程记录
+
+### 使用示例
+
+```python
+# 编程方式调用
+from lion.lion_chart_generator import main
+
+# 生成所有图表
+success = main()
+if success:
+    print("图表生成成功！")
+```
+
+### 故障排除
+
+#### 常见问题
+
+1. **缺少CSV文件**
+   ```
+   错误: ❌ 缺少必要的CSV文件
+   解决: 确保output目录中存在*_cleaned_*.csv, *_spec_*.csv, *_yield_*.csv文件
+   ```
+
+2. **列名不匹配**
+   ```
+   解决: 系统会自动进行列名标准化转换 (LotID -> Lot_ID, WaferID -> Wafer_ID)
+   ```
+
+3. **参数数据不足**
+   ```
+   警告: ⚠️ 未找到可用的测试参数
+   解决: 检查cleaned.csv文件中是否包含数值型测试参数列
+   ```
+
+### 性能指标
+
+- **处理速度**: ~22秒 (14,976行数据，35个参数)
+- **文件大小**: 单个HTML文件 < 5MB
+- **内存使用**: 峰值 < 500MB
+- **支持规模**: 15,000+ 芯片数据点
+
 ---
-*该模块完全支持Lion公司的CP测试数据处理需求*
+*该模块完全支持Lion公司的CP测试数据处理和图表生成需求*

@@ -195,10 +195,21 @@ class YieldChart:
                 logger.warning(f"参数 {parameter} 不在yield数据中")
                 return {}
             
-            # 提取信息 - 根据行名称查找
+            # 提取信息 - 根据行名称查找，支持多种格式
             unit_row = self.yield_data[self.yield_data.iloc[:, 0] == 'Unit']
+            if unit_row.empty:
+                unit_row = self.yield_data[self.yield_data.iloc[:, 0] == 'UNIT']
+            
+            # 支持多种上限格式：LimitU, LIMIT_HIGH
             limitu_row = self.yield_data[self.yield_data.iloc[:, 0] == 'LimitU']
+            if limitu_row.empty:
+                limitu_row = self.yield_data[self.yield_data.iloc[:, 0] == 'LIMIT_HIGH']
+            
+            # 支持多种下限格式：LimitL, LIMIT_LOW
             limitl_row = self.yield_data[self.yield_data.iloc[:, 0] == 'LimitL']
+            if limitl_row.empty:
+                limitl_row = self.yield_data[self.yield_data.iloc[:, 0] == 'LIMIT_LOW']
+            
             testcond_row = self.yield_data[self.yield_data.iloc[:, 0] == 'TestCond:']
             
             info = {
