@@ -130,17 +130,25 @@ class LionOutlierHandler:
         return processed_df, outlier_stats
 
 
-def main():
+def main(data_dir=None):
     """
     Lion公司图表生成主函数
     复用HH公司的前端图表模块生成相同格式的HTML图表
+    
+    Args:
+        data_dir: 数据目录路径，如果为None则使用默认的"output"目录
     """
     logger.info("🦁 Lion公司图表生成器启动")
     logger.info("=" * 60)
     
     # 1. 配置Lion公司数据目录
-    lion_data_dir = Path("output")  # Lion公司的CSV文件目录
-    lion_output_dir = Path("output")  # Lion图表输出目录，与CSV文件保存在同一目录
+    if data_dir is None:
+        lion_data_dir = Path("output")  # 默认目录
+        lion_output_dir = Path("output")
+    else:
+        lion_data_dir = Path(data_dir)  # 使用传入的数据目录
+        lion_output_dir = Path(data_dir)  # 输出到同一目录
+    
     lion_output_dir.mkdir(parents=True, exist_ok=True)
     
     logger.info(f"📂 Lion数据目录: {lion_data_dir.resolve()}")

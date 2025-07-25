@@ -34,7 +34,7 @@ def get_desktop_path():
     return os.path.join(os.path.expanduser("~"), "Desktop")
 
 
-def extract_lot_id_from_folder_name(folder_name: str) -> tuple[str, str]:
+def extract_lot_id_from_folder_name(folder_name: str):
     """
     从标准格式的文件夹名称中提取 product_name 和 lot_id
     

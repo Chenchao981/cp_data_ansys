@@ -66,15 +66,14 @@ def discover_batch_files(data_dir: Path) -> Dict[str, List[str]]:
         excel_files = [f for f in excel_files if not f.name.startswith("~$")]
         
         if excel_files:
-            # 从第一个文件提取批次ID
-            first_file = excel_files[0]
-            batch_id = first_file.stem.split('_')[0] if '_' in first_file.stem else first_file.stem
+            # 使用文件夹名称作为批次ID（Lion公司的文件夹名称就是lot_id）
+            batch_id = batch_dir.name
             
             # 按文件名排序确保处理顺序一致
             sorted_files = sorted([str(f) for f in excel_files])
             batch_files[batch_id] = sorted_files
             
-            print(f"    ✓ 发现批次 {batch_id}: {len(sorted_files)} 个文件")
+            print(f"    ✓ 发现Lion批次 {batch_id}: {len(sorted_files)} 个文件")
         else:
             print(f"    ⚠️  目录 {batch_dir.name} 中没有找到Excel文件")
     

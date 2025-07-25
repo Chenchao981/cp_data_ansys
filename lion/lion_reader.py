@@ -209,22 +209,18 @@ class LionExcelReader(BaseReader):
     
     def _extract_lot_id(self, file_path: str) -> str:
         """
-        从文件路径提取批次ID
+        从文件路径提取批次ID（使用文件夹名称作为lot_id）
         
         Args:
             file_path: 文件路径
             
         Returns:
-            str: 批次ID
+            str: 批次ID（文件夹名称）
         """
         file_path_obj = Path(file_path)
         
-        # 从文件名中提取批次ID（如F25130244_1.xlsx -> F25130244）
-        filename = file_path_obj.stem
-        if '_' in filename:
-            lot_id = filename.split('_')[0]
-        else:
-            lot_id = filename
+        # Lion公司的文件夹名称就是lot_id（如./F25260021.01/F25260021_12.xlsx的lot_id是F25260021.01）
+        lot_id = file_path_obj.parent.name
         
         return lot_id
     

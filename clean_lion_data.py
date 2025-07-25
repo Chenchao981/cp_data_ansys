@@ -95,10 +95,14 @@ class LionDataCleaner:
             if os.path.isfile(batch_path) and batch_path.endswith('.xlsx'):
                 # 处理单个Excel文件
                 batch_id = Path(batch_path).stem
-                excel_file = batch_path
                 self.logger.info(f"开始清洗Lion Excel文件: {batch_id}")
+                
+                # 使用Lion适配器读取数据
+                self.logger.info(f"读取Lion数据: {batch_path}")
+                lot_data = read_cp_data(batch_path)
+                
             elif os.path.isdir(batch_path):
-                # 处理批次目录
+                # 处理批次目录 - 处理目录中的所有Excel文件
                 batch_id = os.path.basename(batch_path)
                 self.logger.info(f"开始清洗Lion批次目录: {batch_id}")
                 
@@ -108,19 +112,58 @@ class LionDataCleaner:
                     self.logger.warning(f"批次目录 {batch_id} 中没有Excel文件")
                     return False
                 
-                # 使用第一个Excel文件（通常一个批次目录包含多个晶圆的Excel文件）
-                excel_file = os.path.join(batch_path, excel_files[0])
-                self.logger.info(f"批次 {batch_id} 包含 {len(excel_files)} 个Excel文件，使用: {excel_files[0]}")
+                self.logger.info(f"批次 {batch_id} 包含 {len(excel_files)} 个Excel文件，将处理所有文件以获取所有wafer数据")
+                
+                # 处理所有Excel文件并合并数据
+                all_wafers = []
+                combined_lot_id = None
+                combined_product = None
+                
+                for i, excel_filename in enumerate(excel_files):
+                    excel_file = os.path.join(batch_path, excel_filename)
+                    self.logger.info(f"处理Excel文件 {i+1}/{len(excel_files)}: {excel_filename}")
+                    
+                    # 读取单个Excel文件的数据
+                    single_lot_data = read_cp_data(excel_file)
+                    if not single_lot_data:
+                        self.logger.warning(f"跳过无法读取的文件: {excel_filename}")
+                        continue
+                    
+                    # 收集批次信息（使用第一个有效文件的信息）
+                    if combined_lot_id is None:
+                        combined_lot_id = single_lot_data.lot_id
+                        combined_product = getattr(single_lot_data, 'product', 'Unknown')
+                    
+                    # 收集所有wafer数据
+                    if single_lot_data.wafers:
+                        all_wafers.extend(single_lot_data.wafers)
+                        wafer_ids = [w.wafer_id for w in single_lot_data.wafers]
+                        self.logger.info(f"从 {excel_filename} 读取到 {len(single_lot_data.wafers)} 个晶圆: {wafer_ids}")
+                
+                if not all_wafers:
+                    self.logger.error(f"批次目录 {batch_id} 中没有读取到有效的晶圆数据")
+                    return False
+                
+                # 创建合并的CPLot对象
+                from cp_data_processor.data_models.cp_data import CPLot
+                lot_data = CPLot(
+                    lot_id=combined_lot_id or batch_id,
+                    product=combined_product or 'Unknown',
+                    wafer_count=len(all_wafers)
+                )
+                lot_data.wafers = all_wafers
+                
+                # 显示合并结果
+                all_wafer_ids = [w.wafer_id for w in all_wafers]
+                self.logger.info(f"成功合并 {len(excel_files)} 个Excel文件，总计 {len(all_wafers)} 个晶圆")
+                self.logger.info(f"合并后的晶圆ID列表: {sorted(all_wafer_ids)}")
+                
             else:
                 self.logger.error(f"无效的输入路径: {batch_path}")
                 return False
             
-            # 使用Lion适配器读取数据
-            self.logger.info(f"读取Lion数据: {excel_file}")
-            lot_data = read_cp_data(excel_file)
-            
             if not lot_data:
-                self.logger.error(f"无法读取Lion数据: {excel_file}")
+                self.logger.error(f"无法读取Lion数据")
                 return False
             
             self.logger.info(f"成功读取Lion批次: {lot_data.lot_id} (晶圆数: {len(lot_data.wafers)})")

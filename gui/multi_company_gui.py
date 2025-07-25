@@ -91,7 +91,7 @@ class MultiCompanyCPDataGUI(QMainWindow):
     def create_navigation_widget(self):
         """创建导航栏组件"""
         nav_widget = QWidget()
-        nav_widget.setFixedWidth(220)  # 稍微增加宽度以适应新按钮
+        nav_widget.setFixedWidth(220)  # 宽度适应三个公司按钮
         nav_widget.setStyleSheet("""
             QWidget {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
@@ -128,9 +128,11 @@ class MultiCompanyCPDataGUI(QMainWindow):
         # 公司选择按钮
         self.hh_button = self.create_nav_button("🏢 HuaHong", "huahong", True)
         self.jt_button = self.create_nav_button("🏭 JeTech", "jetech", False)
+        self.lion_button = self.create_nav_button("🦁 Lion", "lion", False)
         
         layout.addWidget(self.hh_button)
         layout.addWidget(self.jt_button)
+        layout.addWidget(self.lion_button)
         
         # 添加弹性空间
         layout.addStretch()
@@ -254,20 +256,26 @@ class MultiCompanyCPDataGUI(QMainWindow):
         """创建实际的公司界面组件"""
         try:
             # 导入HuaHong界面组件
-            from .widgets.huahong_widget import HuaHongWidget
+            from gui.widgets.huahong_widget import HuaHongWidget
             hh_widget = HuaHongWidget()
             
             # 导入JeTech界面组件
-            from .widgets.jetech_widget import JeTechWidget
+            from gui.widgets.jetech_widget import JeTechWidget
             jt_widget = JeTechWidget()
+            
+            # 导入Lion界面组件
+            from gui.widgets.lion_widget import LionWidget
+            lion_widget = LionWidget()
             
             # 添加到堆栈
             self.content_stack.addWidget(hh_widget)
             self.content_stack.addWidget(jt_widget)
+            self.content_stack.addWidget(lion_widget)
             
             # 存储组件引用
             self.company_widgets["huahong"] = hh_widget
             self.company_widgets["jetech"] = jt_widget
+            self.company_widgets["lion"] = lion_widget
             
             # 默认显示HuaHong界面
             self.content_stack.setCurrentWidget(hh_widget)
@@ -306,13 +314,29 @@ class MultiCompanyCPDataGUI(QMainWindow):
             """)
             jt_layout.addWidget(jt_label)
             
+            # Lion占位界面
+            lion_placeholder = QWidget()
+            lion_layout = QVBoxLayout(lion_placeholder)
+            lion_label = QLabel("Lion界面\n（组件加载失败）")
+            lion_label.setAlignment(Qt.AlignCenter)
+            lion_label.setStyleSheet("""
+                QLabel {
+                    font-size: 24px;
+                    color: #666;
+                    padding: 50px;
+                }
+            """)
+            lion_layout.addWidget(lion_label)
+            
             # 添加到堆栈
             self.content_stack.addWidget(hh_placeholder)
             self.content_stack.addWidget(jt_placeholder)
+            self.content_stack.addWidget(lion_placeholder)
             
             # 存储组件引用
             self.company_widgets["huahong"] = hh_placeholder
             self.company_widgets["jetech"] = jt_placeholder
+            self.company_widgets["lion"] = lion_placeholder
             
             # 默认显示HuaHong界面
             self.content_stack.setCurrentWidget(hh_placeholder)
@@ -345,7 +369,12 @@ class MultiCompanyCPDataGUI(QMainWindow):
         self.switch_content_area(company_id)
         
         # 更新状态栏
-        company_name = "HuaHong" if company_id == "huahong" else "JeTech"
+        company_name_map = {
+            "huahong": "HuaHong",
+            "jetech": "JeTech", 
+            "lion": "Lion"
+        }
+        company_name = company_name_map.get(company_id, company_id)
         self.status_bar.showMessage(f"当前公司: {company_name}", 0)
         
         # 发送公司切换信号
@@ -364,6 +393,11 @@ class MultiCompanyCPDataGUI(QMainWindow):
         is_jt_selected = self.current_company == "jetech"
         self.jt_button.setChecked(is_jt_selected)
         self.update_button_style(self.jt_button, is_jt_selected)
+        
+        # 更新Lion按钮样式
+        is_lion_selected = self.current_company == "lion"
+        self.lion_button.setChecked(is_lion_selected)
+        self.update_button_style(self.lion_button, is_lion_selected)
     
     def switch_content_area(self, company_id):
         """切换内容区域"""
