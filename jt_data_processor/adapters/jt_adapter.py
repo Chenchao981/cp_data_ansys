@@ -235,6 +235,53 @@ class JTAdapter(BaseCompanyAdapter):
         else:
             self.logger.warning(f"发现 {integrity_issues} 个数据完整性问题")
     
+    def can_process_file(self, file_path: str) -> bool:
+        """
+        检查是否能处理指定文件
+        
+        Args:
+            file_path: 文件路径
+            
+        Returns:
+            bool: 能处理返回True，否则返回False
+        """
+        from pathlib import Path
+        import re
+        
+        file_path_obj = Path(file_path)
+        
+        # 检查文件扩展名
+        file_ext = file_path_obj.suffix.lower()
+        supported_extensions = self.config.get('file_patterns', {}).get('file_extensions', ['.xls', '.xlsx'])
+        
+        if file_ext not in supported_extensions:
+            return False
+        
+        # 检查文件名模式
+        filename = file_path_obj.name
+        filename_patterns = self.config.get('file_patterns', {}).get('filename_patterns', ['FA*-*.xls*'])
+        
+        for pattern in filename_patterns:
+            if pattern.startswith('FA') and '*' in pattern:
+                # 匹配FA开头的文件模式，如 FA44-4149
+                pattern_regex = pattern.replace('*', '.*').replace('.', '\\.')
+                if re.match(pattern_regex, filename, re.IGNORECASE):
+                    return True
+            else:
+                # 简单字符串匹配
+                pattern_clean = pattern.replace('*', '')
+                if pattern_clean.lower() in filename.lower():
+                    return True
+        
+        # 检查路径模式
+        path_patterns = self.config.get('file_patterns', {}).get('path_patterns', ['/jetech/'])
+        for pattern in path_patterns:
+            if pattern.lower() in file_path.lower():
+                return True
+        
+        self.logger.debug(f"文件 {file_path} 通过JT格式检查")
+        return True
+    
     def get_field_mapping(self) -> Dict[str, str]:
         """
         获取JT字段映射配置

@@ -41,23 +41,23 @@ conda config --set channel_priority strict
     dependencies:
       # Core Python
       - python=3.12
-
+    
       # GUI Framework
       - pyqt>=5.15
-
+    
       # Data Processing and Numerics
       - pandas>=1.3
       - numpy>=1.21
       - openpyxl>=3.0
-
+    
       # Plotting and Visualization
       - matplotlib>=3.0
       - seaborn>=0.10
       - plotly>=5.0
-
+    
       # Web Frontend (Optional)
       - streamlit
-
+    
       # Pip for any packages not on Conda
       - pip
     ```
@@ -72,6 +72,7 @@ conda config --set channel_priority strict
 
 3.  **激活环境**：
     创建成功后，使用以下命令激活新环境：
+    
     ```bash
     conda activate cp-data-env
     ```
