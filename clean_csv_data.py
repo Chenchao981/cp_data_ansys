@@ -141,13 +141,13 @@ def format_number(value):
     try:
         # 检查是否是接近0的小数，需要科学计数法
         if abs(value) < 0.0001 and value != 0:
-            return f"{value:.2e}"
+            return f"{value:.5e}"
         # VTH, RDSON1 等通常保留2-3位小数
         elif abs(value) < 10 and value != 0:
-            return f"{value:.2f}"
+            return f"{value:.5f}"
         # 其他普通数字
         else:
-            return f"{value:.3g}"
+            return f"{value:.5g}"
     except:
         # 如果有任何格式化错误，返回原始值
         return value
