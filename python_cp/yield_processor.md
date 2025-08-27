@@ -11,6 +11,7 @@
 ### `generate_yield_report_from_dataframe(cleaned_df: pd.DataFrame, output_filepath: str) -> bool`
 
 *   **功能描述**：接收一个包含清洗后晶圆测试数据的Pandas DataFrame和一个输出文件路径，计算每个晶圆的良率、指定Bin的Die数量、总Die数、Pass Die数，并计算整个批次的汇总统计数据。最后，将这些信息保存为一个CSV文件。
+*   **🆕 动态Bin检测**：自动识别所有大于1的唯一bin值，不再局限于固定配置，支持动态生成失效分析列。
 *   **参数**：
     *   `cleaned_df (pd.DataFrame)`: 包含清洗后数据的Pandas DataFrame。该DataFrame必须包含以下列：
         *   `Lot_ID`: 批次标识。
