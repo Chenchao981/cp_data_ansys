@@ -232,12 +232,29 @@ class HHDataProcessingThread(QThread):
             boxplot_files = []
             summary_files = []
             
-            # 生成良率图表
+            # 生成良率图表（包括失效分析饼图）
             self.progress_updated.emit("📈 正在生成华虹良率分析图表...")
             yield_chart = YieldChart(data_dir=self.output_dir)
             if yield_chart.load_data():
                 yield_files = yield_chart.save_all_charts(output_dir=self.output_dir)
                 self.progress_updated.emit(f"✅ 华虹良率图表生成完成: {len(yield_files)} 个文件")
+                logger.info(f"📊 生成的良率图表类型: 趋势图、对比图、失效分析饼图")
+
+                # 新增：显式调用失效分析饼图的生成逻辑
+                self.progress_updated.emit("🥧 正在特别生成失效分析饼图...")
+                try:
+                    failure_chart_path = yield_chart.save_chart('failure_analysis', output_dir=self.output_dir)
+                    if failure_chart_path and failure_chart_path not in yield_files:
+                        yield_files.append(failure_chart_path)
+                        self.progress_updated.emit(f"✅ 单独生成失效分析饼图成功: {failure_chart_path.name}")
+                        logger.info(f"📊 单独生成失效分析饼图成功: {failure_chart_path}")
+                    elif failure_chart_path:
+                        self.progress_updated.emit("ℹ️ 失效分析饼图已在批量保存中创建")
+                    else:
+                        self.progress_updated.emit("⚠️ 未能单独生成失效分析饼图，可能无失效数据")
+                except Exception as e:
+                    self.progress_updated.emit(f"⚠️ 生成失效分析饼图时出现异常: {e}")
+                    logger.error(f"❌ 生成失效分析饼图时出现异常: {e}")
             
             # 生成箱体图表
             self.progress_updated.emit("📦 正在生成华虹箱体统计图表...")

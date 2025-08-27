@@ -491,43 +491,89 @@ class YieldChart:
         return fig
     
     def _create_failure_analysis_chart(self) -> go.Figure:
-        """创建失效类型分析图"""
+        """创建失效类型分析图 - 动态检测yield数据中的Bin列"""
         fig = go.Figure()
         
         if self.wafer_data is None or self.wafer_data.empty:
+            logger.warning("❌ wafer_data为空，无法创建失效分析图")
             return fig
         
-        failure_columns = ['Bin3', 'Bin4', 'Bin6', 'Bin7', 'Bin8', 'Bin9']
-        failure_totals = self.wafer_data[failure_columns].sum()
+        logger.info("🔍 开始创建失效类型分析图...")
+        logger.info(f"📊 wafer_data列名: {list(self.wafer_data.columns)}")
         
-        # 过滤掉为0的bin
-        failure_totals = failure_totals[failure_totals > 0]
+        # 动态检测所有Bin列（除了Bin1 = Pass）
+        bin_columns = [col for col in self.wafer_data.columns if col.startswith('Bin') and col != 'Bin1']
+        logger.info(f"🎯 检测到的失效Bin列: {bin_columns}")
         
-        if len(failure_totals) == 0:
+        if not bin_columns:
+            logger.warning("⚠️ 未找到失效Bin列，尝试其他格式...")
+            # 尝试检测其他可能的列名格式
+            bin_columns = [col for col in self.wafer_data.columns 
+                          if col.lower().startswith('bin') and col.lower() != 'bin1']
+            logger.info(f"🔄 其他格式的Bin列: {bin_columns}")
+        
+        if not bin_columns:
+            logger.warning("⚠️ 仍未找到失效Bin列，显示无失效数据提示")
             # 如果没有失效数据，显示提示
             fig.add_annotation(
                 x=0.5, y=0.5,
-                text="当前数据无失效芯片",
+                text="当前数据无失效芯片或Bin数据",
                 showarrow=False,
                 font=dict(size=20),
                 xref="paper", yref="paper"
             )
         else:
-            fig.add_trace(go.Pie(
-                labels=failure_totals.index,
-                values=failure_totals.values,
-                hole=0.4,
-                hovertemplate='<b>%{label}</b><br>数量: %{value}<br>占比: %{percent}<extra></extra>'
-            ))
-            
-            fig.update_layout(
-                annotations=[dict(
-                    text='失效分析', 
-                    x=0.5, y=0.5, 
-                    font_size=20, 
-                    showarrow=False
-                )]
-            )
+            try:
+                # 计算各失效类型的总数
+                failure_totals = self.wafer_data[bin_columns].sum()
+                logger.info(f"📈 失效统计: {failure_totals.to_dict()}")
+                
+                # 过滤掉为0的bin
+                failure_totals = failure_totals[failure_totals > 0]
+                
+                if len(failure_totals) == 0:
+                    logger.info("ℹ️ 所有失效Bin数值为0，显示无失效提示")
+                    fig.add_annotation(
+                        x=0.5, y=0.5,
+                        text="当前数据无失效芯片",
+                        showarrow=False,
+                        font=dict(size=20),
+                        xref="paper", yref="paper"
+                    )
+                else:
+                    logger.info(f"🥧 生成失效分析饼图，包含 {len(failure_totals)} 种失效类型")
+                    
+                    # 创建饼图
+                    fig.add_trace(go.Pie(
+                        labels=failure_totals.index,
+                        values=failure_totals.values,
+                        hole=0.4,
+                        hovertemplate='<b>%{label}</b><br>数量: %{value}<br>占比: %{percent}<extra></extra>',
+                        textinfo='label+percent',
+                        textposition='auto'
+                    ))
+                    
+                    # 添加中心文字
+                    fig.update_layout(
+                        annotations=[dict(
+                            text='失效分析', 
+                            x=0.5, y=0.5, 
+                            font_size=20, 
+                            showarrow=False
+                        )]
+                    )
+                    
+                    logger.info("✅ 失效分析饼图创建成功")
+                    
+            except Exception as e:
+                logger.error(f"❌ 创建失效分析饼图时出错: {e}")
+                fig.add_annotation(
+                    x=0.5, y=0.5,
+                    text=f"失效分析数据处理错误: {str(e)}",
+                    showarrow=False,
+                    font=dict(size=14),
+                    xref="paper", yref="paper"
+                )
         
         fig.update_layout(
             title="🔍 失效类型分布",
