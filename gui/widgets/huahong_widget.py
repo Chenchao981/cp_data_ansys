@@ -248,17 +248,44 @@ class HHDataProcessingThread(QThread):
             
             # 生成汇总箱体图表
             self.progress_updated.emit("📋 正在生成华虹汇总箱体图表...")
-            from frontend.charts.summary_chart import SummaryChart
-            summary_chart = SummaryChart(data_dir=self.output_dir)
-            if summary_chart.load_data():
-                summary_file = summary_chart.save_summary_chart(output_dir=self.output_dir)
-                if summary_file:
-                    summary_files = [summary_file]
-                    self.progress_updated.emit(f"✅ 华虹汇总箱体图表生成完成: {summary_file}")
+            try:
+                from frontend.charts.summary_chart import SummaryChart
+                
+                # 详细日志记录数据目录状态
+                from pathlib import Path
+                output_path = Path(self.output_dir)
+                csv_files = list(output_path.glob("*.csv"))
+                logger.info(f"🔍 华虹汇总图表生成 - 数据目录: {self.output_dir}")
+                logger.info(f"📄 找到的CSV文件: {[f.name for f in csv_files]}")
+                
+                summary_chart = SummaryChart(data_dir=self.output_dir)
+                
+                # 详细记录数据加载过程
+                logger.info("📊 开始加载华虹汇总图表数据...")
+                load_success = summary_chart.load_data()
+                
+                if load_success:
+                    logger.info("✅ 华虹汇总图表数据加载成功")
+                    self.progress_updated.emit("📊 华虹汇总图表数据加载成功，开始生成图表...")
+                    
+                    summary_file = summary_chart.save_summary_chart(output_dir=self.output_dir)
+                    if summary_file:
+                        summary_files = [summary_file]
+                        self.progress_updated.emit(f"✅ 华虹汇总箱体图表生成完成: {summary_file.name}")
+                        logger.info(f"🎉 华虹汇总图表成功保存: {summary_file}")
+                    else:
+                        self.progress_updated.emit("⚠️ 华虹汇总箱体图表生成失败 - 图表创建过程出错")
+                        logger.error("❌ 华虹汇总图表生成失败 - save_summary_chart返回None")
                 else:
-                    self.progress_updated.emit("⚠️ 华虹汇总箱体图表生成失败")
-            else:
-                self.progress_updated.emit("⚠️ 华虹汇总箱体图表数据加载失败")
+                    self.progress_updated.emit("⚠️ 华虹汇总箱体图表数据加载失败")
+                    logger.error("❌ 华虹汇总图表数据加载失败 - load_data返回False")
+                    
+            except Exception as e:
+                logger.error(f"❌ 华虹汇总图表生成过程中出现异常: {e}")
+                import traceback
+                logger.error(f"详细错误信息: {traceback.format_exc()}")
+                self.progress_updated.emit(f"⚠️ 华虹汇总箱体图表生成异常: {str(e)}")
+                summary_files = []
             
             total_files = len(yield_files) + len(boxplot_files) + len(summary_files)
             self.progress_updated.emit("🎉 华虹所有图表生成完成！")

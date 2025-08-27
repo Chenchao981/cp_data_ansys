@@ -691,6 +691,15 @@ class JTDataProcessor:
         """
         yield_records = []
         
+        # 从整个批次数据中动态获取所有失效的Bin
+        all_fail_bins = []
+        if self.lot and self.lot.combined_data is not None and not self.lot.combined_data.empty:
+            # 确保Bin列是数值类型，以便正确排序和处理
+            bin_series = pd.to_numeric(self.lot.combined_data['Bin'], errors='coerce').dropna()
+            all_bins = bin_series.unique()
+            # 过滤掉pass_bin(1)，并对失效bin进行排序
+            all_fail_bins = sorted([b for b in all_bins if b != 1])
+        
         # 产品名称：使用Lot_ID作为产品名称（简化方案）
         product_name = self.lot.lot_id if self.lot else 'unknown'
         
@@ -723,8 +732,8 @@ class JTDataProcessor:
                 'Pass': pass_chips
             }
             
-            # 添加各个失效Bin的统计（Bin 2-9）
-            for bin_num in range(2, 10):
+            # 动态添加所有失效Bin的统计
+            for bin_num in all_fail_bins:
                 bin_key = f"Bin{bin_num}"
                 yield_record[bin_key] = bin_counts.get(bin_num, 0)
             
@@ -733,18 +742,19 @@ class JTDataProcessor:
         
         # 添加总计行（ALL）
         if yield_records:
-            total_record = self._calculate_lot_total_yield(yield_records)
+            total_record = self._calculate_lot_total_yield(yield_records, all_fail_bins)
             yield_records.append(total_record)
         
         self.logger.info(f"✅ 良率统计完成: {len(yield_records)}条记录（含总计）")
         return yield_records
     
-    def _calculate_lot_total_yield(self, yield_records: List[Dict]) -> Dict:
+    def _calculate_lot_total_yield(self, yield_records: List[Dict], all_fail_bins: List[int]) -> Dict:
         """
         计算批次总良率
         
         Args:
             yield_records: 各晶圆良率记录
+            all_fail_bins: 批次中所有出现过的失效bin列表
             
         Returns:
             Dict: 批次总良率记录
@@ -763,8 +773,8 @@ class JTDataProcessor:
             'Pass': total_pass
         }
         
-        # 统计各失效Bin总数
-        for bin_num in range(2, 10):
+        # 动态统计各失效Bin总数
+        for bin_num in all_fail_bins:
             bin_key = f"Bin{bin_num}"
             total_record[bin_key] = sum(record.get(bin_key, 0) for record in yield_records)
         

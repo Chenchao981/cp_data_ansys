@@ -95,25 +95,42 @@ class SummaryChart:
         try:
             # 查找yield文件
             yield_files = list(self.data_dir.glob("*_yield_*.csv"))
+            logger.info(f"📁 在目录 {self.data_dir} 中搜索yield文件...")
+            logger.info(f"🔍 找到的yield文件: {[f.name for f in yield_files]}")
+            
             if not yield_files:
-                logger.error("未找到yield数据文件")
+                # 列出目录中的所有CSV文件以供调试
+                all_csv_files = list(self.data_dir.glob("*.csv"))
+                logger.error(f"❌ 未找到yield数据文件")
+                logger.error(f"📄 目录中的所有CSV文件: {[f.name for f in all_csv_files]}")
                 return False
             
             # 使用第一个找到的yield文件
             yield_file = yield_files[0]
-            logger.info(f"加载良率数据文件: {yield_file}")
+            logger.info(f"📊 加载良率数据文件: {yield_file.name}")
             
             # 读取yield数据
             self.yield_data = pd.read_csv(yield_file)
+            logger.info(f"📋 yield文件列名: {list(self.yield_data.columns)}")
+            logger.info(f"📈 yield文件数据形状: {self.yield_data.shape}")
+            
+            # 检查必要的列是否存在
+            required_cols = ['Wafer_ID']
+            missing_cols = [col for col in required_cols if col not in self.yield_data.columns]
+            if missing_cols:
+                logger.error(f"❌ yield文件缺少必要列: {missing_cols}")
+                return False
             
             # 数据预处理
             self._preprocess_yield_data()
             
-            logger.info(f"良率数据加载成功，共 {len(self.yield_data)} 条记录")
+            logger.info(f"✅ 良率数据加载成功，共 {len(self.yield_data)} 条记录")
             return True
             
         except Exception as e:
-            logger.error(f"加载良率数据失败: {e}")
+            logger.error(f"❌ 加载良率数据失败: {e}")
+            import traceback
+            logger.error(f"详细错误信息: {traceback.format_exc()}")
             return False
     
     def _preprocess_yield_data(self):
@@ -121,12 +138,47 @@ class SummaryChart:
         if self.yield_data is None:
             return
         
+        logger.info(f"🔄 开始预处理良率数据...")
+        logger.info(f"📊 原始数据列: {list(self.yield_data.columns)}")
+        
+        # 检查是否有Lot_ID列，如果没有则尝试从其他列推断
+        if 'Lot_ID' not in self.yield_data.columns:
+            logger.warning("⚠️ yield数据中没有Lot_ID列，尝试推断...")
+            
+            # 方法1：从Product_Name列中提取Lot_ID
+            if 'Product_Name' in self.yield_data.columns:
+                # 假设Product_Name包含完整的批次信息
+                logger.info("📦 尝试从Product_Name列提取Lot_ID...")
+                # 这里可以根据实际数据格式调整
+                self.yield_data['Lot_ID'] = self.yield_data['Product_Name']
+            else:
+                # 方法2：创建一个默认的Lot_ID
+                logger.info("🏷️ 创建默认的Lot_ID...")
+                self.yield_data['Lot_ID'] = 'Unknown_Lot'
+        
         # 过滤掉汇总行
-        self.yield_data = self.yield_data[self.yield_data['Lot_ID'] != 'ALL'].copy()
+        if 'Lot_ID' in self.yield_data.columns:
+            original_len = len(self.yield_data)
+            self.yield_data = self.yield_data[self.yield_data['Lot_ID'] != 'ALL'].copy()
+            self.yield_data = self.yield_data[self.yield_data['Wafer_ID'] != 'ALL'].copy()
+            self.yield_data = self.yield_data[self.yield_data['Wafer_ID'] != 'Total'].copy()
+            filtered_len = len(self.yield_data)
+            logger.info(f"🗂️ 过滤汇总行: {original_len} -> {filtered_len} 条记录")
         
         # 转换良率为数值格式
         if 'Yield' in self.yield_data.columns:
+            logger.info("📈 转换Yield列为数值格式...")
             self.yield_data['Yield_Numeric'] = self.yield_data['Yield'].str.rstrip('%').astype(float)
+        elif 'Yield_Rate' in self.yield_data.columns:
+            logger.info("📈 使用Yield_Rate列...")
+            self.yield_data['Yield_Numeric'] = self.yield_data['Yield_Rate']
+        else:
+            logger.warning("⚠️ 未找到良率列，使用默认值100%")
+            self.yield_data['Yield_Numeric'] = 100.0
+        
+        # 确保Wafer_ID是字符串格式
+        if 'Wafer_ID' in self.yield_data.columns:
+            self.yield_data['Wafer_ID'] = self.yield_data['Wafer_ID'].astype(str)
         
         # 提取真实的Lot_ID（去掉@后缀）
         def get_true_lot_id(raw_lot_id):
@@ -134,12 +186,17 @@ class SummaryChart:
                 return raw_lot_id.split('@')[0]
             return raw_lot_id
         
-        self.yield_data['Lot_Short'] = self.yield_data['Lot_ID'].apply(get_true_lot_id)
-        
-        # 按Lot_Short和Wafer_ID排序
-        self.yield_data = self.yield_data.sort_values(['Lot_Short', 'Wafer_ID']).reset_index(drop=True)
-        
-        logger.info(f"良率数据预处理完成，识别到 {self.yield_data['Lot_Short'].nunique()} 个批次")
+        if 'Lot_ID' in self.yield_data.columns:
+            self.yield_data['Lot_Short'] = self.yield_data['Lot_ID'].apply(get_true_lot_id)
+            
+            # 按Lot_Short和Wafer_ID排序
+            self.yield_data = self.yield_data.sort_values(['Lot_Short', 'Wafer_ID']).reset_index(drop=True)
+            
+            unique_lots = self.yield_data['Lot_Short'].nunique()
+            unique_wafers = self.yield_data['Wafer_ID'].nunique()
+            logger.info(f"✅ 良率数据预处理完成，识别到 {unique_lots} 个批次，{unique_wafers} 个晶圆")
+        else:
+            logger.warning("⚠️ 无法处理Lot_ID信息")
     
     def get_available_parameters(self) -> List[str]:
         """
@@ -157,84 +214,139 @@ class SummaryChart:
         Returns:
             go.Figure: 合并的Plotly图表对象
         """
-        if self.boxplot_chart.cleaned_data is None:
-            logger.error("箱体图数据未加载，无法创建合并图表")
-            return go.Figure()
-        
-        if self.yield_data is None:
-            logger.error("良率数据未加载，无法创建合并图表")
-            return go.Figure()
-        
-        # 获取所有可用参数
-        parameters = self.get_available_parameters()
-        if not parameters:
-            logger.error("没有可用的测试参数")
-            return go.Figure()
-        
-        logger.info(f"开始创建包含良率图和 {len(parameters)} 个参数的合并图表")
-        
-        # 创建子图布局 - 第一行为良率图，后续行为参数箱体图
-        subplot_titles = ["📊 批次良率对比"]  # 良率图标题
-        
-        # 添加参数图标题
-        for param in parameters:
-            param_info = self.boxplot_chart.get_parameter_info(param)
-            unit_str = f" [{param_info.get('unit', '')}]" if param_info.get('unit') else ""
-            test_cond = f" @{param_info.get('test_condition', '')}" if param_info.get('test_condition') else ""
-            subplot_titles.append(f"{param}{unit_str}{test_cond}")
-        
-        # 总行数 = 1（良率图）+ len(parameters)（参数图）
-        total_rows = 1 + len(parameters)
-        
-        fig = make_subplots(
-            rows=total_rows,
-            cols=1,
-            shared_xaxes=False,  # 不共享X轴，让每个子图都能显示自己的X轴标签
-            vertical_spacing=self.summary_config['subplot_spacing'],
-            subplot_titles=subplot_titles,
-            specs=[[{"secondary_y": False}] for _ in range(total_rows)]  # 每个子图的规格
-        )
-        
-        # 第一步：添加良率对比图（第1行）
-        x_labels, lot_positions = self._add_yield_comparison_chart(fig, row=1)
-        
-        # 第二步：为每个参数生成箱体图数据并添加到对应的子图（从第2行开始）
-        for i, param in enumerate(parameters, 2):  # 从第2行开始
+        try:
+            logger.info("🎨 开始创建合并图表...")
+            
+            if self.boxplot_chart.cleaned_data is None:
+                logger.error("❌ 箱体图数据未加载，无法创建合并图表")
+                return go.Figure()
+            
+            if self.yield_data is None:
+                logger.error("❌ 良率数据未加载，无法创建合并图表")
+                return go.Figure()
+            
+            # 获取所有可用参数
+            parameters = self.get_available_parameters()
+            if not parameters:
+                logger.error("❌ 没有可用的测试参数")
+                return go.Figure()
+            
+            logger.info(f"📊 开始创建包含良率图和 {len(parameters)} 个参数的合并图表")
+            logger.info(f"🎯 可用参数列表: {parameters}")
+            
+            # 创建子图布局 - 第一行为良率图，后续行为参数箱体图
+            subplot_titles = ["📊 批次良率对比"]  # 良率图标题
+            
+            # 添加参数图标题
+            logger.info("🏷️ 生成子图标题...")
             try:
-                # 复用BoxplotChart的数据准备逻辑
-                chart_data, current_x_labels, param_info, current_lot_positions = self.boxplot_chart.prepare_chart_data(param)
-                
-                # 确保X轴标签和批次位置与良率图一致
-                if x_labels is None:
-                    x_labels = current_x_labels
-                    lot_positions = current_lot_positions
-                
-                if chart_data.empty:
-                    # 添加空数据提示
-                    fig.add_annotation(
-                        text=f"参数 {param} 没有有效数据",
-                        xref="paper", yref=f"y{i}",
-                        x=0.5, y=0.5, showarrow=False,
-                        font=dict(size=12),
-                        row=i, col=1
-                    )
-                    continue
-                
-                # 添加箱体图和散点图到当前子图
-                self._add_parameter_traces(fig, chart_data, param_info, i)
-                
-                # 添加上下限线
-                self._add_limit_lines(fig, param_info, i)
-                
+                for param in parameters:
+                    param_info = self.boxplot_chart.get_parameter_info(param)
+                    unit_str = f" [{param_info.get('unit', '')}]" if param_info.get('unit') else ""
+                    test_cond = f" @{param_info.get('test_condition', '')}" if param_info.get('test_condition') else ""
+                    subplot_titles.append(f"{param}{unit_str}{test_cond}")
             except Exception as e:
-                logger.error(f"处理参数 {param} 时出错: {e}")
-                continue
-        
-        # 设置整体布局
-        self._configure_layout(fig, parameters, x_labels, lot_positions)
-        
-        logger.info(f"合并图表创建完成，包含良率图和 {len(parameters)} 个参数")
-        return fig
+                logger.error(f"❌ 生成子图标题时出错: {e}")
+                # 使用简化标题
+                for param in parameters:
+                    subplot_titles.append(f"{param}")
+            
+            # 总行数 = 1（良率图）+ len(parameters)（参数图）
+            total_rows = 1 + len(parameters)
+            logger.info(f"📏 子图布局: {total_rows} 行 x 1 列")
+            
+            # 创建子图布局
+            logger.info("🔧 创建Plotly子图布局...")
+            try:
+                fig = make_subplots(
+                    rows=total_rows,
+                    cols=1,
+                    shared_xaxes=False,  # 不共享X轴，让每个子图都能显示自己的X轴标签
+                    vertical_spacing=self.summary_config['subplot_spacing'],
+                    subplot_titles=subplot_titles,
+                    specs=[[{"secondary_y": False}] for _ in range(total_rows)]  # 每个子图的规格
+                )
+                logger.info("✅ 子图布局创建成功")
+            except Exception as e:
+                logger.error(f"❌ 创建子图布局失败: {e}")
+                return go.Figure()
+            
+            # 第一步：添加良率对比图（第1行）
+            logger.info("📈 添加良率对比图...")
+            try:
+                x_labels, lot_positions = self._add_yield_comparison_chart(fig, row=1)
+                logger.info(f"✅ 良率图添加成功，X轴标签数: {len(x_labels) if x_labels else 0}")
+            except Exception as e:
+                logger.error(f"❌ 添加良率图失败: {e}")
+                x_labels, lot_positions = [], {}
+            
+            # 第二步：为每个参数生成箱体图数据并添加到对应的子图（从第2行开始）
+            logger.info("📦 开始添加参数箱体图...")
+            successful_params = 0
+            
+            for i, param in enumerate(parameters, 2):  # 从第2行开始
+                try:
+                    logger.info(f"🔄 处理参数 {param} (第{i-1}/{len(parameters)}个)...")
+                    
+                    # 复用BoxplotChart的数据准备逻辑
+                    chart_data, current_x_labels, param_info, current_lot_positions = self.boxplot_chart.prepare_chart_data(param)
+                    
+                    # 确保X轴标签和批次位置与良率图一致
+                    if x_labels is None:
+                        x_labels = current_x_labels
+                        lot_positions = current_lot_positions
+                    
+                    if chart_data.empty:
+                        logger.warning(f"⚠️ 参数 {param} 没有有效数据，添加空数据提示")
+                        # 添加空数据提示
+                        try:
+                            fig.add_annotation(
+                                text=f"参数 {param} 没有有效数据",
+                                xref="paper", yref=f"y{i}",
+                                x=0.5, y=0.5, showarrow=False,
+                                font=dict(size=12),
+                                row=i, col=1
+                            )
+                        except Exception as e:
+                            logger.error(f"❌ 添加空数据提示失败: {e}")
+                        continue
+                    
+                    logger.info(f"📊 参数 {param} 数据准备完成，数据量: {len(chart_data)}")
+                    
+                    # 添加箱体图和散点图到当前子图
+                    self._add_parameter_traces(fig, chart_data, param_info, i)
+                    
+                    # 添加上下限线
+                    self._add_limit_lines(fig, param_info, i)
+                    
+                    successful_params += 1
+                    logger.info(f"✅ 参数 {param} 处理完成")
+                    
+                except Exception as e:
+                    logger.error(f"❌ 处理参数 {param} 时出错: {e}")
+                    import traceback
+                    logger.error(f"详细错误: {traceback.format_exc()}")
+                    continue
+            
+            logger.info(f"📊 参数处理完成: {successful_params}/{len(parameters)} 个参数成功")
+            
+            # 设置整体布局
+            logger.info("🎨 配置整体布局...")
+            try:
+                self._configure_layout(fig, parameters, x_labels, lot_positions)
+                logger.info("✅ 布局配置完成")
+            except Exception as e:
+                logger.error(f"❌ 配置布局失败: {e}")
+                # 继续使用基本布局
+            
+            logger.info(f"🎉 合并图表创建完成！包含良率图和 {successful_params} 个参数")
+            return fig
+            
+        except Exception as e:
+            logger.error(f"❌ 创建合并图表过程中出现严重错误: {e}")
+            import traceback
+            logger.error(f"详细错误信息: {traceback.format_exc()}")
+            return go.Figure()
     
     def _add_yield_comparison_chart(self, fig: go.Figure, row: int) -> Tuple[List[str], Dict]:
         """
@@ -247,144 +359,187 @@ class SummaryChart:
         Returns:
             Tuple[List[str], Dict]: X轴标签和批次位置信息
         """
-        if self.yield_data is None or self.yield_data.empty:
-            logger.warning("良率数据为空，无法生成良率趋势图")
+        try:
+            logger.info("📈 开始添加良率对比图...")
+            
+            if self.yield_data is None or self.yield_data.empty:
+                logger.warning("⚠️ 良率数据为空，无法生成良率趋势图")
+                return [], {}
+            
+            logger.info(f"📊 良率数据状态: {len(self.yield_data)} 行数据")
+            logger.info(f"📋 良率数据列: {list(self.yield_data.columns)}")
+        except Exception as e:
+            logger.error(f"❌ 良率图初始检查失败: {e}")
             return [], {}
         
-        # 预处理数据 - 确保数据格式正确
-        yield_data = self.yield_data.copy()
-        
-        # 转换yield为数值（去掉百分号等）
-        if 'Yield' in yield_data.columns:
-            # 如果有原始Yield列，转换为数值
-            if 'Yield_Numeric' not in yield_data.columns:
-                yield_data['Yield_Numeric'] = yield_data['Yield'].astype(str).str.rstrip('%').astype(float)
-        elif 'Yield_Rate' in yield_data.columns:
-            # 如果有Yield_Rate列，直接使用
-            yield_data['Yield_Numeric'] = yield_data['Yield_Rate']
-        else:
-            logger.error("❌ 未找到良率数据列")
-            return [], {}
-        
-        # 过滤掉汇总行
-        yield_data = yield_data[yield_data['Lot_ID'] != 'ALL'].copy()
-        
-        # 按Lot_ID和Wafer_ID排序
-        if 'Wafer_ID' in yield_data.columns:
+        try:
+            # 预处理数据 - 确保数据格式正确
+            logger.info("🔄 预处理良率数据...")
+            yield_data = self.yield_data.copy()
+            
+            # 转换yield为数值（去掉百分号等）
+            logger.info("📊 检查和转换良率数值...")
+            if 'Yield' in yield_data.columns:
+                logger.info("📈 找到Yield列，转换为数值格式...")
+                try:
+                    if 'Yield_Numeric' not in yield_data.columns:
+                        yield_data['Yield_Numeric'] = yield_data['Yield'].astype(str).str.rstrip('%').astype(float)
+                    logger.info("✅ Yield列转换成功")
+                except Exception as e:
+                    logger.error(f"❌ Yield列转换失败: {e}")
+                    yield_data['Yield_Numeric'] = 100.0  # 使用默认值
+            elif 'Yield_Rate' in yield_data.columns:
+                logger.info("📈 找到Yield_Rate列，直接使用...")
+                yield_data['Yield_Numeric'] = yield_data['Yield_Rate']
+            else:
+                logger.warning("⚠️ 未找到良率数据列，使用默认值100%")
+                yield_data['Yield_Numeric'] = 100.0
+            
+            # 过滤掉汇总行
+            logger.info("🗂️ 过滤汇总行...")
+            original_len = len(yield_data)
+            if 'Lot_ID' in yield_data.columns:
+                yield_data = yield_data[yield_data['Lot_ID'] != 'ALL'].copy()
+            if 'Wafer_ID' in yield_data.columns:
+                yield_data = yield_data[yield_data['Wafer_ID'] != 'ALL'].copy()
+                yield_data = yield_data[yield_data['Wafer_ID'] != 'Total'].copy()
+            logger.info(f"📊 过滤后数据: {original_len} -> {len(yield_data)} 行")
+            
+            if yield_data.empty:
+                logger.warning("⚠️ 过滤后的良率数据为空")
+                return [], {}
+            
+            # 按Lot_ID和Wafer_ID排序
+            logger.info("🔄 排序良率数据...")
+            if 'Wafer_ID' in yield_data.columns:
+                try:
+                    # 确保Wafer_ID为数值类型进行正确排序
+                    yield_data['Wafer_ID_Numeric'] = pd.to_numeric(yield_data['Wafer_ID'], errors='coerce')
+                    if 'Lot_ID' in yield_data.columns:
+                        yield_data = yield_data.sort_values(['Lot_ID', 'Wafer_ID_Numeric'])
+                    else:
+                        yield_data = yield_data.sort_values(['Wafer_ID_Numeric'])
+                    logger.info("✅ 数据排序成功（数值型）")
+                except Exception as e:
+                    logger.warning(f"⚠️ 数值排序失败，使用字符串排序: {e}")
+                    # 如果转换失败，使用字符串排序
+                    if 'Lot_ID' in yield_data.columns:
+                        yield_data = yield_data.sort_values(['Lot_ID', 'Wafer_ID'])
+                    else:
+                        yield_data = yield_data.sort_values(['Wafer_ID'])
+            
+            logger.info(f"✅ 良率数据预处理完成: {len(yield_data)} 个晶圆")
+            
+            # 检查数值范围
             try:
-                # 确保Wafer_ID为数值类型进行正确排序
-                yield_data['Wafer_ID_Numeric'] = pd.to_numeric(yield_data['Wafer_ID'], errors='coerce')
-                yield_data = yield_data.sort_values(['Lot_ID', 'Wafer_ID_Numeric'])
-            except:
-                # 如果转换失败，使用字符串排序
-                yield_data = yield_data.sort_values(['Lot_ID', 'Wafer_ID'])
-        
-        logger.info(f"✅ 成功加载 {len(yield_data)} 个晶圆的良率数据")
-        logger.info(f"📊 良率范围: {yield_data['Yield_Numeric'].min():.2f}% - {yield_data['Yield_Numeric'].max():.2f}%")
-        
-        # 按批次分组数据并在X轴方向展开
-        lot_groups = yield_data.groupby('Lot_ID') if 'Lot_ID' in yield_data.columns else {'Unknown': yield_data}
-        if not isinstance(lot_groups, dict):
-            lot_groups = dict(list(lot_groups))
-        
-        # 定义批次颜色
-        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f']
-        
-        x_position = 1  # 全局X轴位置计数器
-        x_labels = []   # X轴标签
-        x_positions = []  # X轴位置
-        lot_positions = {}  # 批次边界位置
-        
-        for i, (lot_id, lot_data) in enumerate(lot_groups.items()):
-            color = colors[i % len(colors)]
-            lot_start_pos = x_position
+                min_yield = yield_data['Yield_Numeric'].min()
+                max_yield = yield_data['Yield_Numeric'].max()
+                logger.info(f"📊 良率范围: {min_yield:.2f}% - {max_yield:.2f}%")
+            except Exception as e:
+                logger.warning(f"⚠️ 无法计算良率范围: {e}")
             
-            # 确定该批次的wafer_id范围
-            actual_wafer_ids = lot_data['Wafer_ID'].unique()
-            min_wafer_id = min(actual_wafer_ids)
-            max_wafer_id = max(actual_wafer_ids)
+            # 按批次分组数据
+            logger.info("📊 按批次分组数据...")
+            try:
+                if 'Lot_ID' in yield_data.columns:
+                    lot_groups = dict(list(yield_data.groupby('Lot_ID')))
+                    logger.info(f"📦 找到 {len(lot_groups)} 个批次: {list(lot_groups.keys())}")
+                else:
+                    lot_groups = {'Unknown': yield_data}
+                    logger.info("📦 使用默认批次名称")
+            except Exception as e:
+                logger.error(f"❌ 批次分组失败: {e}")
+                lot_groups = {'Unknown': yield_data}
             
-            # 为当前批次的每个wafer位置分配X轴位置（包括缺失的wafer）
-            lot_x_positions = []
-            lot_wafer_ids = []
-            lot_yields = []
+            # 简化良率图绘制 - 避免复杂的处理导致错误
+            logger.info("🎨 绘制简化良率图...")
             
-            # 记录批次位置信息
-            lot_positions[lot_id] = {'start': x_position, 'wafers': [], 'end': 0}
+            # 定义批次颜色
+            colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f']
             
-            # 遍历完整的wafer_id范围
-            for wafer_id in range(min_wafer_id, max_wafer_id + 1):
-                # 添加X轴标签（显示wafer_id本身）
-                x_labels.append(str(wafer_id))
-                x_positions.append(x_position)
+            x_position = 1
+            x_labels = []
+            lot_positions = {}
+            
+            try:
+                for i, (lot_id, lot_data) in enumerate(lot_groups.items()):
+                    logger.info(f"🔄 处理批次 {lot_id}: {len(lot_data)} 个晶圆")
+                    color = colors[i % len(colors)]
+                    
+                    # 简化处理 - 直接按顺序绘制每个wafer
+                    lot_x_positions = []
+                    lot_yields = []
+                    lot_wafer_ids = []
+                    
+                    for _, wafer_row in lot_data.iterrows():
+                        wafer_id = wafer_row.get('Wafer_ID', f'W{x_position}')
+                        yield_value = wafer_row.get('Yield_Numeric', 100.0)
+                        
+                        x_labels.append(str(wafer_id))
+                        lot_x_positions.append(x_position)
+                        lot_yields.append(yield_value)
+                        lot_wafer_ids.append(wafer_id)
+                        
+                        x_position += 1
+                    
+                    # 记录批次位置
+                    lot_positions[lot_id] = {
+                        'start': lot_x_positions[0] if lot_x_positions else x_position,
+                        'end': lot_x_positions[-1] if lot_x_positions else x_position,
+                        'wafers': [{'wafer_id': wid, 'x_position': xpos} 
+                                 for wid, xpos in zip(lot_wafer_ids, lot_x_positions)]
+                    }
+                    
+                    # 添加良率趋势线
+                    if lot_x_positions and lot_yields:
+                        try:
+                            fig.add_trace(go.Scatter(
+                                x=lot_x_positions,
+                                y=lot_yields,
+                                mode='lines+markers',
+                                name=f'批次 {lot_id}',
+                                line=dict(color=color, width=3),
+                                marker=dict(size=8, symbol='circle', color=color),
+                                showlegend=True,
+                                hovertemplate=f'<b>批次: {lot_id}</b><br>晶圆: %{{customdata}}<br>良率: %{{y:.2f}}%<extra></extra>',
+                                customdata=lot_wafer_ids,
+                                legendgroup=f"yield_{lot_id}"
+                            ), row=row, col=1)
+                            logger.info(f"✅ 批次 {lot_id} 趋势线添加成功")
+                        except Exception as e:
+                            logger.error(f"❌ 添加批次 {lot_id} 趋势线失败: {e}")
                 
-                # 为每个wafer位置添加垂直虚线
-                fig.add_vline(
-                    x=x_position,
-                    line_dash="dot",
-                    line_color='rgba(128, 128, 128, 0.3)',
-                    line_width=1,
-                    row=row, col=1
-                )
+                # 添加平均线
+                try:
+                    if 'Yield_Numeric' in yield_data.columns:
+                        overall_mean = yield_data['Yield_Numeric'].mean()
+                        fig.add_hline(
+                            y=overall_mean,
+                            line_dash="dash",
+                            line_color="#FF6347",
+                            line_width=2,
+                            annotation_text=f"平均良率: {overall_mean:.2f}%",
+                            annotation_position="top right",
+                            row=row, col=1
+                        )
+                        logger.info(f"✅ 平均线添加成功: {overall_mean:.2f}%")
+                except Exception as e:
+                    logger.warning(f"⚠️ 添加平均线失败: {e}")
                 
-                # 检查该wafer_id是否有数据
-                wafer_data = lot_data[lot_data['Wafer_ID'] == wafer_id]
-                if not wafer_data.empty:
-                    # 有数据的wafer添加到图表中
-                    lot_x_positions.append(x_position)
-                    lot_wafer_ids.append(wafer_id)
-                    lot_yields.append(wafer_data['Yield_Numeric'].iloc[0])
+                logger.info(f"🎉 良率图创建完成，共 {len(x_labels)} 个wafer位置")
+                return x_labels, lot_positions
                 
-                # 记录wafer信息
-                lot_positions[lot_id]['wafers'].append({
-                    'wafer_id': wafer_id,
-                    'x_position': x_position
-                })
+            except Exception as e:
+                logger.error(f"❌ 绘制良率图失败: {e}")
+                import traceback
+                logger.error(f"详细错误: {traceback.format_exc()}")
+                return [], {}
                 
-                x_position += 1
-            
-            lot_positions[lot_id]['end'] = x_position - 1
-            
-            # 为每个批次添加良率趋势线
-            if lot_x_positions and lot_yields:
-                fig.add_trace(go.Scatter(
-                    x=lot_x_positions,
-                    y=lot_yields,
-                    mode='lines+markers',
-                    name=f'批次 {lot_id}',
-                    line=dict(color=color, width=3),
-                    marker=dict(size=8, symbol='circle', color=color),
-                    showlegend=True,
-                    hovertemplate=f'<b>批次: {lot_id}</b><br>晶圆: %{{customdata}}<br>良率: %{{y:.2f}}%<extra></extra>',
-                    customdata=lot_wafer_ids,
-                    legendgroup=f"yield_{lot_id}"
-                ), row=row, col=1)
-            
-            # 添加批次分隔线（除了最后一个批次）
-            if i < len(lot_groups) - 1:
-                fig.add_vline(
-                    x=x_position - 0.5,
-                    line_dash="solid",
-                    line_color='rgba(0, 0, 0, 0.3)',
-                    line_width=2,
-                    row=row, col=1
-                )
-        
-        # 添加整体平均线
-        if 'Yield_Numeric' in yield_data.columns:
-            overall_mean = yield_data['Yield_Numeric'].mean()
-            fig.add_hline(
-                y=overall_mean,
-                line_dash="dash",
-                line_color="#FF6347",
-                line_width=2,
-                annotation_text=f"平均良率: {overall_mean:.2f}%",
-                annotation_position="top right",
-                row=row, col=1
-            )
-        
-        logger.info(f"✅ Wafer良率趋势图创建完成，共 {len(x_labels)} 个wafer位置")
-        return x_labels, lot_positions
+        except Exception as e:
+            logger.error(f"❌ 良率图处理过程中出现严重错误: {e}")
+            import traceback
+            logger.error(f"详细错误信息: {traceback.format_exc()}")
+            return [], {}
     
     def _add_parameter_traces(self, fig: go.Figure, chart_data: pd.DataFrame, param_info: Dict, row: int):
         """
@@ -748,12 +903,37 @@ class SummaryChart:
             Optional[Path]: 保存路径，如果失败则返回None
         """
         try:
+            logger.info(f"🎨 开始创建汇总图表...")
+            
+            # 检查数据状态
+            if self.boxplot_chart.cleaned_data is None:
+                logger.error("❌ 箱体图数据未加载")
+                return None
+                
+            if self.yield_data is None:
+                logger.error("❌ 良率数据未加载")
+                return None
+            
+            logger.info(f"📊 数据状态检查通过:")
+            logger.info(f"   - 箱体图数据: {len(self.boxplot_chart.cleaned_data)} 行")
+            logger.info(f"   - 良率数据: {len(self.yield_data)} 行")
+            
+            # 检查可用参数
+            available_params = self.get_available_parameters()
+            logger.info(f"🎯 可用参数: {len(available_params)} 个 - {available_params}")
+            
             # 创建合并图表
             fig = self.create_combined_chart()
             
             if fig.data is None or len(fig.data) == 0:
-                logger.error("无法保存图表：合并图表为空")
+                logger.error("❌ 无法保存图表：合并图表为空")
+                logger.error("可能的原因:")
+                logger.error("  1. 数据预处理失败")
+                logger.error("  2. 参数提取失败") 
+                logger.error("  3. 图表创建过程中出现异常")
                 return None
+            
+            logger.info(f"✅ 图表创建成功，包含 {len(fig.data)} 个数据轨迹")
             
             output_path = Path(output_dir)
             output_path.mkdir(parents=True, exist_ok=True)
@@ -763,6 +943,8 @@ class SummaryChart:
             filename = f"{dataset_name}_summary_chart.html"
             file_path = output_path / filename
             
+            logger.info(f"💾 正在保存图表到: {file_path}")
+            
             # 保存HTML文件 - 使用本地嵌入的Plotly.js，避免CDN加载失败
             fig.write_html(
                 str(file_path),
@@ -770,11 +952,13 @@ class SummaryChart:
                 validate=False
             )
             
-            logger.info(f"合并图表已保存: {file_path}")
+            logger.info(f"🎉 汇总图表已成功保存: {file_path}")
             return file_path
             
         except Exception as e:
-            logger.error(f"保存合并图表失败: {e}")
+            logger.error(f"❌ 保存汇总图表失败: {e}")
+            import traceback
+            logger.error(f"详细错误信息: {traceback.format_exc()}")
             return None
 
 
