@@ -56,7 +56,10 @@ def generate_yield_report_from_dataframe(cleaned_df: pd.DataFrame, output_filepa
 
     logger.info(f"使用产品名称: {product_name}")
 
-    TARGET_BINS = [3, 4, 6, 7, 8, 9]
+    # 动态生成TARGET_BINS，包含所有大于1的唯一bin值
+    TARGET_BINS = sorted(cleaned_df[cleaned_df['Bin'] != 1]['Bin'].unique())
+    logger.info(f"检测到的失效bin类型: {TARGET_BINS}")
+    
     # 将product_name作为第一列
     TARGET_COLUMNS = ['Product_Name', 'Lot_ID', 'Wafer_ID', 'Yield', 'Total', 'Pass'] + [f'Bin{b}' for b in TARGET_BINS]
 
