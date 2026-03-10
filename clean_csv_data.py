@@ -83,23 +83,14 @@ def clean_csv_data(data_df: pd.DataFrame, output_dir: str, base_filename_part: s
             
     # 列重排逻辑
     fixed_columns = ['Lot_ID', 'Wafer_ID', 'Seq', 'Bin', 'X', 'Y', 'CONT']
-    # 获取 df 中实际存在的列，再进行排序和筛选
+    # 获取 df 中实际存在的列，再进行顺序筛选
     current_df_columns = df.columns.tolist()
     
-    other_columns = sorted([col for col in current_df_columns if col not in fixed_columns])
+    # 仅将固定列放在前面，其余参数保持源文件列顺序
+    other_columns = [col for col in current_df_columns if col not in fixed_columns]
     
-    new_column_order = fixed_columns.copy()
-    # 确保 fixed_columns 中的列实际存在于 df 中，避免KeyError
-    new_column_order = [col for col in new_column_order if col in current_df_columns]
-
-    priority_params = ['IGSS0', 'IGSS1', 'IGSSR1', 'VTH', 'BVDSS1', 'BVDSS2', 'IDSS1', 'IDSS2', 'IGSS2', 'IGSSR2']
-    for param in priority_params:
-        if param in current_df_columns and param not in new_column_order:
-            new_column_order.append(param)
-    
-    for col in other_columns: # other_columns 已经是从 current_df_columns 筛选和排序得到的
-        if col not in new_column_order: # 确保不重复添加
-            new_column_order.append(col)
+    new_column_order = [col for col in fixed_columns if col in current_df_columns]
+    new_column_order.extend(other_columns)
     
     # 最终列顺序应该是 df 中实际存在的列，并按照 new_column_order 排序
     # 有些列可能在 new_column_order 中但不在 df.columns 中（例如，如果原始df就没有某些优先参数）
