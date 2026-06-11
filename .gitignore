@@ -168,3 +168,6 @@ logs/
 
 # YoYo AI version control directory
 .yoyo/
+# Local release archives
+packaging/release.zip
+packaging/release/app.pyz
