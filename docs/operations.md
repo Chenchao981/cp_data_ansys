@@ -8,6 +8,17 @@
 python -m gui.multi_company_main
 ```
 
+发布目录启动：
+
+```powershell
+packaging\release\start.bat
+
+# 仅检查 Python、依赖和 app.pyz，不打开 GUI
+packaging\release\start.bat --check
+```
+
+发布脚本优先使用 `D:\ProgramData\anaconda3\python.exe`，避免误用 PATH 中缺少 PyQt5 的其他 Python 环境。
+
 基本操作流程：
 
 1. 选择公司。
@@ -43,6 +54,14 @@ python -m gui.multi_company_main
 ### 中文乱码
 
 源代码和文档统一按 UTF-8 读取。PowerShell 5 中可显式使用 `Get-Content -Encoding UTF8`。
+
+### `chcp` 不是内部或外部命令
+
+说明 Windows `System32` 未在 PATH 中。新版发布脚本使用 `%SystemRoot%\System32\chcp.com` 的绝对路径，不再依赖 PATH。
+
+### `ModuleNotFoundError: No module named 'PyQt5'`
+
+说明启动脚本使用了错误的 Python 环境。运行 `start.bat --check` 查看实际 Python；必要时运行 `install_anaconda.bat` 安装发布依赖。
 
 ## 4. 打包
 
