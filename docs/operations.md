@@ -15,6 +15,10 @@ packaging\release\start.bat
 
 # 仅检查 Python、依赖和 app.pyz，不打开 GUI
 packaging\release\start.bat --check
+
+# Git Bash
+packaging/release/start.sh
+packaging/release/start.sh --check
 ```
 
 发布脚本优先使用 `D:\ProgramData\anaconda3\python.exe`，避免误用 PATH 中缺少 PyQt5 的其他 Python 环境。
@@ -75,6 +79,6 @@ python create_pyz.py
 发布前应在干净环境验证：
 
 - `app.pyz` 可启动
-- 三个公司 Widget 可加载
+- HH、JT、Lion、国宇FRD Widget 均可加载
 - 至少一套脱敏样例可完成清洗和图表生成
 - 发布目录不包含原始 CP 数据、日志或内部文档

@@ -2,6 +2,10 @@ import zipapp
 import os
 import shutil
 import glob
+import sys
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 # --- 配置 ---
 # 项目根目录
@@ -11,13 +15,23 @@ target_file = os.path.join(os.path.dirname(__file__), 'release', 'app.pyz')
 # 打包的入口点 - 更新为多公司GUI
 main_entry_point = 'gui.multi_company_main:main'
 # 需要包含在 .pyz 文件中的顶层目录
-packages_to_include = ['cp_data_processor', 'gui', 'python_cp', 'utils', 'frontend', 'jt_data_processor', 'lion']
+packages_to_include = [
+    'cp_data_processor',
+    'gui',
+    'python_cp',
+    'utils',
+    'frontend',
+    'jt_data_processor',
+    'lion',
+    'guoyu',
+]
 # 需要包含在 .pyz 文件中的根目录下的 .py 文件
 files_to_include = [
     'clean_dcp_data.py',
     'clean_csv_data.py', 
     'clean_lion_data.py',
     'lion_batch_processor.py',
+    'guoyu_batch_processor.py',
     'dcp_spec_extractor.py',
     'cp_unit_converter.py'
 ]
@@ -177,4 +191,4 @@ if __name__ == '__main__':
     create_secure_archive()
     print("=" * 60)
     print("🎯 安全打包完成！")
-    print("💡 提示: 当前版本已移除敏感文档，可安全发布") 
+    print("💡 提示: 当前版本已移除敏感文档，可安全发布")

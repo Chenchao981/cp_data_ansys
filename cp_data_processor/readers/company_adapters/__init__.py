@@ -15,6 +15,7 @@ from .company_config import COMPANY_CONFIGS, get_company_config
 from .company_registry import CompanyRegistry, get_company_registry, get_adapter_for_file
 from .hh_adapter import HHAdapter
 from .jt_adapter import JTAdapter
+from .guoyu_adapter import GUOYUAdapter
 
 __all__ = [
     'BaseCompanyAdapter',
@@ -24,7 +25,8 @@ __all__ = [
     'get_company_registry',
     'get_adapter_for_file',
     'HHAdapter',
-    'JTAdapter'
+    'JTAdapter',
+    'GUOYUAdapter'
 ]
 
-__version__ = '1.0.0' 
+__version__ = '1.0.0'

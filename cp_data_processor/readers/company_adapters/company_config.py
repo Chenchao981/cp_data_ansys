@@ -133,6 +133,34 @@ COMPANY_CONFIGS: Dict[str, Dict[str, Any]] = {
                 'fail_bins': [2, 3, 4, 5, 6, 7, 8, 9]
             }
         }
+    },
+
+    'GUOYU': {
+        'name': '扬州国宇',
+        'description': '扬州国宇 JUNO DTS-2000 FRD Excel CP测试数据',
+        'supported_formats': ['GUOYU_FRD_EXCEL'],
+        'default_format': 'GUOYU_FRD_EXCEL',
+        'version': '1.0.0',
+        'field_mapping': {
+            'Lot_ID': 'Lot_ID',
+            'Wafer_ID': 'Wafer_ID',
+            'Seq': 'Seq',
+            'Bin': 'Bin',
+            'X': 'X',
+            'Y': 'Y',
+        },
+        'unit_conversion': {},
+        'file_patterns': {
+            'path_patterns': ['/guoyu/', '/国宇/'],
+            'filename_patterns': [],
+            'content_signatures': ['JUNO Test System DTS-2000'],
+            'file_extensions': ['.xls', '.xlsx'],
+        },
+        'data_validation': {
+            'required_fields': ['Lot_ID', 'Wafer_ID', 'Seq', 'Bin', 'X', 'Y'],
+            'optional_fields': [],
+            'bin_values': {'pass_bins': [1], 'fail_bins': [2, 4]},
+        },
     }
 }
 
@@ -276,4 +304,4 @@ def update_company_config(company_name: str, updates: Dict[str, Any]) -> bool:
         return True
     except Exception as e:
         logger.error(f"更新厂商 {company_name} 配置时出错: {e}")
-        return False 
+        return False

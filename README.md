@@ -1,10 +1,10 @@
 # CP 数据分析平台
 
-面向半导体晶圆 CP（Chip Probing）测试数据的清洗、标准化与可视化工具。当前支持华虹宏力（HH）、Jetech（JT）和 Lion 三类数据源，主要运行于 Windows 11。
+面向半导体晶圆 CP（Chip Probing）测试数据的清洗、标准化与可视化工具。当前支持华虹宏力（HH）、Jetech（JT）、Lion 和扬州国宇 FRD 数据源，主要运行于 Windows 11。
 
 ## 当前能力
 
-- 读取并清洗多种 CP 原始数据：HH DCP/TXT、JT Excel、Lion Excel
+- 读取并清洗多种 CP 原始数据：HH DCP/TXT、JT Excel、Lion Excel、扬州国宇 FRD Excel
 - 将不同来源转换为统一的 `CPLot` / `CPWafer` / `CPParameter` 数据模型
 - 输出 cleaned、yield、spec 三类标准 CSV
 - 生成良率趋势、失效分析、参数箱体图、散点图和汇总 HTML
@@ -31,6 +31,9 @@ python -m jt_data_processor.jt_main_processor <input_path> --output <output_dir>
 
 # Lion：扫描 data/ 下的批次并合并
 python lion_batch_processor.py
+
+# 扬州国宇 FRD：支持单批次目录，或产品目录下的多个批次子目录
+python guoyu_batch_processor.py data/257375 --output output
 ```
 
 > 实际参数以各命令的 `--help` 为准。GUI 是当前最完整、最适合日常使用的入口。

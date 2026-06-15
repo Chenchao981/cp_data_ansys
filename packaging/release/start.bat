@@ -10,7 +10,7 @@ if exist "%SystemRoot%\System32\chcp.com" (
 )
 
 echo Starting CP Data Analysis Tool - Multi-Company Edition...
-echo Supporting HuaHong(HH), JeTech(JT), and Lion data processing
+echo Supporting HuaHong(HH), JeTech(JT), Lion, and Guoyu FRD data processing
 echo.
 
 REM Prefer the standard Anaconda installation used by this project.
@@ -41,7 +41,7 @@ if not defined PYTHON_EXE (
 )
 
 echo Using Python: %PYTHON_EXE%
-"%PYTHON_EXE%" -c "import PyQt5, pandas, numpy, openpyxl, plotly" >nul 2>&1
+"%PYTHON_EXE%" -c "import PyQt5, pandas, numpy, openpyxl, xlrd, plotly" >nul 2>&1
 if errorlevel 1 (
     echo ERROR: Required packages are missing from:
     echo   %PYTHON_EXE%

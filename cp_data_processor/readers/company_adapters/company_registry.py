@@ -98,6 +98,12 @@ class CompanyRegistry:
         Returns:
             Optional[str]: 公司代码，如果无法识别返回None
         """
+        # 国宇 JUNO 文件有明确内容签名，优先于 Lion 过宽的 /data/ 路径规则。
+        guoyu_adapter = self.get_company_adapter('GUOYU')
+        if guoyu_adapter and guoyu_adapter.can_process_file(file_path):
+            self.logger.info(f"通过国宇内容签名识别公司: {file_path} -> GUOYU")
+            return 'GUOYU'
+
         # 1. 从路径识别
         company = detect_company_from_path(file_path)
         if company:
@@ -172,6 +178,12 @@ class CompanyRegistry:
             self.register_company('LION', LIONAdapter)
         except ImportError as e:
             self.logger.warning(f"无法加载Lion适配器: {e}")
+
+        try:
+            from .guoyu_adapter import GUOYUAdapter
+            self.register_company('GUOYU', GUOYUAdapter)
+        except ImportError as e:
+            self.logger.warning(f"无法加载国宇适配器: {e}")
         
         # 可以继续添加其他适配器的自动加载
         self._load_dynamic_adapters()
@@ -188,7 +200,7 @@ class CompanyRegistry:
             try:
                 # 提取公司代码
                 company_code = adapter_file.stem.replace('_adapter', '').upper()
-                if company_code in ['HH', 'JT']:  # 已经手动加载的跳过
+                if company_code in ['HH', 'JT', 'LION', 'GUOYU']:  # 已经手动加载的跳过
                     continue
                 
                 # 动态导入模块

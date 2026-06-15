@@ -129,10 +129,12 @@ class MultiCompanyCPDataGUI(QMainWindow):
         self.hh_button = self.create_nav_button("🏢 HuaHong", "huahong", True)
         self.jt_button = self.create_nav_button("🏭 JeTech", "jetech", False)
         self.lion_button = self.create_nav_button("🦁 Lion", "lion", False)
+        self.guoyu_button = self.create_nav_button("国宇FRD", "guoyu", False)
         
         layout.addWidget(self.hh_button)
         layout.addWidget(self.jt_button)
         layout.addWidget(self.lion_button)
+        layout.addWidget(self.guoyu_button)
         
         # 添加弹性空间
         layout.addStretch()
@@ -190,18 +192,15 @@ class MultiCompanyCPDataGUI(QMainWindow):
                     padding-left: 18px;
                     padding-right: 12px;
                     min-height: 60px;
-                    box-shadow: 0 3px 10px rgba(25, 118, 210, 0.25);
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                         stop:0 #42A5F5, stop:1 #1565C0);
-                    box-shadow: 0 5px 15px rgba(25, 118, 210, 0.35);
                     border-left: 5px solid #0D47A1;
                 }
                 QPushButton:pressed {
                     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                         stop:0 #1565C0, stop:1 #0D47A1);
-                    box-shadow: 0 2px 6px rgba(25, 118, 210, 0.2);
                 }
             """)
         else:
@@ -220,21 +219,18 @@ class MultiCompanyCPDataGUI(QMainWindow):
                     padding-left: 18px;
                     padding-right: 12px;
                     min-height: 60px;
-                    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
                 }
                 QPushButton:hover {
                     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                         stop:0 #ffffff, stop:1 #e9ecef);
                     color: #212529;
                     border: 1px solid #adb5bd;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
                     border-left: 4px solid #6c757d;
                 }
                 QPushButton:pressed {
                     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                         stop:0 #f8f9fa, stop:1 #e9ecef);
                     border: 1px solid #6c757d;
-                    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
                 }
             """)
     
@@ -266,16 +262,21 @@ class MultiCompanyCPDataGUI(QMainWindow):
             # 导入Lion界面组件
             from gui.widgets.lion_widget import LionWidget
             lion_widget = LionWidget()
+
+            from gui.widgets.guoyu_widget import GuoyuWidget
+            guoyu_widget = GuoyuWidget()
             
             # 添加到堆栈
             self.content_stack.addWidget(hh_widget)
             self.content_stack.addWidget(jt_widget)
             self.content_stack.addWidget(lion_widget)
+            self.content_stack.addWidget(guoyu_widget)
             
             # 存储组件引用
             self.company_widgets["huahong"] = hh_widget
             self.company_widgets["jetech"] = jt_widget
             self.company_widgets["lion"] = lion_widget
+            self.company_widgets["guoyu"] = guoyu_widget
             
             # 默认显示HuaHong界面
             self.content_stack.setCurrentWidget(hh_widget)
@@ -327,16 +328,31 @@ class MultiCompanyCPDataGUI(QMainWindow):
                 }
             """)
             lion_layout.addWidget(lion_label)
+
+            guoyu_placeholder = QWidget()
+            guoyu_layout = QVBoxLayout(guoyu_placeholder)
+            guoyu_label = QLabel("国宇FRD界面\n（组件加载失败）")
+            guoyu_label.setAlignment(Qt.AlignCenter)
+            guoyu_label.setStyleSheet("""
+                QLabel {
+                    font-size: 24px;
+                    color: #666;
+                    padding: 50px;
+                }
+            """)
+            guoyu_layout.addWidget(guoyu_label)
             
             # 添加到堆栈
             self.content_stack.addWidget(hh_placeholder)
             self.content_stack.addWidget(jt_placeholder)
             self.content_stack.addWidget(lion_placeholder)
+            self.content_stack.addWidget(guoyu_placeholder)
             
             # 存储组件引用
             self.company_widgets["huahong"] = hh_placeholder
             self.company_widgets["jetech"] = jt_placeholder
             self.company_widgets["lion"] = lion_placeholder
+            self.company_widgets["guoyu"] = guoyu_placeholder
             
             # 默认显示HuaHong界面
             self.content_stack.setCurrentWidget(hh_placeholder)
@@ -372,7 +388,8 @@ class MultiCompanyCPDataGUI(QMainWindow):
         company_name_map = {
             "huahong": "HuaHong",
             "jetech": "JeTech", 
-            "lion": "Lion"
+            "lion": "Lion",
+            "guoyu": "国宇FRD"
         }
         company_name = company_name_map.get(company_id, company_id)
         self.status_bar.showMessage(f"当前公司: {company_name}", 0)
@@ -398,6 +415,10 @@ class MultiCompanyCPDataGUI(QMainWindow):
         is_lion_selected = self.current_company == "lion"
         self.lion_button.setChecked(is_lion_selected)
         self.update_button_style(self.lion_button, is_lion_selected)
+
+        is_guoyu_selected = self.current_company == "guoyu"
+        self.guoyu_button.setChecked(is_guoyu_selected)
+        self.update_button_style(self.guoyu_button, is_guoyu_selected)
     
     def switch_content_area(self, company_id):
         """切换内容区域"""
@@ -466,4 +487,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()

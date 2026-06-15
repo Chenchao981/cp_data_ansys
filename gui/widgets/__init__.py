@@ -4,4 +4,4 @@
 包含各公司的专用数据分析界面组件
 """
 
-__all__ = ['HuaHongWidget', 'JeTechWidget', 'LionWidget']
+__all__ = ['HuaHongWidget', 'JeTechWidget', 'LionWidget', 'GuoyuWidget']

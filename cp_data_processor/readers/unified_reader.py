@@ -211,6 +211,12 @@ class UnifiedReader:
                 reader = LionExcelReader([file_path])
             else:
                 raise ValueError(f"Lion公司不支持的文件格式: {file_ext}")
+        elif company_code == 'GUOYU':
+            if file_ext in ['.xls', '.xlsx']:
+                from guoyu.guoyu_reader import GuoyuFRDReader
+                reader = GuoyuFRDReader([file_path])
+            else:
+                raise ValueError(f"扬州国宇不支持的文件格式: {file_ext}")
         else:
             raise ValueError(f"不支持的公司: {company_code}")
         

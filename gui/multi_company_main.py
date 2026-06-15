@@ -9,8 +9,10 @@ import sys
 import os
 from pathlib import Path
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import Qt
 import logging
+
+# Avoid NumExpr environment notices when pandas is imported by company widgets.
+os.environ.setdefault("NUMEXPR_MAX_THREADS", "8")
 
 # 添加项目路径
 sys.path.append(str(Path(__file__).parent.parent))
@@ -32,10 +34,6 @@ def main():
         app.setOrganizationName("CP Data Analysis Team")
         app.setOrganizationDomain("cp-data-analysis.com")
         
-        # 设置高DPI缩放
-        app.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-        app.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
-        
         # 导入并创建主窗口
         from .multi_company_gui import MultiCompanyCPDataGUI
         
@@ -48,7 +46,7 @@ def main():
         window.show()
         
         logger.info("多公司CP数据分析工具启动成功")
-        logger.info("支持的公司: HuaHong, JeTech")
+        logger.info("支持的公司: HuaHong, JeTech, Lion, Guoyu FRD")
         
         # 运行应用
         exit_code = app.exec_()
