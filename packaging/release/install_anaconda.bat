@@ -2,6 +2,10 @@
 setlocal
 cd /d "%~dp0"
 
+REM Force UTF-8 for Python and pip on Windows systems using CP936/GBK.
+set "PYTHONUTF8=1"
+set "PYTHONIOENCODING=utf-8"
+
 if exist "%SystemRoot%\System32\chcp.com" (
     "%SystemRoot%\System32\chcp.com" 65001 >nul
 )
@@ -39,7 +43,7 @@ if errorlevel 1 (
 
 echo.
 echo Verifying runtime dependencies...
-"%PYTHON_EXE%" -c "import PyQt5, pandas, numpy, openpyxl, plotly, matplotlib, seaborn; print('All runtime dependencies are available.')"
+"%PYTHON_EXE%" -c "import PyQt5, pandas, numpy, openpyxl, xlrd, plotly, matplotlib, seaborn; print('All runtime dependencies are available.')"
 if errorlevel 1 (
     echo ERROR: Dependency verification failed.
     goto :failed
