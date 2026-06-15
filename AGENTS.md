@@ -19,8 +19,6 @@
 4. 与任务相关的模块代码
 5. `docs/technical-debt.md`
 
-`docs/archive/` 是历史记录，不能作为当前实现依据。
-
 ## 当前真实架构
 
 ```text
@@ -38,7 +36,7 @@
 - GUI 当前直接编排 HH、JT、Lion 三套成熟流程，并非全部通过 `UnifiedReader`。
 - `frontend/` 主要消费标准 CSV。
 - `python_cp/`、JT 专用模块和 Lion 专用模块仍被主流程使用，未验证前不得删除。
-- 根目录存在早期重复包，删除前必须做引用审计和真实数据回归。
+- 已删除根目录早期重复包；新增公共能力应放入 `cp_data_processor/`。
 
 ## 常用命令
 

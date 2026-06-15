@@ -6,15 +6,13 @@
 
 1. 补齐统一开发环境和锁定依赖。当前 `requirements.txt`、核心 requirements 和 GUI requirements 内容不一致。
 2. 修复 `frontend/main.py` 与 `frontend/utils/data_loader.py` 的 null bytes；它们当前无法通过 Python 语法编译。
-3. 修复 JT 测试收集：当前从仓库根目录运行 pytest 时，根包 `__init__.py` 导入不存在的 `cp_data_ansys.file_utils`，导致 collection 失败。
-4. 建立最小端到端脱敏样例和回归测试，覆盖 HH、JT、Lion 的三类 CSV。
+3. 建立最小端到端脱敏样例和回归测试，覆盖 HH、JT、Lion 的三类 CSV。
 
 ## P1：收敛主路径
 
 1. 明确 GUI 公司专用流程与 `UnifiedReader` 的关系，逐步让 Reader/Adapter/CSV 契约成为唯一公共主线。
-2. 审计根目录 `readers/`、`processing/`、`data_models/`、`analysis/`、`plotting/`、`exporters/` 与 `cp_data_processor/` 的重复代码。
-3. 审计 `python_cp/` 的仍在用能力，迁移后再删除兼容模块。
-4. 合并两套 JT Reader/Adapter，减少规则漂移。
+2. 审计 `python_cp/` 的仍在用能力，迁移后再删除兼容模块。
+3. 合并两套 JT Reader/Adapter，减少规则漂移。
 
 ## P1：修正识别与契约风险
 
@@ -38,7 +36,7 @@
   -> 修复不可编译文件
   -> 固化 CSV 契约
   -> 收敛公司 Reader/Adapter
-  -> 删除重复兼容包
+  -> 收敛 python_cp 兼容模块
   -> 发布自动化与业务数据集成
 ```
 

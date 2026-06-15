@@ -9,5 +9,3 @@
 3. [docs/data-contracts.md](docs/data-contracts.md)：数据模型与 CSV 契约
 4. [docs/development.md](docs/development.md)：开发、测试和变更规则
 5. [docs/technical-debt.md](docs/technical-debt.md)：已知风险与升级顺序
-
-`docs/archive/` 中的内容仅用于追溯历史决策，不应覆盖当前文档和代码事实。

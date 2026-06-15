@@ -62,8 +62,6 @@ python guoyu_batch_processor.py data/257375 --output output
 - [技术债与升级路线](docs/technical-debt.md)
 - [AI / Codex 协作说明](AGENTS.md)
 
-历史计划、修复记录和旧版说明统一保存在 [历史文档归档](docs/archive/README.md)，不应作为当前实现依据。
-
 ## 项目结构
 
 ```text
@@ -74,7 +72,7 @@ jt_data_processor/   JT 成熟专用处理流程
 lion/                Lion Reader、适配器与图表生成
 python_cp/           华虹流程仍在使用的兼容模块
 packaging/           .pyz 打包与发布文件
-docs/                当前文档与历史归档
+docs/                当前有效文档
 ```
 
 ## 当前验证状态

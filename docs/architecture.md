@@ -41,7 +41,7 @@ flowchart LR
 - `UnifiedReader` 已支持 HH、JT、Lion、扬州国宇，但并非所有成熟流程的唯一入口。
 - 多公司 GUI 当前直接调用公司专用处理流程，再复用图表层。
 - `frontend/` 主要消费标准 CSV，而不是直接消费原始厂商文件。
-- `python_cp/`、根目录兼容包和公司专用模块仍被部分主流程引用，暂不能直接删除。
+- `python_cp/` 和公司专用模块仍被部分主流程引用，未完成迁移前不能直接删除。
 
 ## 3. 模块职责
 
@@ -57,7 +57,6 @@ flowchart LR
 | `lion/` 与 `lion_batch_processor.py` | Lion 专用读取、合并、图表 | 兼容且仍在用 |
 | `guoyu/` 与 `guoyu_batch_processor.py` | 扬州国宇 FRD 读取、单位解析、批次处理与图表 | 核心 |
 | `python_cp/` | 华虹良率等历史兼容逻辑 | 兼容且仍在用 |
-| 根目录 `readers/`、`processing/` 等 | 早期重复包 | 待审计 |
 
 ## 4. 公司处理路径
 
