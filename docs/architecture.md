@@ -33,8 +33,13 @@ flowchart LR
     G --> L
     G --> Y
     G --> F
-    W["Local Streamlit Web Cockpit"] --> S
-    W --> F
+    A --> W["Local Raw Data Web Analyzer"]
+    B --> W
+    C --> W
+    D --> W
+    W --> I["In-memory cleaning and analytics"]
+    I --> F
+    W --> S
 ```
 
 ### 关键判断
@@ -42,7 +47,7 @@ flowchart LR
 - `cp_data_processor/` 是目标核心架构，包含统一模型、Reader、适配器和标准 CSV 生成器。
 - `UnifiedReader` 已支持 HH、JT、Lion、扬州国宇，但并非所有成熟流程的唯一入口。
 - 多公司 GUI 当前直接调用公司专用处理流程，再复用图表层。
-- 本地 Web 数据驾驶舱消费 cleaned、yield、spec 标准 CSV，用于预览和交互分析；MVP 不直接解析原始厂商文件。
+- Web 分支作为独立的原始数据分析项目：通过厂商适配器直接读取 TXT/Excel/CSV，在内存中清洗并计算良率、Bin 和参数统计，不要求生成 cleaned/yield/spec 中间文件；标准 CSV 仅作为兼容入口。
 - `frontend/` 主要消费标准 CSV，而不是直接消费原始厂商文件。
 - `python_cp/` 和公司专用模块仍被部分主流程引用，未完成迁移前不能直接删除。
 

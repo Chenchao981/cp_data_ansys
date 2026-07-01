@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 import re
 from typing import Iterable
@@ -34,6 +34,8 @@ class DataBundle:
     cleaned: pd.DataFrame | None
     yield_data: pd.DataFrame | None
     spec: pd.DataFrame | None
+    source_kind: str = "standard_csv"
+    metadata: dict[str, object] = field(default_factory=dict)
 
     @property
     def is_empty(self) -> bool:
@@ -100,6 +102,8 @@ def load_bundle(directory: str | Path) -> DataBundle:
         cleaned=frames.get("cleaned"),
         yield_data=frames.get("yield"),
         spec=frames.get("spec"),
+        source_kind="standard_csv",
+        metadata={"adapter": "Standard CSV", "file_count": len(files)},
     )
 
 

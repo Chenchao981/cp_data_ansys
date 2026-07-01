@@ -6,6 +6,7 @@ set "PYTHON_EXE=D:\ProgramData\anaconda3\python.exe"
 if not exist "%PYTHON_EXE%" set "PYTHON_EXE=python"
 
 echo Starting CP Data Cockpit...
+set "PYTHONDONTWRITEBYTECODE=1"
 "%PYTHON_EXE%" -c "import streamlit, pandas, plotly" >nul 2>&1
 if errorlevel 1 (
     echo ERROR: Streamlit dependencies are missing.

@@ -23,8 +23,9 @@ python -m gui.multi_company_main
 start_web.bat
 ```
 
-Web 版默认访问 `http://127.0.0.1:8501`，读取现有清洗流程生成的
-cleaned、yield、spec 标准 CSV。数据只在本机处理，不需要账号或服务端部署。
+Web 版默认访问 `http://127.0.0.1:8501`，直接读取厂商 TXT/Excel/CSV 原始数据，
+在内存中完成清洗、良率/Bin、参数统计、图表和 HTML 报告；不要求先生成中间 CSV。
+数据只在本机处理，不需要账号或服务端部署。
 
 公司专用命令：
 

@@ -46,7 +46,8 @@ def pick_table_file(initial_directory: str | Path | None = None) -> str | None:
             title="选择要预览的表格文件",
             initialdir=_initial_directory(initial_directory),
             filetypes=(
-                ("表格文件", "*.csv *.xlsx *.xls"),
+                ("CP 与表格文件", "*.txt *.dcp *.csv *.xlsx *.xls"),
+                ("CP 文本文件", "*.txt *.dcp"),
                 ("CSV 文件", "*.csv"),
                 ("Excel 文件", "*.xlsx *.xls"),
                 ("所有文件", "*.*"),

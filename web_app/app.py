@@ -22,13 +22,13 @@ from web_app.data_service import (
     excel_sheet_names,
     filter_by_lot_and_wafer,
     first_existing_column,
-    load_bundle,
     parameter_columns,
     parameter_spec,
     read_table_file,
     wafer_yield_data,
 )
 from web_app.native_picker import pick_folder, pick_table_file
+from web_app.source_analyzer import analyze_source, parameter_summary, source_fingerprint
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -94,16 +94,13 @@ def inject_theme() -> None:
 
 
 @st.cache_data(show_spinner=False)
-def cached_bundle(path: str, fingerprint: tuple[tuple[str, int, int], ...]) -> DataBundle:
+def cached_bundle(
+    source: str,
+    fingerprint: tuple[tuple[str, int, int], ...],
+    clean_outliers: bool,
+) -> DataBundle:
     del fingerprint
-    return load_bundle(path)
-
-
-def directory_fingerprint(path: str) -> tuple[tuple[str, int, int], ...]:
-    root = Path(path).expanduser()
-    if not root.is_dir():
-        return ()
-    return tuple(sorted((item.name, item.stat().st_mtime_ns, item.stat().st_size) for item in root.glob("*.csv")))
+    return analyze_source(source, clean_outliers=clean_outliers)
 
 
 @st.cache_data(show_spinner=False)
@@ -131,13 +128,36 @@ def csv_download(frame: pd.DataFrame) -> bytes:
     return frame.to_csv(index=False).encode("utf-8-sig")
 
 
-def html_report(figures: list[go.Figure], title: str) -> bytes:
+def html_report(
+    figures: list[go.Figure],
+    title: str,
+    metadata: dict[str, object] | None = None,
+    yield_frame: pd.DataFrame | None = None,
+    parameter_stats: pd.DataFrame | None = None,
+) -> bytes:
     fragments: list[str] = []
     for index, figure in enumerate(figures):
         fragments.append(figure.to_html(full_html=False, include_plotlyjs=True if index == 0 else False))
+    metadata_html = ""
+    if metadata:
+        rows = "".join(
+            f"<tr><th>{escape(str(key))}</th><td>{escape(str(value))}</td></tr>"
+            for key, value in metadata.items()
+            if value is not None and key not in {"source_names"}
+        )
+        metadata_html = f"<h2>数据来源与处理口径</h2><table>{rows}</table>"
+    yield_html = ""
+    if yield_frame is not None and not yield_frame.empty:
+        yield_html = "<h2>Wafer 良率摘要</h2>" + yield_frame.to_html(index=False, border=0)
+    stats_html = ""
+    if parameter_stats is not None and not parameter_stats.empty:
+        stats_html = "<h2>参数统计摘要</h2>" + parameter_stats.to_html(index=False, border=0)
     document = f"""<!doctype html><html lang='zh-CN'><head><meta charset='utf-8'>
     <title>{escape(title)}</title><style>body{{background:#07101f;color:#eaf2ff;font-family:Segoe UI,Microsoft YaHei,sans-serif;margin:28px}}
-    h1{{color:#55ddff}} .chart{{margin:20px 0}}</style></head><body><h1>{escape(title)}</h1>{''.join(fragments)}</body></html>"""
+    h1{{color:#55ddff}} h2{{color:#a9eaff;margin-top:32px}} table{{border-collapse:collapse;width:100%;margin:14px 0 28px}}
+    th,td{{border:1px solid #28405f;padding:7px 10px;text-align:left}} th{{background:#102642;color:#5ce6ff}}
+    tr:nth-child(even){{background:#0b1a30}} .chart{{margin:20px 0}}</style></head><body><h1>{escape(title)}</h1>
+    {metadata_html}{yield_html}{stats_html}{''.join(fragments)}</body></html>"""
     return document.encode("utf-8")
 
 
@@ -164,17 +184,23 @@ def sidebar() -> str:
                 st.rerun()
     if st.sidebar.button("扫描并加载", use_container_width=True):
         st.session_state["data_path"] = path
+        st.session_state.pop("preview_file", None)
         st.cache_data.clear()
     preview_file = st.session_state.get("preview_file")
     if preview_file:
         st.sidebar.caption(f"当前文件 · {Path(preview_file).name}")
     st.sidebar.markdown("---")
-    st.sidebar.markdown("**文件契约**")
-    st.sidebar.caption("`*_cleaned_*.csv`  · Die 明细")
-    st.sidebar.caption("`*_yield_*.csv`  · Wafer 良率")
-    st.sidebar.caption("`*_spec_*.csv`  · 参数规格")
+    st.sidebar.selectbox(
+        "测量值清洗",
+        ["IQR 异常值清洗", "保留原始测量值"],
+        key="cleaning_mode",
+        help="只处理数值参数，不改变 Bin、坐标和源文件。",
+    )
+    st.sidebar.markdown("**自动识别输入**")
+    st.sidebar.caption("HH DCP/TXT · JT/Lion/国宇 Excel")
+    st.sidebar.caption("通用 CSV/Excel · 标准分析 CSV")
     st.sidebar.markdown("---")
-    st.sidebar.caption("Web MVP v0.1 · codex/web")
+    st.sidebar.caption("Raw Analytics v0.2 · codex/web")
     return st.session_state.get("data_path", path)
 
 
@@ -215,7 +241,7 @@ def selected_file_preview(path: str, key_prefix: str) -> pd.DataFrame | None:
 def show_standalone_file(path: str) -> None:
     st.markdown(
         """<div class='hero'><div class='hero-kicker'><span class='status-dot'></span>MANUAL FILE PREVIEW</div>
-        <h1>表格文件预览</h1><p>当前文件不是标准分析输出，先展示原始表格内容，不执行良率或规格计算。</p></div>""",
+        <h1>表格文件预览</h1><p>当前文件作为通用表格读取；能识别 Lot、Wafer、Bin 时自动生成完整分析。</p></div>""",
         unsafe_allow_html=True,
     )
     selected_file_preview(path, "standalone")
@@ -224,7 +250,7 @@ def show_standalone_file(path: str) -> None:
 def show_empty_state(path: str, message: str | None = None) -> None:
     st.markdown(
         """<div class='hero'><div class='hero-kicker'>READY FOR SIGNAL</div>
-        <h1>CP Data Cockpit</h1><p>选择一个包含 cleaned、yield、spec CSV 的输出目录，启动晶圆数据分析。</p></div>""",
+        <h1>CP Raw Data Analyzer</h1><p>选择原始 CP 数据文件夹或文件，系统自动识别格式、清洗并生成分析。</p></div>""",
         unsafe_allow_html=True,
     )
     if message:
@@ -236,7 +262,7 @@ def show_empty_state(path: str, message: str | None = None) -> None:
     for column, (title, detail) in zip(
         cols,
         [
-            ("数据预览", "三类 CSV、筛选与下载"),
+            ("原始读取", "TXT、CSV、Excel 自动识别"),
             ("良率洞察", "Wafer 趋势、Lot 对比、分布"),
             ("失效结构", "动态识别全部 Bin 列"),
             ("参数分析", "箱体分布与双参数散点"),
@@ -250,26 +276,27 @@ def main() -> None:
     inject_theme()
     data_path = sidebar()
     preview_file = st.session_state.get("preview_file")
-    fingerprint = directory_fingerprint(data_path)
+    analysis_source = preview_file if preview_file and Path(preview_file).is_file() else data_path
+    fingerprint = source_fingerprint(analysis_source)
     if not fingerprint:
-        if preview_file:
-            show_standalone_file(preview_file)
-        else:
-            show_empty_state(data_path)
+        show_empty_state(analysis_source, "所选位置没有找到支持的 TXT、DCP、CSV 或 Excel 文件。")
         return
 
     try:
-        bundle = cached_bundle(data_path, fingerprint)
+        clean_outliers = st.session_state.get("cleaning_mode", "IQR 异常值清洗") == "IQR 异常值清洗"
+        with st.spinner("正在识别格式、读取并分析原始数据…"):
+            bundle = cached_bundle(analysis_source, fingerprint, clean_outliers)
     except Exception as exc:
-        show_empty_state(data_path, f"数据加载失败：{exc}")
+        show_empty_state(analysis_source, f"原始数据分析失败：{exc}")
         return
     if bundle.is_empty:
-        show_empty_state(data_path, "目录中没有找到符合命名契约的 CSV 文件。")
+        show_empty_state(analysis_source, "适配器没有读取到可分析的数据。")
         return
 
-    st.sidebar.success(f"已加载 {len(bundle.files)} 类标准文件")
-    for kind, file_path in bundle.files.items():
-        st.sidebar.caption(f"{kind.upper()} · {file_path.name}")
+    st.sidebar.success(f"已识别：{bundle.metadata.get('adapter', bundle.source_kind)}")
+    st.sidebar.caption(f"源文件 · {bundle.metadata.get('source_file_count', bundle.metadata.get('file_count', 0))} 个")
+    if bundle.metadata.get("pass_bin") is not None:
+        st.sidebar.caption(f"Pass Bin · {bundle.metadata['pass_bin']}")
 
     cleaned = bundle.cleaned if bundle.cleaned is not None else pd.DataFrame()
     yield_frame = wafer_yield_data(bundle.yield_data)
@@ -282,11 +309,19 @@ def main() -> None:
 
     cleaned_filtered = filter_by_lot_and_wafer(cleaned, selected_lots, selected_wafers)
     yield_filtered = filter_by_lot_and_wafer(yield_frame, selected_lots, selected_wafers)
+    parameter_stats = parameter_summary(cleaned_filtered)
 
     st.markdown(
         f"""<div class='hero'><div class='hero-kicker'><span class='status-dot'></span>LIVE DATA LINK</div>
-        <h1>CP Data Cockpit</h1><p>{escape(str(bundle.directory))} · 标准数据已接入，可交互探索</p></div>""",
+        <h1>CP Raw Data Analyzer</h1><p>{escape(str(analysis_source))} · 原始数据已读取并完成内存分析</p></div>""",
         unsafe_allow_html=True,
+    )
+    st.caption(
+        f"适配器：{bundle.metadata.get('adapter', 'Unknown')} · "
+        f"源数据 {bundle.metadata.get('raw_rows', len(cleaned)):,} 行 · "
+        f"参数 {bundle.metadata.get('parameter_count', len(parameter_columns(cleaned))):,} 个 · "
+        f"IQR 替换 {bundle.metadata.get('outlier_replacements', 0):,} 个异常测量值 · "
+        "分析结果仅在内存中生成，不要求 yield/spec 中间文件"
     )
 
     gross_column = first_existing_column(yield_filtered, ("Gross_die", "Total"))
@@ -328,8 +363,8 @@ def main() -> None:
             st.warning("缺少可用 yield 数据，驾驶舱暂不显示良率图。")
 
     with tabs[1]:
-        st.markdown("### 标准数据透视")
-        available = {"cleaned": bundle.cleaned, "yield": bundle.yield_data, "spec": bundle.spec}
+        st.markdown("### 内存数据透视")
+        available = {"清洗后 Die 明细": bundle.cleaned, "实时良率统计": bundle.yield_data, "内存规格": bundle.spec}
         available = {name: frame for name, frame in available.items() if frame is not None}
         preview_options = list(available)
         if preview_file:
@@ -339,7 +374,7 @@ def main() -> None:
             selected_file_preview(preview_file, "contract_file")
         else:
             preview = available[selected_kind]
-            if selected_kind != "spec":
+            if selected_kind != "内存规格":
                 preview = filter_by_lot_and_wafer(preview, selected_lots, selected_wafers)
             limit = st.select_slider("预览行数", options=[100, 300, 500, 1000, 3000], value=500)
             st.caption(f"共 {len(preview):,} 行 × {len(preview.columns):,} 列；当前显示前 {min(limit, len(preview)):,} 行")
@@ -347,14 +382,14 @@ def main() -> None:
             st.download_button(
                 "下载当前筛选 CSV",
                 data=csv_download(preview),
-                file_name=f"{selected_kind}_filtered.csv",
+                file_name="cp_analysis_filtered.csv",
                 mime="text/csv",
             )
 
     with tabs[2]:
         st.markdown("### 良率信号分析")
         if yield_filtered.empty:
-            st.warning("yield CSV 缺少 Lot_ID、Wafer_ID 或 Yield，无法生成分析。")
+            st.warning("原始数据中没有可识别的 Lot_ID、Wafer_ID、Bin，无法生成良率分析。")
         else:
             first, second = st.columns(2)
             distribution = yield_distribution(yield_filtered)
@@ -408,6 +443,8 @@ def main() -> None:
                 scatter_fig = parameter_scatter(cleaned_filtered, x_parameter, y_parameter)
                 report_figures.append(scatter_fig)
                 st.plotly_chart(scatter_fig, use_container_width=True, config=PLOT_CONFIG)
+            with st.expander("参数统计摘要", expanded=False):
+                st.dataframe(parameter_stats, use_container_width=True, hide_index=True, height=420)
 
     with tabs[5]:
         st.markdown("### 离线报告")
@@ -415,7 +452,13 @@ def main() -> None:
         if report_figures:
             st.download_button(
                 "生成并下载 HTML 报告",
-                data=html_report(report_figures, "CP Data Cockpit Report"),
+                data=html_report(
+                    report_figures,
+                    "CP Raw Data Analysis Report",
+                    metadata=bundle.metadata,
+                    yield_frame=yield_filtered,
+                    parameter_stats=parameter_stats,
+                ),
                 file_name="cp_data_cockpit_report.html",
                 mime="text/html",
             )
