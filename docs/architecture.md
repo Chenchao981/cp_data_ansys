@@ -33,6 +33,8 @@ flowchart LR
     G --> L
     G --> Y
     G --> F
+    W["Local Streamlit Web Cockpit"] --> S
+    W --> F
 ```
 
 ### 关键判断
@@ -40,6 +42,7 @@ flowchart LR
 - `cp_data_processor/` 是目标核心架构，包含统一模型、Reader、适配器和标准 CSV 生成器。
 - `UnifiedReader` 已支持 HH、JT、Lion、扬州国宇，但并非所有成熟流程的唯一入口。
 - 多公司 GUI 当前直接调用公司专用处理流程，再复用图表层。
+- 本地 Web 数据驾驶舱消费 cleaned、yield、spec 标准 CSV，用于预览和交互分析；MVP 不直接解析原始厂商文件。
 - `frontend/` 主要消费标准 CSV，而不是直接消费原始厂商文件。
 - `python_cp/` 和公司专用模块仍被部分主流程引用，未完成迁移前不能直接删除。
 
@@ -53,6 +56,7 @@ flowchart LR
 | `cp_data_processor/processing/` | 清洗、转换、标准 CSV、性能处理 | 核心 |
 | `frontend/charts/` | 标准 CSV 到 Plotly HTML | 核心 |
 | `gui/widgets/` | 多公司 GUI 工作流编排 | 核心 |
+| `web_app/` | 本地 Streamlit 表格预览与交互分析 | 核心 |
 | `jt_data_processor/` | JT 专用成熟处理链 | 兼容且仍在用 |
 | `lion/` 与 `lion_batch_processor.py` | Lion 专用读取、合并、图表 | 兼容且仍在用 |
 | `guoyu/` 与 `guoyu_batch_processor.py` | 扬州国宇 FRD 读取、单位解析、批次处理与图表 | 核心 |

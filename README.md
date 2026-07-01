@@ -8,7 +8,7 @@
 - 将不同来源转换为统一的 `CPLot` / `CPWafer` / `CPParameter` 数据模型
 - 输出 cleaned、yield、spec 三类标准 CSV
 - 生成良率趋势、失效分析、参数箱体图、散点图和汇总 HTML
-- 提供 PyQt5 多公司 GUI、公司专用脚本和 Python API
+- 提供 PyQt5 多公司 GUI、本地 Streamlit 数据驾驶舱、公司专用脚本和 Python API
 
 ## 推荐入口
 
@@ -18,7 +18,13 @@ python -m pip install -r requirements.txt
 
 # 启动多公司 GUI
 python -m gui.multi_company_main
+
+# 启动本地 Web 数据驾驶舱
+start_web.bat
 ```
+
+Web 版默认访问 `http://127.0.0.1:8501`，读取现有清洗流程生成的
+cleaned、yield、spec 标准 CSV。数据只在本机处理，不需要账号或服务端部署。
 
 公司专用命令：
 
@@ -68,6 +74,7 @@ python guoyu_batch_processor.py data/257375 --output output
 cp_data_processor/   核心数据模型、Reader、适配器、处理与分析模块
 frontend/            基于标准 CSV 的 Plotly 图表模块
 gui/                 PyQt5 多公司桌面 GUI
+web_app/             本地 Streamlit 数据驾驶舱
 jt_data_processor/   JT 成熟专用处理流程
 lion/                Lion Reader、适配器与图表生成
 python_cp/           华虹流程仍在使用的兼容模块
