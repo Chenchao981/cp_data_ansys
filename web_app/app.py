@@ -8,6 +8,20 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+from web_app.advanced_charts import (
+    bin_pareto,
+    capability_metrics,
+    correlation_heatmap,
+    ecdf_chart,
+    parameter_distribution,
+    qq_chart,
+    scatter_3d,
+    scatter_matrix,
+    sequence_scatter,
+    violin_distribution,
+    wafer_map,
+    wafer_mean_control_chart,
+)
 from web_app.charts import (
     bin_failure_chart,
     lot_comparison,
@@ -126,6 +140,16 @@ def metric_card(label: str, value: object, note: str) -> None:
 
 def csv_download(frame: pd.DataFrame) -> bytes:
     return frame.to_csv(index=False).encode("utf-8-sig")
+
+
+def optional_float(value: object) -> float | None:
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        return float(text)
+    except (TypeError, ValueError):
+        return None
 
 
 def html_report(
@@ -345,7 +369,10 @@ def main() -> None:
             with column:
                 metric_card(*metric)
 
-    tabs = st.tabs(["驾驶舱", "数据预览", "良率分析", "Bin 失效", "参数实验室", "报告导出"])
+    parameters = parameter_columns(cleaned_filtered)
+    tabs = st.tabs(
+        ["驾驶舱", "数据预览", "良率与失效", "Wafer Map", "分布与能力", "散点与相关", "SPC 趋势", "报告导出"]
+    )
     report_figures: list[go.Figure] = []
 
     with tabs[0]:
@@ -387,7 +414,7 @@ def main() -> None:
             )
 
     with tabs[2]:
-        st.markdown("### 良率信号分析")
+        st.markdown("### 良率与失效结构")
         if yield_filtered.empty:
             st.warning("原始数据中没有可识别的 Lot_ID、Wafer_ID、Bin，无法生成良率分析。")
         else:
@@ -399,56 +426,152 @@ def main() -> None:
                 st.plotly_chart(distribution, use_container_width=True, config=PLOT_CONFIG)
             with second:
                 st.plotly_chart(comparison, use_container_width=True, config=PLOT_CONFIG)
-
-    with tabs[3]:
-        st.markdown("### Bin 失效结构")
         bin_columns = dynamic_bin_columns(yield_filtered)
         if not bin_columns:
-            st.warning("当前 yield 数据没有可识别的动态 Bin 计数列。")
+            st.info("当前数据没有可识别的失效 Bin 计数。")
         else:
             totals = yield_filtered[bin_columns].apply(pd.to_numeric, errors="coerce").sum().sort_values(ascending=False)
             chart = bin_failure_chart(totals)
-            report_figures.append(chart)
-            left, right = st.columns([1.45, 1])
+            pareto = bin_pareto(totals)
+            report_figures.extend([chart, pareto])
+            left, right = st.columns(2)
             with left:
                 st.plotly_chart(chart, use_container_width=True, config=PLOT_CONFIG)
             with right:
-                st.markdown("#### 失效排行")
-                ranking = totals.rename("Fail_Die").rename_axis("Bin").reset_index()
-                ranking["占比"] = ranking["Fail_Die"] / ranking["Fail_Die"].sum()
+                st.plotly_chart(pareto, use_container_width=True, config=PLOT_CONFIG)
+            ranking = totals.rename("Fail_Die").rename_axis("Bin").reset_index()
+            ranking["占比"] = ranking["Fail_Die"] / ranking["Fail_Die"].sum()
+            with st.expander("Bin 失效明细", expanded=False):
                 st.dataframe(ranking, use_container_width=True, hide_index=True)
 
-    with tabs[4]:
-        st.markdown("### 参数实验室")
-        parameters = parameter_columns(cleaned_filtered)
-        if not parameters:
-            st.warning("cleaned CSV 中没有可分析的数值参数。")
+    with tabs[3]:
+        st.markdown("### Wafer 空间分布")
+        if not {"Wafer_ID", "X", "Y"}.issubset(cleaned_filtered.columns):
+            st.warning("原始数据没有 Wafer_ID、X、Y，无法生成 Wafer Map。")
+        elif cleaned_filtered["X"].nunique() < 2 or cleaned_filtered["Y"].nunique() < 2:
+            st.warning("当前坐标没有有效空间变化，Wafer Map 不具备位置分析意义。")
         else:
-            box_parameter = st.selectbox("分布参数", parameters)
-            spec_info = parameter_spec(bundle.spec, box_parameter)
-            if spec_info:
-                st.caption("规格信息 · " + " · ".join(f"{key}: {value}" for key, value in spec_info.items()))
-            box_fig = parameter_box(cleaned_filtered, box_parameter)
-            report_figures.append(box_fig)
-            st.plotly_chart(box_fig, use_container_width=True, config=PLOT_CONFIG)
-            st.markdown("#### 双参数关联")
-            cols = st.columns(2)
-            with cols[0]:
-                x_parameter = st.selectbox("X 参数", parameters, index=0)
-            with cols[1]:
-                y_parameter = st.selectbox("Y 参数", parameters, index=min(1, len(parameters) - 1))
-            if x_parameter == y_parameter:
-                st.info("请选择两个不同参数查看相关性。")
-            else:
+            wafer_options = sorted(cleaned_filtered["Wafer_ID"].dropna().astype(str).unique().tolist())
+            map_columns = ["Bin"] + parameters
+            controls = st.columns(2)
+            with controls[0]:
+                map_wafer = st.selectbox("Wafer", wafer_options, key="map_wafer")
+            with controls[1]:
+                map_value = st.selectbox("着色字段", map_columns, key="map_value")
+            map_fig = wafer_map(
+                cleaned_filtered,
+                map_wafer,
+                map_value,
+                pass_bin=int(bundle.metadata.get("pass_bin", 1)),
+            )
+            report_figures.append(map_fig)
+            st.plotly_chart(map_fig, use_container_width=True, config=PLOT_CONFIG)
+
+    with tabs[4]:
+        st.markdown("### 参数分布与制程能力")
+        if not parameters:
+            st.warning("没有可分析的数值参数。")
+        else:
+            distribution_parameter = st.selectbox("分析参数", parameters, key="distribution_parameter")
+            spec_info = parameter_spec(bundle.spec, distribution_parameter)
+            default_lsl = spec_info.get("LimitL", spec_info.get("LSL", "")) if spec_info else ""
+            default_usl = spec_info.get("LimitU", spec_info.get("USL", "")) if spec_info else ""
+            limits = st.columns(2)
+            with limits[0]:
+                lsl_text = st.text_input("LSL（可留空）", value=str(default_lsl) if default_lsl != "" else "")
+            with limits[1]:
+                usl_text = st.text_input("USL（可留空）", value=str(default_usl) if default_usl != "" else "")
+            lsl, usl = optional_float(lsl_text), optional_float(usl_text)
+            if lsl is None and usl is None:
+                st.caption("未提供规格：展示分布统计，但不计算 Cp/Cpk/Pp/Ppk。")
+            capability = capability_metrics(cleaned_filtered, distribution_parameter, lsl, usl)
+            capability_columns = st.columns(4)
+            for column, name in zip(capability_columns, ("Cp", "Cpk", "Pp", "Ppk")):
+                value = capability[name]
+                with column:
+                    st.metric(name, "—" if value is None or pd.isna(value) else f"{value:.3f}")
+            histogram = parameter_distribution(cleaned_filtered, distribution_parameter, lsl, usl)
+            violin = violin_distribution(cleaned_filtered, distribution_parameter)
+            qq = qq_chart(cleaned_filtered, distribution_parameter)
+            ecdf = ecdf_chart(cleaned_filtered, distribution_parameter)
+            report_figures.extend([histogram, violin, qq, ecdf])
+            left, right = st.columns(2)
+            with left:
+                st.plotly_chart(histogram, use_container_width=True, config=PLOT_CONFIG)
+                st.plotly_chart(qq, use_container_width=True, config=PLOT_CONFIG)
+            with right:
+                st.plotly_chart(violin, use_container_width=True, config=PLOT_CONFIG)
+                st.plotly_chart(ecdf, use_container_width=True, config=PLOT_CONFIG)
+            with st.expander("能力计算明细", expanded=False):
+                st.json(capability)
+
+    with tabs[5]:
+        st.markdown("### 多参数散点与相关性")
+        if len(parameters) < 2:
+            st.warning("至少需要两个数值参数。")
+        else:
+            selectors = st.columns(2)
+            with selectors[0]:
+                x_parameter = st.selectbox("X 参数", parameters, index=0, key="scatter_x")
+            with selectors[1]:
+                y_parameter = st.selectbox("Y 参数", parameters, index=1, key="scatter_y")
+            if x_parameter != y_parameter:
                 scatter_fig = parameter_scatter(cleaned_filtered, x_parameter, y_parameter)
                 report_figures.append(scatter_fig)
                 st.plotly_chart(scatter_fig, use_container_width=True, config=PLOT_CONFIG)
-            with st.expander("参数统计摘要", expanded=False):
-                st.dataframe(parameter_stats, use_container_width=True, hide_index=True, height=420)
+            selected_matrix = st.multiselect(
+                "相关矩阵参数（2–6 个）",
+                parameters,
+                default=parameters[: min(4, len(parameters))],
+                max_selections=6,
+            )
+            if len(selected_matrix) >= 2:
+                heatmap = correlation_heatmap(cleaned_filtered, selected_matrix)
+                matrix = scatter_matrix(cleaned_filtered, selected_matrix[:5])
+                report_figures.extend([heatmap, matrix])
+                st.plotly_chart(heatmap, use_container_width=True, config=PLOT_CONFIG)
+                st.plotly_chart(matrix, use_container_width=True, config=PLOT_CONFIG)
+            if len(parameters) >= 3:
+                triple = st.columns(3)
+                with triple[0]:
+                    x3 = st.selectbox("3D X", parameters, index=0)
+                with triple[1]:
+                    y3 = st.selectbox("3D Y", parameters, index=1)
+                with triple[2]:
+                    z3 = st.selectbox("3D Z", parameters, index=2)
+                if len({x3, y3, z3}) == 3:
+                    chart_3d = scatter_3d(cleaned_filtered, x3, y3, z3)
+                    report_figures.append(chart_3d)
+                    st.plotly_chart(chart_3d, use_container_width=True, config=PLOT_CONFIG)
 
-    with tabs[5]:
+    with tabs[6]:
+        st.markdown("### SPC 与测试顺序趋势")
+        if not parameters:
+            st.warning("没有可分析的数值参数。")
+        else:
+            spc_parameter = st.selectbox("SPC 参数", parameters, key="spc_parameter")
+            spc_chart = wafer_mean_control_chart(cleaned_filtered, spc_parameter)
+            report_figures.append(spc_chart)
+            st.plotly_chart(spc_chart, use_container_width=True, config=PLOT_CONFIG)
+            if "Seq" in cleaned_filtered.columns:
+                sequence_wafer_options = ["全部 Wafer"] + sorted(
+                    cleaned_filtered["Wafer_ID"].dropna().astype(str).unique().tolist()
+                )
+                sequence_wafer = st.selectbox("Run Chart Wafer", sequence_wafer_options)
+                sequence_fig = sequence_scatter(
+                    cleaned_filtered,
+                    spc_parameter,
+                    None if sequence_wafer == "全部 Wafer" else sequence_wafer,
+                )
+                report_figures.append(sequence_fig)
+                st.plotly_chart(sequence_fig, use_container_width=True, config=PLOT_CONFIG)
+            st.caption("控制界限按当前筛选范围内的 Wafer 均值 ±3σ 计算；用于过程监控，不替代正式控制计划判异规则。")
+
+    with tabs[7]:
         st.markdown("### 离线报告")
-        st.write("将当前筛选条件下已经生成的图表合并为一个可离线打开的 HTML 文件。")
+        st.write("汇总当前筛选条件下的良率、失效、分布、能力、散点、Wafer Map 和 SPC 图表。")
+        with st.expander("参数统计摘要", expanded=True):
+            st.dataframe(parameter_stats, use_container_width=True, hide_index=True, height=420)
         if report_figures:
             st.download_button(
                 "生成并下载 HTML 报告",

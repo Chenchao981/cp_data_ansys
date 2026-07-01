@@ -31,8 +31,12 @@ D:\ProgramData\anaconda3\python.exe -m streamlit run web_app\app.py
 - 原始文件自动识别、内存 IQR 清洗和动态良率/Bin 计算
 - 参数统计摘要与带处理口径的离线 HTML 报告
 - Wafer 良率趋势、Lot 对比与良率分布
-- 动态 Bin 失效排行
-- 参数箱体分布、规格提示和双参数散点图
+- 动态 Bin 失效排行与 Pareto 累计贡献
+- Bin/参数 Wafer Map
+- Histogram、Box、Violin、ECDF、Normal Q-Q
+- Cp/Cpk（片内 pooled sigma）与 Pp/Ppk（总体 sigma）
+- 二维散点、3D 散点、Scatter Matrix、Correlation Heatmap
+- Wafer Mean 3-sigma SPC 与测试顺序 Run Chart
 - 当前筛选视图离线 HTML 报告
 
 ## 后续迭代
