@@ -19,13 +19,16 @@ from web_app.charts import (
 from web_app.data_service import (
     DataBundle,
     dynamic_bin_columns,
+    excel_sheet_names,
     filter_by_lot_and_wafer,
     first_existing_column,
     load_bundle,
     parameter_columns,
     parameter_spec,
+    read_table_file,
     wafer_yield_data,
 )
+from web_app.native_picker import pick_folder, pick_table_file
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -103,6 +106,18 @@ def directory_fingerprint(path: str) -> tuple[tuple[str, int, int], ...]:
     return tuple(sorted((item.name, item.stat().st_mtime_ns, item.stat().st_size) for item in root.glob("*.csv")))
 
 
+@st.cache_data(show_spinner=False)
+def cached_table_preview(path: str, sheet_name: str | int, modified_ns: int, size: int) -> pd.DataFrame:
+    del modified_ns, size
+    return read_table_file(path, sheet_name=sheet_name)
+
+
+@st.cache_data(show_spinner=False)
+def cached_sheet_names(path: str, modified_ns: int, size: int) -> list[str]:
+    del modified_ns, size
+    return excel_sheet_names(path)
+
+
 def metric_card(label: str, value: object, note: str) -> None:
     st.markdown(
         f"<div class='metric-card'><div class='metric-label'>{escape(str(label))}</div>"
@@ -129,10 +144,30 @@ def html_report(figures: list[go.Figure], title: str) -> bytes:
 def sidebar() -> str:
     st.sidebar.markdown("## ⚡ CP Cockpit")
     st.sidebar.caption("LOCAL ANALYTICS · 数据仅在本机")
-    path = st.sidebar.text_input("标准 CSV 数据目录", value=st.session_state.get("data_path", DEFAULT_DATA_DIR))
+    path = st.sidebar.text_input("数据目录", value=st.session_state.get("data_path", DEFAULT_DATA_DIR))
+    browse_columns = st.sidebar.columns(2)
+    with browse_columns[0]:
+        if st.button("📁 选择文件夹", use_container_width=True):
+            selected_folder = pick_folder(path if Path(path).is_dir() else None)
+            if selected_folder:
+                st.session_state["data_path"] = selected_folder
+                st.session_state.pop("preview_file", None)
+                st.cache_data.clear()
+                st.rerun()
+    with browse_columns[1]:
+        if st.button("📄 选择文件", use_container_width=True):
+            selected_file = pick_table_file(path if Path(path).is_dir() else None)
+            if selected_file:
+                st.session_state["preview_file"] = selected_file
+                st.session_state["data_path"] = str(Path(selected_file).parent)
+                st.cache_data.clear()
+                st.rerun()
     if st.sidebar.button("扫描并加载", use_container_width=True):
         st.session_state["data_path"] = path
         st.cache_data.clear()
+    preview_file = st.session_state.get("preview_file")
+    if preview_file:
+        st.sidebar.caption(f"当前文件 · {Path(preview_file).name}")
     st.sidebar.markdown("---")
     st.sidebar.markdown("**文件契约**")
     st.sidebar.caption("`*_cleaned_*.csv`  · Die 明细")
@@ -141,6 +176,49 @@ def sidebar() -> str:
     st.sidebar.markdown("---")
     st.sidebar.caption("Web MVP v0.1 · codex/web")
     return st.session_state.get("data_path", path)
+
+
+def selected_file_preview(path: str, key_prefix: str) -> pd.DataFrame | None:
+    source = Path(path)
+    if not source.is_file():
+        st.warning(f"选中的文件已不存在：{source}")
+        return None
+    try:
+        stat = source.stat()
+        sheet_name: str | int = 0
+        if source.suffix.lower() in {".xlsx", ".xls"}:
+            sheet_names = cached_sheet_names(str(source), stat.st_mtime_ns, stat.st_size)
+            sheet_name = st.selectbox("Excel 工作表", sheet_names, key=f"{key_prefix}_sheet")
+        frame = cached_table_preview(str(source), sheet_name, stat.st_mtime_ns, stat.st_size)
+    except Exception as exc:
+        st.error(f"表格预览失败：{exc}")
+        return None
+
+    row_limit = st.select_slider(
+        "预览行数",
+        options=[100, 300, 500, 1000, 3000],
+        value=500,
+        key=f"{key_prefix}_rows",
+    )
+    st.caption(f"{source.name} · {len(frame):,} 行 × {len(frame.columns):,} 列")
+    st.dataframe(frame.head(row_limit), use_container_width=True, height=520)
+    st.download_button(
+        "下载预览内容 CSV",
+        data=csv_download(frame),
+        file_name=f"{source.stem}_preview.csv",
+        mime="text/csv",
+        key=f"{key_prefix}_download",
+    )
+    return frame
+
+
+def show_standalone_file(path: str) -> None:
+    st.markdown(
+        """<div class='hero'><div class='hero-kicker'><span class='status-dot'></span>MANUAL FILE PREVIEW</div>
+        <h1>表格文件预览</h1><p>当前文件不是标准分析输出，先展示原始表格内容，不执行良率或规格计算。</p></div>""",
+        unsafe_allow_html=True,
+    )
+    selected_file_preview(path, "standalone")
 
 
 def show_empty_state(path: str, message: str | None = None) -> None:
@@ -171,9 +249,13 @@ def show_empty_state(path: str, message: str | None = None) -> None:
 def main() -> None:
     inject_theme()
     data_path = sidebar()
+    preview_file = st.session_state.get("preview_file")
     fingerprint = directory_fingerprint(data_path)
     if not fingerprint:
-        show_empty_state(data_path)
+        if preview_file:
+            show_standalone_file(preview_file)
+        else:
+            show_empty_state(data_path)
         return
 
     try:
@@ -249,19 +331,25 @@ def main() -> None:
         st.markdown("### 标准数据透视")
         available = {"cleaned": bundle.cleaned, "yield": bundle.yield_data, "spec": bundle.spec}
         available = {name: frame for name, frame in available.items() if frame is not None}
-        selected_kind = st.radio("数据类型", list(available), horizontal=True)
-        preview = available[selected_kind]
-        if selected_kind != "spec":
-            preview = filter_by_lot_and_wafer(preview, selected_lots, selected_wafers)
-        limit = st.select_slider("预览行数", options=[100, 300, 500, 1000, 3000], value=500)
-        st.caption(f"共 {len(preview):,} 行 × {len(preview.columns):,} 列；当前显示前 {min(limit, len(preview)):,} 行")
-        st.dataframe(preview.head(limit), use_container_width=True, height=520)
-        st.download_button(
-            "下载当前筛选 CSV",
-            data=csv_download(preview),
-            file_name=f"{selected_kind}_filtered.csv",
-            mime="text/csv",
-        )
+        preview_options = list(available)
+        if preview_file:
+            preview_options.insert(0, "手动选择文件")
+        selected_kind = st.radio("数据类型", preview_options, horizontal=True)
+        if selected_kind == "手动选择文件":
+            selected_file_preview(preview_file, "contract_file")
+        else:
+            preview = available[selected_kind]
+            if selected_kind != "spec":
+                preview = filter_by_lot_and_wafer(preview, selected_lots, selected_wafers)
+            limit = st.select_slider("预览行数", options=[100, 300, 500, 1000, 3000], value=500)
+            st.caption(f"共 {len(preview):,} 行 × {len(preview.columns):,} 列；当前显示前 {min(limit, len(preview)):,} 行")
+            st.dataframe(preview.head(limit), use_container_width=True, height=520)
+            st.download_button(
+                "下载当前筛选 CSV",
+                data=csv_download(preview),
+                file_name=f"{selected_kind}_filtered.csv",
+                mime="text/csv",
+            )
 
     with tabs[2]:
         st.markdown("### 良率信号分析")

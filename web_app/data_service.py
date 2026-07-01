@@ -72,6 +72,24 @@ def read_csv_compatible(path: Path) -> pd.DataFrame:
     return pd.read_csv(path, low_memory=False)
 
 
+def excel_sheet_names(path: str | Path) -> list[str]:
+    source = Path(path)
+    if source.suffix.lower() not in {".xlsx", ".xls"}:
+        return []
+    with pd.ExcelFile(source) as workbook:
+        return list(workbook.sheet_names)
+
+
+def read_table_file(path: str | Path, sheet_name: str | int = 0) -> pd.DataFrame:
+    source = Path(path).expanduser().resolve()
+    suffix = source.suffix.lower()
+    if suffix == ".csv":
+        return read_csv_compatible(source)
+    if suffix in {".xlsx", ".xls"}:
+        return pd.read_excel(source, sheet_name=sheet_name)
+    raise ValueError(f"暂不支持预览该文件类型：{suffix or '无扩展名'}")
+
+
 def load_bundle(directory: str | Path) -> DataBundle:
     root = Path(directory).expanduser().resolve()
     files = discover_standard_files(root)
@@ -180,4 +198,3 @@ def filter_by_lot_and_wafer(
     if wafers and "Wafer_ID" in result.columns:
         result = result[result["Wafer_ID"].astype(str).isin(wafers)]
     return result
-

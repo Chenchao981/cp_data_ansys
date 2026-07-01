@@ -11,7 +11,9 @@
 D:\ProgramData\anaconda3\python.exe -m streamlit run web_app\app.py
 ```
 
-浏览器默认打开 `http://127.0.0.1:8501`。在左侧输入包含以下文件的数据目录：
+浏览器默认打开 `http://127.0.0.1:8501`。左侧可以直接点击“选择文件夹”或
+“选择文件”，也可以粘贴路径。选择普通 CSV/Excel 时先预览表格；选择标准 CSV
+时会自动扫描同目录的以下文件：
 
 - `*_cleaned_*.csv`
 - `*_yield_*.csv`
@@ -22,6 +24,7 @@ D:\ProgramData\anaconda3\python.exe -m streamlit run web_app\app.py
 - 深色科技风 KPI 驾驶舱
 - Lot、Wafer 联动筛选
 - cleaned、yield、spec 表格预览和 CSV 下载
+- Windows 原生文件夹/CSV/Excel 选择窗口与普通表格预览
 - Wafer 良率趋势、Lot 对比与良率分布
 - 动态 Bin 失效排行
 - 参数箱体分布、规格提示和双参数散点图
@@ -32,4 +35,3 @@ D:\ProgramData\anaconda3\python.exe -m streamlit run web_app\app.py
 1. 在 Web 页面调用 HH、JT、Lion、国宇现有清洗入口，并显示任务日志。
 2. 增加 Wafer Map、Cpk/Ppk、异常 Wafer 排名和参数失效贡献分析。
 3. 用脱敏厂商样例补齐端到端契约测试。
-

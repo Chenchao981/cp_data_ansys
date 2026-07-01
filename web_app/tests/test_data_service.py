@@ -9,6 +9,7 @@ from web_app.data_service import (
     normalize_yield_percent,
     parameter_columns,
     parameter_spec,
+    read_table_file,
     wafer_yield_data,
 )
 
@@ -65,3 +66,9 @@ def test_yield_normalization_handles_percent_and_fraction(tmp_path: Path) -> Non
     assert wafer_data["Yield_Numeric"].tolist() == [99.0, 98.0, 97.0]
     assert normalize_yield_percent(pd.Series(["99.5%", 0.975, 97])).tolist() == [99.5, 97.5, 97.0]
 
+
+def test_manual_csv_preview_accepts_non_contract_file(tmp_path: Path) -> None:
+    source = tmp_path / "manual_preview.csv"
+    pd.DataFrame({"Product": ["NCE-A"], "Value": [12.3]}).to_csv(source, index=False, encoding="utf-8-sig")
+    preview = read_table_file(source)
+    assert preview.to_dict("records") == [{"Product": "NCE-A", "Value": 12.3}]
