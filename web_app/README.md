@@ -33,9 +33,10 @@ D:\ProgramData\anaconda3\python.exe -m streamlit run web_app\app.py
 - Wafer 良率趋势、Lot 对比与良率分布
 - 动态 Bin 失效排行与 Pareto 累计贡献
 - Bin/参数 Wafer Map
+- 华虹规则参数全览：每个参数自动生成 Lot/Wafer 箱体 + Die 散点 + 规格线
 - Histogram、Box、Violin、ECDF、Normal Q-Q
 - Cp/Cpk（片内 pooled sigma）与 Pp/Ppk（总体 sigma）
-- 二维散点、3D 散点、Scatter Matrix、Correlation Heatmap
+- 自动高相关二维散点、3D 散点、Scatter Matrix、Correlation Heatmap
 - Wafer Mean 3-sigma SPC 与测试顺序 Run Chart
 - 当前筛选视图离线 HTML 报告
 

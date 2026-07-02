@@ -18,6 +18,7 @@ from web_app.advanced_charts import (
     scatter_3d,
     scatter_matrix,
     sequence_scatter,
+    strongest_parameter_pairs,
     violin_distribution,
     wafer_map,
     wafer_mean_control_chart,
@@ -25,8 +26,8 @@ from web_app.advanced_charts import (
 from web_app.charts import (
     bin_failure_chart,
     lot_comparison,
-    parameter_box,
     parameter_scatter,
+    parameter_wafer_chart,
     yield_distribution,
     yield_trend,
 )
@@ -224,7 +225,7 @@ def sidebar() -> str:
     st.sidebar.caption("HH DCP/TXT · JT/Lion/国宇 Excel")
     st.sidebar.caption("通用 CSV/Excel · 标准分析 CSV")
     st.sidebar.markdown("---")
-    st.sidebar.caption("Raw Analytics v0.2 · codex/web")
+    st.sidebar.caption("Raw Analytics v0.3 · codex/web")
     return st.session_state.get("data_path", path)
 
 
@@ -289,7 +290,7 @@ def show_empty_state(path: str, message: str | None = None) -> None:
             ("原始读取", "TXT、CSV、Excel 自动识别"),
             ("良率洞察", "Wafer 趋势、Lot 对比、分布"),
             ("失效结构", "动态识别全部 Bin 列"),
-            ("参数分析", "箱体分布与双参数散点"),
+            ("参数全览", "每个参数自动生成 Wafer 箱体与 Die 散点"),
         ],
     ):
         with column:
@@ -371,7 +372,7 @@ def main() -> None:
 
     parameters = parameter_columns(cleaned_filtered)
     tabs = st.tabs(
-        ["驾驶舱", "数据预览", "良率与失效", "Wafer Map", "分布与能力", "散点与相关", "SPC 趋势", "报告导出"]
+        ["驾驶舱", "数据预览", "良率与失效", "Wafer Map", "参数全览", "分布与能力", "参数相关", "SPC 趋势", "报告导出"]
     )
     report_figures: list[go.Figure] = []
 
@@ -468,6 +469,20 @@ def main() -> None:
             st.plotly_chart(map_fig, use_container_width=True, config=PLOT_CONFIG)
 
     with tabs[4]:
+        st.markdown("### 全参数 Wafer 分布")
+        st.caption("沿用华虹参数图规则：X 轴固定为 Lot → Wafer_ID，Y 轴固定为当前参数；箱体来自全部有效 Die，散点仅做等分位抽样。")
+        if not parameters:
+            st.warning("没有可分析的数值参数。")
+        else:
+            parameter_columns_ui = st.columns(2)
+            for index, parameter in enumerate(parameters):
+                spec_info = parameter_spec(bundle.spec, parameter)
+                chart = parameter_wafer_chart(cleaned_filtered, parameter, spec_info)
+                report_figures.append(chart)
+                with parameter_columns_ui[index % 2]:
+                    st.plotly_chart(chart, use_container_width=True, config=PLOT_CONFIG, key=f"parameter_gallery_{index}")
+
+    with tabs[5]:
         st.markdown("### 参数分布与制程能力")
         if not parameters:
             st.warning("没有可分析的数值参数。")
@@ -505,46 +520,45 @@ def main() -> None:
             with st.expander("能力计算明细", expanded=False):
                 st.json(capability)
 
-    with tabs[5]:
-        st.markdown("### 多参数散点与相关性")
+    with tabs[6]:
+        st.markdown("### 自动参数相关分析")
         if len(parameters) < 2:
             st.warning("至少需要两个数值参数。")
         else:
-            selectors = st.columns(2)
-            with selectors[0]:
-                x_parameter = st.selectbox("X 参数", parameters, index=0, key="scatter_x")
-            with selectors[1]:
-                y_parameter = st.selectbox("Y 参数", parameters, index=1, key="scatter_y")
-            if x_parameter != y_parameter:
-                scatter_fig = parameter_scatter(cleaned_filtered, x_parameter, y_parameter)
-                report_figures.append(scatter_fig)
-                st.plotly_chart(scatter_fig, use_container_width=True, config=PLOT_CONFIG)
-            selected_matrix = st.multiselect(
-                "相关矩阵参数（2–6 个）",
-                parameters,
-                default=parameters[: min(4, len(parameters))],
-                max_selections=6,
-            )
-            if len(selected_matrix) >= 2:
-                heatmap = correlation_heatmap(cleaned_filtered, selected_matrix)
-                matrix = scatter_matrix(cleaned_filtered, selected_matrix[:5])
-                report_figures.extend([heatmap, matrix])
+            st.caption("系统按绝对 Pearson 相关系数自动挑选最强参数对，不需要设置 X/Y。")
+            heatmap = correlation_heatmap(cleaned_filtered, parameters)
+            matrix_parameters = parameters[: min(5, len(parameters))]
+            matrix = scatter_matrix(cleaned_filtered, matrix_parameters)
+            report_figures.extend([heatmap, matrix])
+            overview = st.columns(2)
+            with overview[0]:
                 st.plotly_chart(heatmap, use_container_width=True, config=PLOT_CONFIG)
+            with overview[1]:
                 st.plotly_chart(matrix, use_container_width=True, config=PLOT_CONFIG)
-            if len(parameters) >= 3:
-                triple = st.columns(3)
-                with triple[0]:
-                    x3 = st.selectbox("3D X", parameters, index=0)
-                with triple[1]:
-                    y3 = st.selectbox("3D Y", parameters, index=1)
-                with triple[2]:
-                    z3 = st.selectbox("3D Z", parameters, index=2)
-                if len({x3, y3, z3}) == 3:
-                    chart_3d = scatter_3d(cleaned_filtered, x3, y3, z3)
-                    report_figures.append(chart_3d)
-                    st.plotly_chart(chart_3d, use_container_width=True, config=PLOT_CONFIG)
 
-    with tabs[6]:
+            correlation_pairs = strongest_parameter_pairs(cleaned_filtered, parameters, limit=6)
+            if correlation_pairs:
+                st.markdown("#### 高相关参数散点")
+                pair_columns = st.columns(2)
+                for index, (x_parameter, y_parameter, correlation) in enumerate(correlation_pairs):
+                    scatter_fig = parameter_scatter(cleaned_filtered, x_parameter, y_parameter)
+                    scatter_fig.update_layout(title=f"{x_parameter} × {y_parameter} · r={correlation:.3f}")
+                    report_figures.append(scatter_fig)
+                    with pair_columns[index % 2]:
+                        st.plotly_chart(scatter_fig, use_container_width=True, config=PLOT_CONFIG, key=f"auto_pair_{index}")
+            if len(parameters) >= 3:
+                automatic_3d = []
+                for left, right, _ in correlation_pairs:
+                    for parameter in (left, right):
+                        if parameter not in automatic_3d:
+                            automatic_3d.append(parameter)
+                automatic_3d.extend(parameter for parameter in parameters if parameter not in automatic_3d)
+                x3, y3, z3 = automatic_3d[:3]
+                chart_3d = scatter_3d(cleaned_filtered, x3, y3, z3)
+                report_figures.append(chart_3d)
+                st.plotly_chart(chart_3d, use_container_width=True, config=PLOT_CONFIG)
+
+    with tabs[7]:
         st.markdown("### SPC 与测试顺序趋势")
         if not parameters:
             st.warning("没有可分析的数值参数。")
@@ -567,7 +581,7 @@ def main() -> None:
                 st.plotly_chart(sequence_fig, use_container_width=True, config=PLOT_CONFIG)
             st.caption("控制界限按当前筛选范围内的 Wafer 均值 ±3σ 计算；用于过程监控，不替代正式控制计划判异规则。")
 
-    with tabs[7]:
+    with tabs[8]:
         st.markdown("### 离线报告")
         st.write("汇总当前筛选条件下的良率、失效、分布、能力、散点、Wafer Map 和 SPC 图表。")
         with st.expander("参数统计摘要", expanded=True):

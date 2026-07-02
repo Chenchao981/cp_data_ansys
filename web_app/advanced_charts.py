@@ -22,6 +22,18 @@ def sampled(frame: pd.DataFrame, limit: int, seed: int = 42) -> pd.DataFrame:
     return frame.sample(limit, random_state=seed) if len(frame) > limit else frame
 
 
+def strongest_parameter_pairs(frame: pd.DataFrame, parameters: list[str], limit: int = 6) -> list[tuple[str, str, float]]:
+    numeric = frame[parameters].apply(pd.to_numeric, errors="coerce")
+    correlation = numeric.corr(min_periods=3)
+    pairs = [
+        (left, right, float(correlation.loc[left, right]))
+        for index, left in enumerate(parameters)
+        for right in parameters[index + 1 :]
+        if pd.notna(correlation.loc[left, right])
+    ]
+    return sorted(pairs, key=lambda item: abs(item[2]), reverse=True)[:limit]
+
+
 def bin_pareto(totals: pd.Series) -> go.Figure:
     values = totals[totals > 0].sort_values(ascending=False)
     cumulative = values.cumsum() / values.sum() * 100 if values.sum() else values

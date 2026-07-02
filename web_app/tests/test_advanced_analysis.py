@@ -1,6 +1,14 @@
 import pandas as pd
 
-from web_app.advanced_charts import bin_pareto, capability_metrics, correlation_heatmap, qq_chart, wafer_map
+from web_app.advanced_charts import (
+    bin_pareto,
+    capability_metrics,
+    correlation_heatmap,
+    qq_chart,
+    strongest_parameter_pairs,
+    wafer_map,
+)
+from web_app.charts import parameter_wafer_chart
 
 
 def sample_frame() -> pd.DataFrame:
@@ -50,3 +58,25 @@ def test_empty_qq_and_zero_sigma_capability_are_safe() -> None:
     assert len(empty_figure.layout.annotations) == 1
     assert metrics["Cp"] is None
     assert metrics["Cpk"] is None
+
+
+def test_parameter_wafer_chart_uses_fixed_wafer_axis_and_spec_lines() -> None:
+    frame = sample_frame()
+    original = frame.copy(deep=True)
+    figure = parameter_wafer_chart(
+        frame,
+        "P1",
+        {"Unit": "V", "LimitL": 9.0, "LimitU": 11.0, "Target": 10.0},
+    )
+    assert figure.layout.xaxis.title.text == "Wafer_ID"
+    assert figure.layout.yaxis.title.text == "P1 [V]"
+    assert list(figure.layout.xaxis.ticktext) == ["01", "02"]
+    assert len(figure.layout.shapes) == 3
+    assert {trace.type for trace in figure.data} == {"box", "scattergl"}
+    pd.testing.assert_frame_equal(frame, original)
+
+
+def test_strongest_parameter_pairs_are_automatic() -> None:
+    pairs = strongest_parameter_pairs(sample_frame(), ["P1", "P2"], limit=6)
+    assert len(pairs) == 1
+    assert pairs[0][:2] == ("P1", "P2")
