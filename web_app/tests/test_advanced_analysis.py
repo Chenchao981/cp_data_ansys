@@ -70,11 +70,12 @@ def test_parameter_wafer_chart_uses_fixed_wafer_axis_and_spec_lines() -> None:
     )
     assert figure.layout.xaxis.title.text == "Wafer_ID"
     assert figure.layout.yaxis.title.text == "P1 [V]"
-    assert list(figure.layout.xaxis.ticktext) == ["01", "02"]
-    assert list(figure.layout.xaxis.range) == [-0.5, 1.5]
+    assert list(figure.layout.xaxis.ticktext) == ["1", "2"]
+    assert list(figure.layout.xaxis.tickvals) == [1, 2]
+    assert list(figure.layout.xaxis.range) == [0.5, 2.5]
     assert list(figure.layout.yaxis.range) == [8.8, 11.2]
     assert len(figure.layout.shapes) == 3
-    assert {trace.type for trace in figure.data} == {"box", "scattergl"}
+    assert {trace.type for trace in figure.data} == {"box", "scatter"}
     pd.testing.assert_frame_equal(frame, original)
 
 
@@ -94,7 +95,22 @@ def test_parameter_wafer_chart_marks_iqr_outliers_with_open_circles() -> None:
     )
     figure = parameter_wafer_chart(frame, "P1")
     open_circle_traces = [
-        trace for trace in figure.data if trace.type == "scattergl" and trace.marker.symbol == "circle-open"
+        trace for trace in figure.data if trace.type == "scatter" and trace.marker.symbol == "circle-open"
     ]
     assert len(open_circle_traces) == 1
     assert list(open_circle_traces[0].y) == [10.0]
+
+
+def test_parameter_wafer_chart_preserves_missing_physical_wafer_slots() -> None:
+    frame = pd.DataFrame(
+        {
+            "Lot_ID": ["L1"] * 6,
+            "Wafer_ID": ["01", "01", "03", "03", "25", "25"],
+            "P1": [1.0, 1.1, 1.2, 1.3, 1.4, 1.5],
+        }
+    )
+    figure = parameter_wafer_chart(frame, "P1")
+    assert list(figure.layout.xaxis.tickvals) == list(range(1, 26))
+    assert list(figure.layout.xaxis.range) == [0.5, 25.5]
+    box_trace = next(trace for trace in figure.data if trace.type == "box")
+    assert list(box_trace.x) == [1, 3, 25]

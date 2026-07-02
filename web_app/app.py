@@ -96,7 +96,15 @@ def inject_theme() -> None:
         .metric-label { color:#8298b8; font-size:.77rem; letter-spacing:.08em; text-transform:uppercase; }
         .metric-value { margin-top:8px; color:#f2f7ff; font-size:1.72rem; font-weight:750; }
         .metric-note { margin-top:4px; color:#35d9ff; font-size:.76rem; }
-        [data-testid="stTabs"] button { font-weight:650; }
+        div[role="radiogroup"] { gap:.42rem; }
+        div[role="radiogroup"] label {
+          padding:.38rem .72rem; border:1px solid rgba(83,174,255,.18); border-radius:999px;
+          background:rgba(8,18,36,.58); transition:all .18s ease;
+        }
+        div[role="radiogroup"] label:has(input:checked) {
+          border-color:rgba(58,220,255,.72); background:linear-gradient(120deg, rgba(19,111,170,.72), rgba(100,54,190,.68));
+          box-shadow:0 0 18px rgba(35,213,255,.16);
+        }
         [data-testid="stDataFrame"] { border:1px solid rgba(83,174,255,.18); border-radius:14px; overflow:hidden; }
         .stButton>button, .stDownloadButton>button { border-radius:12px; border:1px solid rgba(63,211,255,.35);
           background:linear-gradient(120deg, rgba(19,111,170,.88), rgba(100,54,190,.84)); color:white; }
@@ -184,6 +192,30 @@ def html_report(
     tr:nth-child(even){{background:#0b1a30}} .chart{{margin:20px 0}}</style></head><body><h1>{escape(title)}</h1>
     {metadata_html}{yield_html}{stats_html}{''.join(fragments)}</body></html>"""
     return document.encode("utf-8")
+
+
+def build_report_figures(
+    cleaned: pd.DataFrame,
+    yield_frame: pd.DataFrame,
+    spec: pd.DataFrame | None,
+    parameters: list[str],
+) -> list[go.Figure]:
+    """仅在用户请求报告时构建图表，避免页面刷新时重复序列化。"""
+    figures: list[go.Figure] = []
+    if not yield_frame.empty:
+        figures.extend([yield_trend(yield_frame), lot_comparison(yield_frame), yield_distribution(yield_frame)])
+        bin_columns = dynamic_bin_columns(yield_frame)
+        if bin_columns:
+            totals = yield_frame[bin_columns].apply(pd.to_numeric, errors="coerce").sum().sort_values(ascending=False)
+            figures.extend([bin_failure_chart(totals), bin_pareto(totals)])
+    figures.extend(parameter_wafer_chart(cleaned, parameter, parameter_spec(spec, parameter)) for parameter in parameters)
+    if len(parameters) >= 2:
+        figures.append(correlation_heatmap(cleaned, parameters))
+        for left, right, correlation in strongest_parameter_pairs(cleaned, parameters, limit=3):
+            chart = parameter_scatter(cleaned, left, right)
+            chart.update_layout(title=f"{left} × {right} · r={correlation:.3f}")
+            figures.append(chart)
+    return figures
 
 
 def sidebar() -> str:
@@ -334,7 +366,6 @@ def main() -> None:
 
     cleaned_filtered = filter_by_lot_and_wafer(cleaned, selected_lots, selected_wafers)
     yield_filtered = filter_by_lot_and_wafer(yield_frame, selected_lots, selected_wafers)
-    parameter_stats = parameter_summary(cleaned_filtered)
 
     st.markdown(
         f"""<div class='hero'><div class='hero-kicker'><span class='status-dot'></span>LIVE DATA LINK</div>
@@ -371,18 +402,21 @@ def main() -> None:
                 metric_card(*metric)
 
     parameters = parameter_columns(cleaned_filtered)
-    tabs = st.tabs(
-        ["驾驶舱", "数据预览", "良率与失效", "Wafer Map", "参数全览", "分布与能力", "参数相关", "SPC 趋势", "报告导出"]
+    views = ["驾驶舱", "数据预览", "良率与失效", "Wafer Map", "参数全览", "分布与能力", "参数相关", "SPC 趋势", "报告导出"]
+    active_view = st.radio(
+        "分析视图",
+        views,
+        horizontal=True,
+        label_visibility="collapsed",
+        key="analysis_view",
     )
-    report_figures: list[go.Figure] = []
 
-    with tabs[0]:
+    if active_view == "驾驶舱":
         st.markdown("### 信号总览")
         if not yield_filtered.empty:
             left, right = st.columns([1.55, 1])
             trend = yield_trend(yield_filtered)
             comparison = lot_comparison(yield_filtered)
-            report_figures.extend([trend, comparison])
             with left:
                 st.plotly_chart(trend, use_container_width=True, config=PLOT_CONFIG)
             with right:
@@ -390,7 +424,7 @@ def main() -> None:
         else:
             st.warning("缺少可用 yield 数据，驾驶舱暂不显示良率图。")
 
-    with tabs[1]:
+    elif active_view == "数据预览":
         st.markdown("### 内存数据透视")
         available = {"清洗后 Die 明细": bundle.cleaned, "实时良率统计": bundle.yield_data, "内存规格": bundle.spec}
         available = {name: frame for name, frame in available.items() if frame is not None}
@@ -414,7 +448,7 @@ def main() -> None:
                 mime="text/csv",
             )
 
-    with tabs[2]:
+    elif active_view == "良率与失效":
         st.markdown("### 良率与失效结构")
         if yield_filtered.empty:
             st.warning("原始数据中没有可识别的 Lot_ID、Wafer_ID、Bin，无法生成良率分析。")
@@ -422,7 +456,6 @@ def main() -> None:
             first, second = st.columns(2)
             distribution = yield_distribution(yield_filtered)
             comparison = lot_comparison(yield_filtered)
-            report_figures.extend([distribution, comparison])
             with first:
                 st.plotly_chart(distribution, use_container_width=True, config=PLOT_CONFIG)
             with second:
@@ -434,7 +467,6 @@ def main() -> None:
             totals = yield_filtered[bin_columns].apply(pd.to_numeric, errors="coerce").sum().sort_values(ascending=False)
             chart = bin_failure_chart(totals)
             pareto = bin_pareto(totals)
-            report_figures.extend([chart, pareto])
             left, right = st.columns(2)
             with left:
                 st.plotly_chart(chart, use_container_width=True, config=PLOT_CONFIG)
@@ -445,7 +477,7 @@ def main() -> None:
             with st.expander("Bin 失效明细", expanded=False):
                 st.dataframe(ranking, use_container_width=True, hide_index=True)
 
-    with tabs[3]:
+    elif active_view == "Wafer Map":
         st.markdown("### Wafer 空间分布")
         if not {"Wafer_ID", "X", "Y"}.issubset(cleaned_filtered.columns):
             st.warning("原始数据没有 Wafer_ID、X、Y，无法生成 Wafer Map。")
@@ -465,22 +497,20 @@ def main() -> None:
                 map_value,
                 pass_bin=int(bundle.metadata.get("pass_bin", 1)),
             )
-            report_figures.append(map_fig)
             st.plotly_chart(map_fig, use_container_width=True, config=PLOT_CONFIG)
 
-    with tabs[4]:
+    elif active_view == "参数全览":
         st.markdown("### 全参数 Wafer 分布")
-        st.caption("沿用华虹参数图规则：X 轴固定为 Lot → Wafer_ID，Y 轴固定为当前参数；箱体来自全部有效 Die，散点仅做等分位抽样。")
+        st.caption("X 轴按实际 Wafer 片号排列（例如 1–25，缺片位置保留）；当前页面只加载参数图，隐藏分析页不再占用图形资源。")
         if not parameters:
             st.warning("没有可分析的数值参数。")
         else:
             for index, parameter in enumerate(parameters):
                 spec_info = parameter_spec(bundle.spec, parameter)
                 chart = parameter_wafer_chart(cleaned_filtered, parameter, spec_info)
-                report_figures.append(chart)
                 st.plotly_chart(chart, use_container_width=True, config=PLOT_CONFIG, key=f"parameter_gallery_{index}")
 
-    with tabs[5]:
+    elif active_view == "分布与能力":
         st.markdown("### 参数分布与制程能力")
         if not parameters:
             st.warning("没有可分析的数值参数。")
@@ -507,7 +537,6 @@ def main() -> None:
             violin = violin_distribution(cleaned_filtered, distribution_parameter)
             qq = qq_chart(cleaned_filtered, distribution_parameter)
             ecdf = ecdf_chart(cleaned_filtered, distribution_parameter)
-            report_figures.extend([histogram, violin, qq, ecdf])
             left, right = st.columns(2)
             with left:
                 st.plotly_chart(histogram, use_container_width=True, config=PLOT_CONFIG)
@@ -518,7 +547,7 @@ def main() -> None:
             with st.expander("能力计算明细", expanded=False):
                 st.json(capability)
 
-    with tabs[6]:
+    elif active_view == "参数相关":
         st.markdown("### 自动参数相关分析")
         if len(parameters) < 2:
             st.warning("至少需要两个数值参数。")
@@ -527,7 +556,6 @@ def main() -> None:
             heatmap = correlation_heatmap(cleaned_filtered, parameters)
             matrix_parameters = parameters[: min(5, len(parameters))]
             matrix = scatter_matrix(cleaned_filtered, matrix_parameters)
-            report_figures.extend([heatmap, matrix])
             overview = st.columns(2)
             with overview[0]:
                 st.plotly_chart(heatmap, use_container_width=True, config=PLOT_CONFIG)
@@ -541,7 +569,6 @@ def main() -> None:
                 for index, (x_parameter, y_parameter, correlation) in enumerate(correlation_pairs):
                     scatter_fig = parameter_scatter(cleaned_filtered, x_parameter, y_parameter)
                     scatter_fig.update_layout(title=f"{x_parameter} × {y_parameter} · r={correlation:.3f}")
-                    report_figures.append(scatter_fig)
                     with pair_columns[index % 2]:
                         st.plotly_chart(scatter_fig, use_container_width=True, config=PLOT_CONFIG, key=f"auto_pair_{index}")
             if len(parameters) >= 3:
@@ -553,17 +580,15 @@ def main() -> None:
                 automatic_3d.extend(parameter for parameter in parameters if parameter not in automatic_3d)
                 x3, y3, z3 = automatic_3d[:3]
                 chart_3d = scatter_3d(cleaned_filtered, x3, y3, z3)
-                report_figures.append(chart_3d)
                 st.plotly_chart(chart_3d, use_container_width=True, config=PLOT_CONFIG)
 
-    with tabs[7]:
+    elif active_view == "SPC 趋势":
         st.markdown("### SPC 与测试顺序趋势")
         if not parameters:
             st.warning("没有可分析的数值参数。")
         else:
             spc_parameter = st.selectbox("SPC 参数", parameters, key="spc_parameter")
             spc_chart = wafer_mean_control_chart(cleaned_filtered, spc_parameter)
-            report_figures.append(spc_chart)
             st.plotly_chart(spc_chart, use_container_width=True, config=PLOT_CONFIG)
             if "Seq" in cleaned_filtered.columns:
                 sequence_wafer_options = ["全部 Wafer"] + sorted(
@@ -575,30 +600,43 @@ def main() -> None:
                     spc_parameter,
                     None if sequence_wafer == "全部 Wafer" else sequence_wafer,
                 )
-                report_figures.append(sequence_fig)
                 st.plotly_chart(sequence_fig, use_container_width=True, config=PLOT_CONFIG)
             st.caption("控制界限按当前筛选范围内的 Wafer 均值 ±3σ 计算；用于过程监控，不替代正式控制计划判异规则。")
 
-    with tabs[8]:
+    elif active_view == "报告导出":
         st.markdown("### 离线报告")
-        st.write("汇总当前筛选条件下的良率、失效、分布、能力、散点、Wafer Map 和 SPC 图表。")
+        st.write("报告图表只在点击生成时计算，避免每次切换筛选条件都重复创建几十张图。")
+        parameter_stats = parameter_summary(cleaned_filtered)
         with st.expander("参数统计摘要", expanded=True):
             st.dataframe(parameter_stats, use_container_width=True, hide_index=True, height=420)
-        if report_figures:
-            st.download_button(
-                "生成并下载 HTML 报告",
-                data=html_report(
+        report_key = (
+            str(analysis_source),
+            fingerprint,
+            tuple(selected_lots),
+            tuple(selected_wafers),
+            clean_outliers,
+        )
+        if st.button("生成 HTML 报告", use_container_width=True):
+            with st.spinner("正在按当前筛选条件生成离线报告…"):
+                report_figures = build_report_figures(cleaned_filtered, yield_filtered, bundle.spec, parameters)
+                st.session_state["report_payload"] = html_report(
                     report_figures,
                     "CP Raw Data Analysis Report",
                     metadata=bundle.metadata,
                     yield_frame=yield_filtered,
                     parameter_stats=parameter_stats,
-                ),
+                )
+                st.session_state["report_key"] = report_key
+        if st.session_state.get("report_key") == report_key and st.session_state.get("report_payload"):
+            st.download_button(
+                "下载 HTML 报告",
+                data=st.session_state["report_payload"],
                 file_name="cp_data_cockpit_report.html",
                 mime="text/html",
+                use_container_width=True,
             )
         else:
-            st.info("当前数据不足，尚未生成可导出的图表。")
+            st.info("尚未按当前筛选条件生成报告。")
 
 
 if __name__ == "__main__":

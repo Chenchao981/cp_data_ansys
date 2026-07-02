@@ -127,7 +127,7 @@ def parameter_wafer_chart(
     frame: pd.DataFrame,
     parameter: str,
     spec: dict[str, object] | None = None,
-    points_per_wafer: int = 120,
+    points_per_wafer: int = 60,
 ) -> go.Figure:
     """按华虹参数图规则生成 Wafer 箱体 + 散点图。"""
     required = [column for column in ("Lot_ID", "Wafer_ID", parameter) if column in frame.columns]
@@ -143,15 +143,45 @@ def parameter_wafer_chart(
         data["Lot_ID"] = "ALL"
     data["Lot_ID"] = data["Lot_ID"].astype(str).str.split("@", n=1).str[0]
     data["Wafer_ID"] = data["Wafer_ID"].astype(str)
-    groups = list(data.groupby(["Lot_ID", "Wafer_ID"], sort=True))
-    position = {key: index for index, (key, _) in enumerate(groups)}
-    lot_count = data["Lot_ID"].nunique()
-    labels = [wafer if lot_count == 1 else f"{lot} / W{wafer}" for (lot, wafer), _ in groups]
+    def wafer_slot(value: str) -> int | None:
+        numeric = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+        return int(numeric) if pd.notna(numeric) and float(numeric).is_integer() and numeric > 0 else None
+
+    lot_ids = sorted(data["Lot_ID"].unique().tolist())
+    wafers_by_lot = {
+        lot_id: sorted(
+            data.loc[data["Lot_ID"] == lot_id, "Wafer_ID"].unique().tolist(),
+            key=lambda wafer: (wafer_slot(wafer) is None, wafer_slot(wafer) or 0, wafer),
+        )
+        for lot_id in lot_ids
+    }
+    numeric_slots = all(wafer_slot(wafer) is not None for wafers in wafers_by_lot.values() for wafer in wafers)
+    position: dict[tuple[str, str], int] = {}
+    tick_values: list[int] = []
+    tick_labels: list[str] = []
+    if numeric_slots:
+        max_slot = max(wafer_slot(wafer) or 1 for wafers in wafers_by_lot.values() for wafer in wafers)
+        block_width = max_slot + 2
+        for lot_index, lot_id in enumerate(lot_ids):
+            offset = lot_index * block_width
+            for wafer in wafers_by_lot[lot_id]:
+                position[(lot_id, wafer)] = offset + (wafer_slot(wafer) or 1)
+            for slot in range(1, max_slot + 1):
+                tick_values.append(offset + slot)
+                tick_labels.append(str(slot) if len(lot_ids) == 1 else f"{lot_id} / W{slot}")
+    else:
+        next_position = 1
+        for lot_id in lot_ids:
+            for wafer in wafers_by_lot[lot_id]:
+                position[(lot_id, wafer)] = next_position
+                tick_values.append(next_position)
+                tick_labels.append(wafer if len(lot_ids) == 1 else f"{lot_id} / W{wafer}")
+                next_position += 1
     fig = go.Figure()
 
     for lot_index, (lot_id, lot_data) in enumerate(data.groupby("Lot_ID", sort=True)):
         color = [ACCENT, PURPLE, PINK, GREEN, ORANGE][lot_index % 5]
-        lot_groups = list(lot_data.groupby("Wafer_ID", sort=True))
+        lot_groups = [(wafer, lot_data.loc[lot_data["Wafer_ID"] == wafer]) for wafer in wafers_by_lot[lot_id]]
         q1: list[float] = []
         median: list[float] = []
         q3: list[float] = []
@@ -211,7 +241,7 @@ def parameter_wafer_chart(
             )
         )
         fig.add_trace(
-            go.Scattergl(
+            go.Scatter(
                 x=scatter_x,
                 y=scatter_y,
                 customdata=scatter_wafer,
@@ -225,7 +255,7 @@ def parameter_wafer_chart(
         )
         if outlier_y:
             fig.add_trace(
-                go.Scattergl(
+                go.Scatter(
                     x=outlier_x,
                     y=outlier_y,
                     customdata=outlier_wafer,
@@ -256,10 +286,10 @@ def parameter_wafer_chart(
     fig.update_layout(title=title, xaxis_title="Wafer_ID", yaxis_title=f"{parameter}{f' [{unit}]' if unit else ''}")
     fig.update_xaxes(
         tickmode="array",
-        tickvals=list(range(len(labels))),
-        ticktext=labels,
+        tickvals=tick_values,
+        ticktext=tick_labels,
         tickangle=0,
-        range=[-0.5, len(labels) - 0.5],
+        range=[min(tick_values) - 0.5, max(tick_values) + 0.5],
     )
     if "LSL" in limits and "USL" in limits:
         lower_limit, upper_limit = sorted((limits["LSL"], limits["USL"]))
@@ -275,8 +305,8 @@ def parameter_scatter(frame: pd.DataFrame, x_parameter: str, y_parameter: str) -
     data[x_parameter] = pd.to_numeric(data[x_parameter], errors="coerce")
     data[y_parameter] = pd.to_numeric(data[y_parameter], errors="coerce")
     data = data.dropna(subset=[x_parameter, y_parameter])
-    if len(data) > 20_000:
-        data = data.sample(20_000, random_state=42)
+    if len(data) > 3_000:
+        data = data.sample(3_000, random_state=42)
     fig = px.scatter(
         data,
         x=x_parameter,
@@ -284,6 +314,7 @@ def parameter_scatter(frame: pd.DataFrame, x_parameter: str, y_parameter: str) -
         color="Lot_ID" if "Lot_ID" in data.columns else None,
         hover_data=["Wafer_ID"] if "Wafer_ID" in data.columns else None,
         opacity=0.62,
+        render_mode="svg",
         title=f"{x_parameter} × {y_parameter} · 参数关联",
         color_discrete_sequence=[ACCENT, PURPLE, PINK, GREEN, ORANGE],
         trendline=None,

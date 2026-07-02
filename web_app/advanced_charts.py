@@ -212,7 +212,7 @@ def correlation_heatmap(frame: pd.DataFrame, parameters: list[str]) -> go.Figure
 
 def scatter_matrix(frame: pd.DataFrame, parameters: list[str], color_column: str | None = "Lot_ID") -> go.Figure:
     columns = parameters + ([color_column] if color_column and color_column in frame.columns else [])
-    data = sampled(frame[columns].copy(), 4_000)
+    data = sampled(frame[columns].copy(), 2_000)
     for parameter in parameters:
         data[parameter] = _numeric(data, parameter)
     fig = px.scatter_matrix(
@@ -228,7 +228,7 @@ def scatter_matrix(frame: pd.DataFrame, parameters: list[str], color_column: str
 
 def scatter_3d(frame: pd.DataFrame, x: str, y: str, z: str) -> go.Figure:
     columns = [column for column in ("Lot_ID", "Wafer_ID", x, y, z) if column in frame.columns]
-    data = sampled(frame[columns].copy(), 8_000)
+    data = sampled(frame[columns].copy(), 4_000)
     for parameter in (x, y, z):
         data[parameter] = _numeric(data, parameter)
     data = data.dropna(subset=[x, y, z])
