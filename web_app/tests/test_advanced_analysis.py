@@ -71,6 +71,8 @@ def test_parameter_wafer_chart_uses_fixed_wafer_axis_and_spec_lines() -> None:
     assert figure.layout.xaxis.title.text == "Wafer_ID"
     assert figure.layout.yaxis.title.text == "P1 [V]"
     assert list(figure.layout.xaxis.ticktext) == ["01", "02"]
+    assert list(figure.layout.xaxis.range) == [-0.5, 1.5]
+    assert list(figure.layout.yaxis.range) == [8.8, 11.2]
     assert len(figure.layout.shapes) == 3
     assert {trace.type for trace in figure.data} == {"box", "scattergl"}
     pd.testing.assert_frame_equal(frame, original)
@@ -80,3 +82,19 @@ def test_strongest_parameter_pairs_are_automatic() -> None:
     pairs = strongest_parameter_pairs(sample_frame(), ["P1", "P2"], limit=6)
     assert len(pairs) == 1
     assert pairs[0][:2] == ("P1", "P2")
+
+
+def test_parameter_wafer_chart_marks_iqr_outliers_with_open_circles() -> None:
+    frame = pd.DataFrame(
+        {
+            "Lot_ID": ["L1@202"] * 10,
+            "Wafer_ID": ["01"] * 10,
+            "P1": [1.0] * 9 + [10.0],
+        }
+    )
+    figure = parameter_wafer_chart(frame, "P1")
+    open_circle_traces = [
+        trace for trace in figure.data if trace.type == "scattergl" and trace.marker.symbol == "circle-open"
+    ]
+    assert len(open_circle_traces) == 1
+    assert list(open_circle_traces[0].y) == [10.0]

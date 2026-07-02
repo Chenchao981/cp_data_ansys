@@ -474,13 +474,11 @@ def main() -> None:
         if not parameters:
             st.warning("没有可分析的数值参数。")
         else:
-            parameter_columns_ui = st.columns(2)
             for index, parameter in enumerate(parameters):
                 spec_info = parameter_spec(bundle.spec, parameter)
                 chart = parameter_wafer_chart(cleaned_filtered, parameter, spec_info)
                 report_figures.append(chart)
-                with parameter_columns_ui[index % 2]:
-                    st.plotly_chart(chart, use_container_width=True, config=PLOT_CONFIG, key=f"parameter_gallery_{index}")
+                st.plotly_chart(chart, use_container_width=True, config=PLOT_CONFIG, key=f"parameter_gallery_{index}")
 
     with tabs[5]:
         st.markdown("### 参数分布与制程能力")

@@ -141,7 +141,7 @@ def parameter_wafer_chart(
 
     if "Lot_ID" not in data.columns:
         data["Lot_ID"] = "ALL"
-    data["Lot_ID"] = data["Lot_ID"].astype(str)
+    data["Lot_ID"] = data["Lot_ID"].astype(str).str.split("@", n=1).str[0]
     data["Wafer_ID"] = data["Wafer_ID"].astype(str)
     groups = list(data.groupby(["Lot_ID", "Wafer_ID"], sort=True))
     position = {key: index for index, (key, _) in enumerate(groups)}
@@ -161,12 +161,16 @@ def parameter_wafer_chart(
         scatter_x: list[float] = []
         scatter_y: list[float] = []
         scatter_wafer: list[str] = []
+        outlier_x: list[float] = []
+        outlier_y: list[float] = []
+        outlier_wafer: list[str] = []
 
         for wafer_id, wafer_data in lot_groups:
             values = wafer_data[parameter].to_numpy(dtype=float)
             first, middle, third = np.percentile(values, [25, 50, 75])
             iqr = third - first
             normal = values[(values >= first - 1.5 * iqr) & (values <= third + 1.5 * iqr)]
+            outliers = values[(values < first - 1.5 * iqr) | (values > third + 1.5 * iqr)]
             box_x.append(position[(lot_id, wafer_id)])
             q1.append(float(first))
             median.append(float(middle))
@@ -174,7 +178,7 @@ def parameter_wafer_chart(
             lower.append(float(normal.min()) if len(normal) else float(first))
             upper.append(float(normal.max()) if len(normal) else float(third))
 
-            sorted_values = np.sort(values)
+            sorted_values = np.sort(normal)
             if len(sorted_values) > points_per_wafer:
                 indices = np.linspace(0, len(sorted_values) - 1, points_per_wafer, dtype=int)
                 shown = sorted_values[indices]
@@ -184,6 +188,9 @@ def parameter_wafer_chart(
             scatter_x.extend(position[(lot_id, wafer_id)] + rng.uniform(-0.2, 0.2, len(shown)))
             scatter_y.extend(shown.tolist())
             scatter_wafer.extend([wafer_id] * len(shown))
+            outlier_x.extend([position[(lot_id, wafer_id)]] * len(outliers))
+            outlier_y.extend(outliers.tolist())
+            outlier_wafer.extend([wafer_id] * len(outliers))
 
         fig.add_trace(
             go.Box(
@@ -216,14 +223,30 @@ def parameter_wafer_chart(
                 hovertemplate=f"Lot {lot_id}<br>Wafer %{{customdata}}<br>{parameter} %{{y:.6g}}<extra></extra>",
             )
         )
+        if outlier_y:
+            fig.add_trace(
+                go.Scattergl(
+                    x=outlier_x,
+                    y=outlier_y,
+                    customdata=outlier_wafer,
+                    mode="markers",
+                    name=f"{lot_id} 异常值",
+                    legendgroup=lot_id,
+                    showlegend=False,
+                    marker=dict(color=color, size=6, symbol="circle-open", line=dict(color=color, width=1.2)),
+                    hovertemplate=f"异常值<br>Lot {lot_id}<br>Wafer %{{customdata}}<br>{parameter} %{{y:.6g}}<extra></extra>",
+                )
+            )
 
     spec = spec or {}
     unit = str(spec.get("Unit", "")).strip()
     test_condition = str(spec.get("TestCond", "")).strip()
+    limits: dict[str, float] = {}
     for keys, label in ((('LimitL', 'LSL'), 'LSL'), (('LimitU', 'USL'), 'USL')):
         raw = next((spec[key] for key in keys if key in spec), None)
         value = pd.to_numeric(pd.Series([raw]), errors="coerce").iloc[0]
         if pd.notna(value):
+            limits[label] = float(value)
             fig.add_hline(y=float(value), line_dash="dash", line_color=PINK, annotation_text=f"{label} {value:g}")
     target = pd.to_numeric(pd.Series([spec.get("Target")]), errors="coerce").iloc[0]
     if pd.notna(target):
@@ -231,7 +254,18 @@ def parameter_wafer_chart(
 
     title = f"{parameter}{f' [{unit}]' if unit else ''}{f' · {test_condition}' if test_condition else ''}"
     fig.update_layout(title=title, xaxis_title="Wafer_ID", yaxis_title=f"{parameter}{f' [{unit}]' if unit else ''}")
-    fig.update_xaxes(tickmode="array", tickvals=list(range(len(labels))), ticktext=labels, tickangle=0)
+    fig.update_xaxes(
+        tickmode="array",
+        tickvals=list(range(len(labels))),
+        ticktext=labels,
+        tickangle=0,
+        range=[-0.5, len(labels) - 0.5],
+    )
+    if "LSL" in limits and "USL" in limits:
+        lower_limit, upper_limit = sorted((limits["LSL"], limits["USL"]))
+        span = upper_limit - lower_limit
+        padding = span * 0.1 if span else abs(upper_limit) * 0.1 or 1.0
+        fig.update_yaxes(range=[lower_limit - padding, upper_limit + padding])
     return style_figure(fig, height=520)
 
 
