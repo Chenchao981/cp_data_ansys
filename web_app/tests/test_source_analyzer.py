@@ -10,11 +10,11 @@ from web_app.source_analyzer import (
 )
 
 
-def write_minimal_huahong(path: Path) -> None:
+def write_minimal_huahong(path: Path, lot: str = "LOT-001-A-250101@202", wafer: str = "01") -> None:
     lines = [
         "Program name\tTEST.dll",
-        "Lot number\tLOT-001-A-250101@202",
-        "Wafer number\t01",
+        f"Lot number\t{lot}",
+        f"Wafer number\t{wafer}",
         "Operator\tTEST",
         "Date\t2026-07-01",
         "Comment\tSynthetic",
@@ -70,3 +70,23 @@ def test_generic_csv_gets_common_analysis(tmp_path: Path) -> None:
     assert result.loc[0, "Bin5"] == 1
     stats = parameter_summary(bundle.cleaned)
     assert "VALUE" in stats["Parameter"].tolist()
+
+
+def test_product_directory_merges_multiple_huahong_batches(tmp_path: Path) -> None:
+    product = tmp_path / "NCE_PRODUCT"
+    first_batch = product / "NCEVTG120EB30DA_FA57-8553@202"
+    second_batch = product / "NCEVTG120EB30DA_FA57-8554@202"
+    first_batch.mkdir(parents=True)
+    second_batch.mkdir(parents=True)
+    write_minimal_huahong(first_batch / "W01.TXT", lot="SOURCE-A@202", wafer="01")
+    write_minimal_huahong(second_batch / "W03.TXT", lot="SOURCE-B@202", wafer="03")
+
+    assert len(source_fingerprint(product)) == 2
+    bundle = analyze_source(product, clean_outliers=False)
+
+    assert bundle.cleaned is not None
+    assert set(bundle.cleaned["Lot_ID"].astype(str)) == {"FA57-8553", "FA57-8554"}
+    assert set(bundle.cleaned["Wafer_ID"].astype(str)) == {"01", "03"}
+    assert bundle.metadata["batch_count"] == 2
+    assert bundle.metadata["source_file_count"] == 2
+    assert bundle.yield_data is not None and len(bundle.yield_data) == 2

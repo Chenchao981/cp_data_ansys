@@ -27,10 +27,25 @@ def source_files(source: str | Path) -> list[Path]:
         return [path] if path.suffix.lower() in SUPPORTED_SUFFIXES else []
     if not path.is_dir():
         return []
-    return sorted(
-        (item for item in path.iterdir() if item.is_file() and item.suffix.lower() in SUPPORTED_SUFFIXES),
-        key=lambda item: item.name,
-    )
+    direct = [
+        item
+        for item in path.iterdir()
+        if item.is_file() and item.suffix.lower() in SUPPORTED_SUFFIXES and not item.name.startswith("~$")
+    ]
+    if direct:
+        return sorted(direct, key=lambda item: item.name.lower())
+
+    nested = [
+        item
+        for child in path.iterdir()
+        if child.is_dir()
+        for item in child.rglob("*")
+        if item.is_file()
+        and item.suffix.lower() in SUPPORTED_SUFFIXES
+        and not item.name.startswith("~$")
+        and len(item.relative_to(child).parts) <= 3
+    ]
+    return sorted(nested, key=lambda item: str(item).lower())
 
 
 def source_fingerprint(source: str | Path) -> tuple[tuple[str, int, int], ...]:
@@ -135,6 +150,44 @@ def _folder_identity(path: Path, fallback_lot: str) -> tuple[str | None, str]:
     return (match.group("product"), match.group("lot")) if match else (None, fallback_lot)
 
 
+def _batch_folder(source: Path, file_path: Path) -> Path:
+    if source.is_file():
+        return source.parent
+    try:
+        relative = file_path.resolve().relative_to(source.resolve())
+    except ValueError:
+        return file_path.parent
+    if len(relative.parts) <= 1:
+        return source
+    first_level = source / relative.parts[0]
+    if first_level.name.upper().startswith("EDS"):
+        return source
+    return first_level
+
+
+def _batch_identity(source: Path, file_path: Path) -> tuple[str | None, str]:
+    folder = _batch_folder(source, file_path)
+    return _folder_identity(folder, folder.name)
+
+
+def _apply_batch_traceability(lot, source: Path) -> None:
+    identities: list[tuple[str | None, str]] = []
+    for wafer in getattr(lot, "wafers", []):
+        if not wafer.file_path:
+            continue
+        identity = _batch_identity(source, Path(wafer.file_path))
+        wafer.source_lot_id = identity[1]
+        identities.append(identity)
+    lot_ids = list(dict.fromkeys(lot_id for _product, lot_id in identities))
+    products = list(dict.fromkeys(product for product, _lot_id in identities if product))
+    if lot_ids:
+        lot.lot_id = lot_ids[0] if len(lot_ids) == 1 else f"Combined_{len(lot_ids)}_batches"
+    if len(products) == 1:
+        lot.product = products[0]
+    elif source.is_dir() and lot_ids:
+        lot.product = source.name
+
+
 class SourceAdapter(ABC):
     name = "Unknown"
     source_kind = "unknown"
@@ -220,7 +273,40 @@ class StandardCSVAdapter(SourceAdapter):
         return any("_cleaned_" in name and name.endswith(".csv") for name in names)
 
     def load(self, source: Path, files: list[Path]):
-        return load_bundle(source if source.is_dir() else source.parent)
+        root = source if source.is_dir() else source.parent
+        direct_standard = [path for path in files if path.parent == root and "_cleaned_" in path.name.lower()]
+        if direct_standard:
+            return load_bundle(root)
+
+        frame_groups: dict[str, list[pd.DataFrame]] = {"cleaned": [], "yield": [], "spec": []}
+        for directory in sorted({path.parent for path in files}, key=lambda path: str(path).lower()):
+            directory_files = [path for path in files if path.parent == directory]
+            for kind in frame_groups:
+                candidates = [path for path in directory_files if f"_{kind}_" in path.name.lower() and path.suffix.lower() == ".csv"]
+                if not candidates:
+                    continue
+                latest = max(candidates, key=lambda path: (path.stat().st_mtime_ns, path.name))
+                frame = read_csv_compatible(latest)
+                if kind in {"cleaned", "yield"} and "Lot_ID" not in frame.columns:
+                    _product, batch_lot = _batch_identity(root, latest)
+                    frame["Lot_ID"] = batch_lot
+                frame_groups[kind].append(frame)
+
+        combined = {
+            kind: pd.concat(frames, ignore_index=True, sort=False) if frames else None
+            for kind, frames in frame_groups.items()
+        }
+        if combined["spec"] is not None and "Parameter" in combined["spec"].columns:
+            combined["spec"] = combined["spec"].drop_duplicates(subset=["Parameter"], keep="first")
+        return DataBundle(
+            directory=root,
+            files={},
+            cleaned=combined["cleaned"],
+            yield_data=combined["yield"],
+            spec=combined["spec"],
+            source_kind=self.source_kind,
+            metadata={"adapter": self.name, "source_file_count": len(files)},
+        )
 
 
 class GenericTableAdapter(SourceAdapter):
@@ -238,7 +324,8 @@ class GenericTableAdapter(SourceAdapter):
             frame = read_csv_compatible(path) if path.suffix.lower() == ".csv" else pd.read_excel(path, sheet_name=0)
             frame = _standardize_aliases(frame)
             if "Lot_ID" not in frame.columns:
-                frame["Lot_ID"] = path.stem
+                _product, batch_lot = _batch_identity(source, path)
+                frame["Lot_ID"] = batch_lot
             if "Wafer_ID" not in frame.columns:
                 match = re.search(r"(?:_|-)(\d+)$", path.stem)
                 frame["Wafer_ID"] = match.group(1) if match else str(index)
@@ -344,7 +431,19 @@ def analyze_source(source: str | Path, clean_outliers: bool = True) -> DataBundl
         loaded = adapter.load(source_path, files)
 
     if isinstance(loaded, DataBundle):
-        loaded.metadata.update({"adapter": adapter.name, "source_file_count": len(files)})
+        batch_names = (
+            sorted(loaded.cleaned["Lot_ID"].dropna().astype(str).unique().tolist())
+            if loaded.cleaned is not None and "Lot_ID" in loaded.cleaned.columns
+            else []
+        )
+        loaded.metadata.update(
+            {
+                "adapter": adapter.name,
+                "source_file_count": len(files),
+                "batch_count": len(batch_names),
+                "batch_names": batch_names,
+            }
+        )
         return loaded
 
     if isinstance(loaded, pd.DataFrame):
@@ -354,6 +453,7 @@ def analyze_source(source: str | Path, clean_outliers: bool = True) -> DataBundl
         product = None
         lot_id = None
     else:
+        _apply_batch_traceability(loaded, source_path)
         raw_frame = _lot_to_frame(loaded)
         pass_bin = int(loaded.pass_bin if loaded.pass_bin is not None else 1)
         spec = _params_to_spec(loaded) if adapter.trustworthy_spec else None
@@ -378,6 +478,10 @@ def analyze_source(source: str | Path, clean_outliers: bool = True) -> DataBundl
             "lot_id": lot_id,
             "pass_bin": pass_bin,
             "source_file_count": len(files),
+            "batch_count": int(raw_frame["Lot_ID"].nunique()) if "Lot_ID" in raw_frame.columns else 1,
+            "batch_names": sorted(raw_frame["Lot_ID"].dropna().astype(str).unique().tolist())
+            if "Lot_ID" in raw_frame.columns
+            else [],
             "raw_rows": len(raw_frame),
             "cleaned_rows": len(cleaned),
             "outlier_replacements": replacements,

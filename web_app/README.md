@@ -29,6 +29,7 @@ D:\ProgramData\anaconda3\python.exe -m streamlit run web_app\app.py
 - cleaned、yield、spec 表格预览和 CSV 下载
 - Windows 原生文件夹/CSV/Excel 选择窗口与普通表格预览
 - 原始文件自动识别、内存 IQR 清洗和动态良率/Bin 计算
+- 支持选择单批次目录，或“产品目录 → 多个批次子目录”递归扫描并合并分析
 - 参数统计摘要与带处理口径的离线 HTML 报告
 - Wafer 良率趋势、Lot 对比与良率分布
 - 动态 Bin 失效排行与 Pareto 累计贡献

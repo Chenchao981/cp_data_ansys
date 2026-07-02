@@ -352,6 +352,8 @@ def main() -> None:
 
     st.sidebar.success(f"已识别：{bundle.metadata.get('adapter', bundle.source_kind)}")
     st.sidebar.caption(f"源文件 · {bundle.metadata.get('source_file_count', bundle.metadata.get('file_count', 0))} 个")
+    if bundle.metadata.get("batch_count"):
+        st.sidebar.caption(f"批次 · {bundle.metadata['batch_count']} 个")
     if bundle.metadata.get("pass_bin") is not None:
         st.sidebar.caption(f"Pass Bin · {bundle.metadata['pass_bin']}")
 

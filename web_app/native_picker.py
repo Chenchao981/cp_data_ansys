@@ -27,7 +27,7 @@ def pick_folder(initial_directory: str | Path | None = None) -> str | None:
     try:
         selected = filedialog.askdirectory(
             parent=root,
-            title="选择 CP 数据文件夹",
+            title="选择产品目录或 CP 批次目录",
             initialdir=_initial_directory(initial_directory),
             mustexist=True,
         )
