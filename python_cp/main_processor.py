@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 import yaml # 用于读取配置文件
 from typing import Optional # 明确导入 Optional
+from runtime_paths import configure_application_logging
 
 # --- 相对导入我们已创建的模块 ---
 # 注意：实际运行时需要确保 python_cp 是一个可识别的包，或者调整 sys.path
@@ -51,12 +52,7 @@ except ImportError as e:
 
 # --- 日志配置 ---
 # 确保 logger 在 try-except 块外部定义，以便全局可用
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
-                    handlers=[
-                        logging.FileHandler("cp_processor.log", mode='w'), # 写入日志文件
-                        logging.StreamHandler() # 输出到控制台
-                    ])
+configure_application_logging("cp_processor")
 logger = logging.getLogger(__name__)
 logging.getLogger('matplotlib').setLevel(logging.WARNING) # 减少 matplotlib 的冗余日志
 
@@ -299,4 +295,4 @@ def main():
     logger.info(f"输出文件已保存到: {output_dir.resolve()}")
 
 if __name__ == "__main__":
-    main() 
+    main()

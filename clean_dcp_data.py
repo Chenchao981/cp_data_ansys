@@ -13,20 +13,14 @@ import pandas as pd
 import argparse
 from datetime import datetime
 from pathlib import Path
+from runtime_paths import configure_application_logging
 
 # 添加项目根目录到Python路径
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, current_dir)
 
-# 设置日志配置
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(f"dcp_process_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"),
-        logging.StreamHandler()
-    ]
-)
+# 将 CLI 或 GUI 日志统一写入持久化数据目录，而不是程序目录。
+configure_application_logging("dcp_process")
 logger = logging.getLogger(__name__)
 
 # 导入必要的模块
@@ -505,4 +499,4 @@ if __name__ == "__main__":
     except Exception as e:
         logger.exception(f"程序运行时出错: {str(e)}")
         print(f"错误: {str(e)}")
-        sys.exit(1) 
+        sys.exit(1)

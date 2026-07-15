@@ -30,8 +30,16 @@ logger = logging.getLogger(__name__)
 
 
 def get_desktop_path():
-    """获取用户桌面路径"""
+    """获取当前 Windows 用户的桌面路径。"""
     return os.path.join(os.path.expanduser("~"), "Desktop")
+
+
+def get_default_input_path():
+    return get_desktop_path()
+
+
+def get_default_output_path():
+    return get_desktop_path()
 
 
 def extract_lot_id_from_folder_name(folder_name: str):
@@ -315,6 +323,8 @@ class HHDataProcessingThread(QThread):
 
 class HuaHongWidget(QWidget):
     """华虹公司数据分析界面组件"""
+
+    cockpit_requested = pyqtSignal()
     
     def __init__(self):
         super().__init__()
@@ -325,11 +335,11 @@ class HuaHongWidget(QWidget):
         self.set_default_paths()
     
     def set_default_paths(self):
-        """设置默认路径为桌面"""
-        desktop_path = get_desktop_path()
-        self.input_path_edit.setText(desktop_path)
-        self.input_dir = desktop_path
-        self.output_path_edit.setText(desktop_path)
+        """设置华虹业务数据的默认输入、输出路径。"""
+        input_path = get_default_input_path()
+        self.input_path_edit.setText(input_path)
+        self.input_dir = input_path
+        self.output_path_edit.setText(get_default_output_path())
     
     def init_ui(self):
         """初始化华虹界面"""
@@ -413,9 +423,9 @@ class HuaHongWidget(QWidget):
         self.clean_btn.clicked.connect(self.start_cleaning)
         self.clean_btn.setEnabled(True)
         
-        self.generate_btn = QPushButton("📊 生成图表")
-        self.generate_btn.setMinimumHeight(60)
-        self.generate_btn.setStyleSheet("""
+        self.cockpit_btn = QPushButton("📊 CP Cockpit")
+        self.cockpit_btn.setMinimumHeight(60)
+        self.cockpit_btn.setStyleSheet("""
             QPushButton {
                 background-color: #4CAF50;
                 color: white;
@@ -431,11 +441,13 @@ class HuaHongWidget(QWidget):
                 background-color: #CCCCCC;
             }
         """)
-        self.generate_btn.clicked.connect(self.start_generating)
-        self.generate_btn.setEnabled(False)
+        self.cockpit_btn.clicked.connect(
+            lambda _checked=False: self.cockpit_requested.emit()
+        )
+        self.cockpit_btn.setEnabled(True)
         
         button_layout.addWidget(self.clean_btn)
-        button_layout.addWidget(self.generate_btn)
+        button_layout.addWidget(self.cockpit_btn)
         main_layout.addLayout(button_layout)
         
         # 进度条
@@ -469,7 +481,7 @@ class HuaHongWidget(QWidget):
     
     def browse_input_dir(self):
         """浏览输入目录"""
-        start_dir = get_desktop_path()
+        start_dir = self.input_path_edit.text().strip() or get_default_input_path()
         dir_path = QFileDialog.getExistingDirectory(self, "选择华虹数据文件夹", start_dir)
         if dir_path:
             self.input_dir = dir_path
@@ -477,7 +489,7 @@ class HuaHongWidget(QWidget):
     
     def browse_output_dir(self):
         """浏览输出目录并创建基于lot_id+时间戳的文件夹"""
-        start_dir = get_desktop_path()
+        start_dir = self.output_path_edit.text().strip() or get_default_output_path()
         parent_dir = QFileDialog.getExistingDirectory(self, "选择华虹输出文件夹的父目录", start_dir)
         if parent_dir:
             # 如果用户已选择输入目录，尝试生成基于lot_id的文件夹名
@@ -520,7 +532,7 @@ class HuaHongWidget(QWidget):
             return
         
         # 生成输出文件夹名称
-        base_output_dir = self.output_path_edit.text().strip() or get_desktop_path()
+        base_output_dir = self.output_path_edit.text().strip() or get_default_output_path()
         folder_name = generate_output_folder_name(self.input_dir)
         self.output_dir = os.path.join(base_output_dir, folder_name)
         
@@ -576,7 +588,6 @@ class HuaHongWidget(QWidget):
         
         if success:
             self.log_message(f"✅ {message}")
-            self.generate_btn.setEnabled(True)
             QMessageBox.information(self, "成功", f"华虹数据清洗完成！\n{message}\n\n输出文件夹: {self.output_dir}")
         else:
             self.log_message(f"❌ {message}")
@@ -621,7 +632,7 @@ class HuaHongWidget(QWidget):
     def set_processing_state(self, is_processing):
         """设置处理状态"""
         self.clean_btn.setEnabled(not is_processing and bool(self.input_dir))
-        self.generate_btn.setEnabled(not is_processing and bool(self.output_dir))
+        self.cockpit_btn.setEnabled(not is_processing)
         self.input_browse_btn.setEnabled(not is_processing)
         self.output_browse_btn.setEnabled(not is_processing)
         

@@ -17,8 +17,11 @@ os.environ.setdefault("NUMEXPR_MAX_THREADS", "8")
 # 添加项目路径
 sys.path.append(str(Path(__file__).parent.parent))
 
-# 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# 创建持久化业务目录，并将日志写到 D:\CPData\logs（可由环境变量覆盖）。
+from runtime_paths import configure_application_logging, ensure_data_directories
+
+RUNTIME_PATHS = ensure_data_directories()
+LOG_PATH = configure_application_logging()
 logger = logging.getLogger(__name__)
 
 def main():
@@ -38,6 +41,8 @@ def main():
         from .multi_company_gui import MultiCompanyCPDataGUI
         
         logger.info("正在启动多公司CP数据分析工具...")
+        logger.info(f"业务数据目录: {RUNTIME_PATHS['root']}")
+        logger.info(f"运行日志: {LOG_PATH}")
         
         # 创建主窗口
         window = MultiCompanyCPDataGUI()

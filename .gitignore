@@ -172,3 +172,5 @@ logs/
 # Local release archives
 packaging/release.zip
 packaging/release/app.pyz
+packaging/release_frontend/
+packaging/release_frontend.zip

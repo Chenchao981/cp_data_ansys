@@ -19,13 +19,20 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-
 logger = logging.getLogger(__name__)
 
 
 def get_desktop_path() -> str:
-    """获取用户桌面路径。"""
+    """获取当前 Windows 用户的桌面路径。"""
     return os.path.join(os.path.expanduser("~"), "Desktop")
+
+
+def get_default_input_path() -> str:
+    return get_desktop_path()
+
+
+def get_default_output_path() -> str:
+    return get_desktop_path()
 
 
 class GuoyuDataProcessingThread(QThread):
@@ -68,6 +75,8 @@ class GuoyuDataProcessingThread(QThread):
 class GuoyuWidget(QWidget):
     """国宇 FRD 数据清洗操作页面。"""
 
+    cockpit_requested = pyqtSignal()
+
     def __init__(self):
         super().__init__()
         self.input_dir = ""
@@ -78,10 +87,10 @@ class GuoyuWidget(QWidget):
 
     def set_default_paths(self):
         """设置默认输入、输出路径。"""
-        desktop_path = get_desktop_path()
-        self.input_path_edit.setText(desktop_path)
-        self.input_dir = desktop_path
-        self.output_path_edit.setText(desktop_path)
+        input_path = get_default_input_path()
+        self.input_path_edit.setText(input_path)
+        self.input_dir = input_path
+        self.output_path_edit.setText(get_default_output_path())
 
     def init_ui(self):
         """初始化国宇 FRD 清洗界面。"""
@@ -134,6 +143,9 @@ class GuoyuWidget(QWidget):
         output_layout.addWidget(self.output_browse_btn)
         main_layout.addLayout(output_layout)
 
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(30)
+
         self.clean_btn = QPushButton("开始清洗数据")
         self.clean_btn.setMinimumHeight(60)
         self.clean_btn.setStyleSheet(
@@ -151,7 +163,30 @@ class GuoyuWidget(QWidget):
             """
         )
         self.clean_btn.clicked.connect(self.start_cleaning)
-        main_layout.addWidget(self.clean_btn)
+
+        self.cockpit_btn = QPushButton("📊 CP Cockpit")
+        self.cockpit_btn.setMinimumHeight(60)
+        self.cockpit_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 18px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background-color: #388E3C; }
+            QPushButton:disabled { background-color: #CCCCCC; }
+            """
+        )
+        self.cockpit_btn.clicked.connect(
+            lambda _checked=False: self.cockpit_requested.emit()
+        )
+
+        button_layout.addWidget(self.clean_btn)
+        button_layout.addWidget(self.cockpit_btn)
+        main_layout.addLayout(button_layout)
 
         self.progress_bar = QProgressBar()
         self.progress_bar.setMinimumHeight(25)
@@ -185,7 +220,7 @@ class GuoyuWidget(QWidget):
     def browse_input_dir(self):
         """浏览国宇单批次或产品级输入目录。"""
         dir_path = QFileDialog.getExistingDirectory(
-            self, "选择国宇FRD数据文件夹", self.input_dir or get_desktop_path()
+            self, "选择国宇FRD数据文件夹", self.input_dir or get_default_input_path()
         )
         if dir_path:
             self.input_path_edit.setText(dir_path)
@@ -193,7 +228,7 @@ class GuoyuWidget(QWidget):
     def browse_output_dir(self):
         """浏览标准 CSV 输出父目录。"""
         dir_path = QFileDialog.getExistingDirectory(
-            self, "选择国宇FRD输出父目录", self.output_path_edit.text() or get_desktop_path()
+            self, "选择国宇FRD输出父目录", self.output_path_edit.text() or get_default_output_path()
         )
         if dir_path:
             self.output_path_edit.setText(dir_path)
@@ -247,6 +282,7 @@ class GuoyuWidget(QWidget):
     def set_processing_state(self, is_processing: bool):
         """更新处理期间控件状态。"""
         self.clean_btn.setEnabled(not is_processing and bool(self.input_dir))
+        self.cockpit_btn.setEnabled(not is_processing)
         self.input_browse_btn.setEnabled(not is_processing)
         self.output_browse_btn.setEnabled(not is_processing)
         self.input_path_edit.setEnabled(not is_processing)

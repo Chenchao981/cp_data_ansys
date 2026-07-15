@@ -21,6 +21,9 @@ from collections import defaultdict
 from typing import Dict, List
 import logging
 
+if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
@@ -39,7 +42,10 @@ logger = logging.getLogger(__name__)
 
 def discover_batch_files(data_dir: Path) -> Dict[str, List[str]]:
     """
-    发现数据目录中的所有批次文件
+    发现单批次目录或产品目录下的多个批次文件。
+
+    单批次：输入目录直接包含 Excel，输入目录名作为批次 ID。
+    多批次：输入目录的第一层子目录分别包含 Excel。
     
     Args:
         data_dir: 数据根目录
@@ -47,36 +53,57 @@ def discover_batch_files(data_dir: Path) -> Dict[str, List[str]]:
     Returns:
         Dict[str, List[str]]: 批次ID -> 文件路径列表的映射
     """
+    data_dir = Path(data_dir)
+    if not data_dir.is_dir():
+        raise ValueError(f"Lion输入目录不存在: {data_dir}")
+
     batch_files = defaultdict(list)
-    
-    print(f"🔍 扫描数据目录: {data_dir}")
-    
-    # 扫描所有子目录
-    for batch_dir in data_dir.iterdir():
+
+    print(f"扫描Lion数据目录: {data_dir}")
+
+    direct_files = list(data_dir.glob("*.xlsx"))
+    direct_files.extend(data_dir.glob("*.xls"))
+    direct_files = sorted(
+        (path for path in direct_files if not path.name.startswith("~$")),
+        key=lambda path: path.name.lower(),
+    )
+    if direct_files:
+        batch_files[data_dir.name] = [str(path) for path in direct_files]
+        print(f"发现Lion单批次 {data_dir.name}: {len(direct_files)} 个文件")
+        return dict(batch_files)
+
+    # 输入目录不直接包含文件时，扫描第一层批次子目录。
+    for batch_dir in sorted(
+        (path for path in data_dir.iterdir() if path.is_dir()),
+        key=lambda path: path.name.lower(),
+    ):
         if not batch_dir.is_dir():
             continue
-            
-        print(f"  📁 检查批次目录: {batch_dir.name}")
-        
+
+        print(f"  检查批次目录: {batch_dir.name}")
+
         # 查找Excel文件
         excel_files = list(batch_dir.glob("*.xlsx"))
         excel_files.extend(list(batch_dir.glob("*.xls")))
-        
+
         # 过滤掉临时文件
         excel_files = [f for f in excel_files if not f.name.startswith("~$")]
-        
+
         if excel_files:
             # 使用文件夹名称作为批次ID（Lion公司的文件夹名称就是lot_id）
             batch_id = batch_dir.name
-            
+
             # 按文件名排序确保处理顺序一致
-            sorted_files = sorted([str(f) for f in excel_files])
+            sorted_files = [
+                str(path)
+                for path in sorted(excel_files, key=lambda path: path.name.lower())
+            ]
             batch_files[batch_id] = sorted_files
-            
-            print(f"    ✓ 发现Lion批次 {batch_id}: {len(sorted_files)} 个文件")
+
+            print(f"    发现Lion批次 {batch_id}: {len(sorted_files)} 个文件")
         else:
-            print(f"    ⚠️  目录 {batch_dir.name} 中没有找到Excel文件")
-    
+            print(f"    目录 {batch_dir.name} 中没有找到Excel文件")
+
     return dict(batch_files)
 
 

@@ -13,11 +13,15 @@ CP数据分析工具 - 多公司支持版GUI界面
 
 import sys
 import os
+import socket
+import subprocess
+import webbrowser
 from pathlib import Path
+from urllib.parse import quote
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLabel, QPushButton, QStackedWidget,
                              QMessageBox, QStatusBar)
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtGui import QFont, QIcon
 
 # 添加项目路径
@@ -135,7 +139,7 @@ class MultiCompanyCPDataGUI(QMainWindow):
         layout.addWidget(self.jt_button)
         layout.addWidget(self.lion_button)
         layout.addWidget(self.guoyu_button)
-        
+
         # 添加弹性空间
         layout.addStretch()
         
@@ -265,6 +269,9 @@ class MultiCompanyCPDataGUI(QMainWindow):
 
             from gui.widgets.guoyu_widget import GuoyuWidget
             guoyu_widget = GuoyuWidget()
+
+            for widget in (hh_widget, jt_widget, lion_widget, guoyu_widget):
+                widget.cockpit_requested.connect(self.open_cp_cockpit)
             
             # 添加到堆栈
             self.content_stack.addWidget(hh_widget)
@@ -434,7 +441,96 @@ class MultiCompanyCPDataGUI(QMainWindow):
         logger.info(f"公司切换事件: {company_id}")
         # 这里可以添加额外的公司切换逻辑
         # 例如：保存当前状态、加载新公司配置等
-    
+
+    def get_current_output_dir(self):
+        """获取当前页面的输出目录，用于打开 CP Cockpit。"""
+        widget = self.company_widgets.get(self.current_company)
+        if widget is not None:
+            output_dir = getattr(widget, "output_dir", "")
+            if output_dir:
+                return str(Path(output_dir).expanduser())
+
+            output_edit = getattr(widget, "output_path_edit", None)
+            if output_edit is not None:
+                text = output_edit.text().strip()
+                if text:
+                    return text
+
+        return str(Path.home() / "Desktop")
+
+    def get_runtime_root(self):
+        """获取源码运行或 release/app.pyz 运行时的根目录。"""
+        argv0 = Path(sys.argv[0]).resolve()
+        if argv0.suffix.lower() == ".pyz":
+            return argv0.parent
+        return Path(__file__).resolve().parents[1]
+
+    def is_cockpit_port_open(self, port=8501):
+        """检查 Streamlit 服务端口是否已启动。"""
+        try:
+            with socket.create_connection(("127.0.0.1", port), timeout=0.5):
+                return True
+        except OSError:
+            return False
+
+    def open_cp_cockpit(self):
+        """启动或打开 CP Cockpit 前端。"""
+        data_dir = self.get_current_output_dir()
+        port = 8501
+        runtime_root = self.get_runtime_root()
+        project_root = Path(__file__).resolve().parents[1]
+        app_candidates = [
+            runtime_root / "frontend" / "yield_analyzer_app.py",
+            project_root / "frontend" / "yield_analyzer_app.py",
+        ]
+        app_path = next((path for path in app_candidates if path.exists()), None)
+
+        if app_path is None:
+            QMessageBox.critical(
+                self,
+                "错误",
+                "找不到 CP Cockpit 入口，已搜索:\n" + "\n".join(str(path) for path in app_candidates),
+            )
+            return
+
+        if not self.is_cockpit_port_open(port):
+            env = os.environ.copy()
+            env["CP_COCKPIT_DATA_DIR"] = data_dir
+            pyz_path = runtime_root / "app.pyz"
+            if pyz_path.exists():
+                env["PYTHONPATH"] = str(pyz_path) + os.pathsep + env.get("PYTHONPATH", "")
+            creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+            try:
+                subprocess.Popen(
+                    [
+                        sys.executable,
+                        "-m",
+                        "streamlit",
+                        "run",
+                        str(app_path),
+                        "--server.headless",
+                        "true",
+                        "--server.port",
+                        str(port),
+                        "--browser.gatherUsageStats",
+                        "false",
+                    ],
+                    cwd=str(runtime_root if runtime_root.exists() else project_root),
+                    env=env,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    creationflags=creationflags,
+                )
+                self.status_bar.showMessage("正在启动 CP Cockpit...", 3000)
+            except Exception as exc:
+                logger.error(f"启动 CP Cockpit 失败: {exc}", exc_info=True)
+                QMessageBox.critical(self, "错误", f"启动 CP Cockpit 失败:\n{exc}")
+                return
+
+        url = f"http://127.0.0.1:{port}/?data_dir={quote(data_dir)}"
+        QTimer.singleShot(1500, lambda: webbrowser.open(url))
+        self.status_bar.showMessage(f"CP Cockpit 数据目录: {data_dir}", 5000)
+
     def add_company_widget(self, company_id, widget):
         """添加公司界面组件"""
         if company_id in self.company_widgets:

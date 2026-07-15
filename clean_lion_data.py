@@ -23,6 +23,7 @@ import argparse
 import logging
 from pathlib import Path
 from datetime import datetime
+from runtime_paths import configure_application_logging
 
 # 添加项目路径
 project_root = Path(__file__).parent
@@ -49,14 +50,7 @@ class LionDataCleaner:
     
     def _setup_logging(self):
         """设置日志"""
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - Lion数据清洗 - %(levelname)s - %(message)s',
-            handlers=[
-                logging.StreamHandler(),
-                logging.FileHandler('lion_data_cleaning.log', encoding='utf-8')
-            ]
-        )
+        configure_application_logging("lion_data_cleaning")
         return logging.getLogger('LionDataCleaner')
     
     def _is_lion_batch_dir(self, path: str) -> bool:

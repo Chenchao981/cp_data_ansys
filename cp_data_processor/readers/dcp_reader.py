@@ -265,7 +265,7 @@ class DCPReader(BaseReader):
             try:
                 # 优先尝试使用正则表达式匹配一个或多个空白字符作为分隔符
                 csv_data.seek(0) # 确保每次尝试前重置 StringIO 对象
-                df = pd.read_csv(csv_data, sep='\s+', engine='python')
+                df = pd.read_csv(csv_data, sep=r'\s+', engine='python')
                 logger.info(f"成功使用 sep='\\s+' 读取数据，形状: {df.shape}")
             except Exception as e_regex:
                 logger.warning(f"使用 sep='\\s+' 读取失败: {e_regex}。尝试使用 sep='\\t'...")
@@ -530,4 +530,4 @@ class DCPReader(BaseReader):
         
         count = name_dict[base_name] + 1
         name_dict[base_name] = count
-        return f"{base_name}{count}" 
+        return f"{base_name}{count}"

@@ -19,7 +19,6 @@ packages_to_include = [
     'cp_data_processor',
     'gui',
     'python_cp',
-    'utils',
     'frontend',
     'jt_data_processor',
     'lion',
@@ -27,6 +26,7 @@ packages_to_include = [
 ]
 # 需要包含在 .pyz 文件中的根目录下的 .py 文件
 files_to_include = [
+    'runtime_paths.py',
     'clean_dcp_data.py',
     'clean_csv_data.py', 
     'clean_lion_data.py',
