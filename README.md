@@ -4,7 +4,7 @@
 
 ## 当前能力
 
-- 读取并清洗多种 CP 原始数据：HH DCP/TXT、JT Excel、Lion Excel、扬州国宇 FRD Excel
+- 读取并清洗多种 CP 原始数据：HH DCP/TXT（GUI 支持文件夹、单 ZIP、多 ZIP）、JT Excel、Lion Excel、扬州国宇 FRD Excel
 - 将不同来源转换为统一的 `CPLot` / `CPWafer` / `CPParameter` 数据模型
 - 输出 cleaned、yield、spec 三类标准 CSV
 - 生成良率趋势、失效分析、参数箱体图、散点图和汇总 HTML
@@ -37,6 +37,8 @@ python guoyu_batch_processor.py data/257375 --output output
 ```
 
 > 实际参数以各命令的 `--help` 为准。GUI 是当前最完整、最适合日常使用的入口。
+
+华虹 GUI 的“数据来源”支持三种选择：原始 DCP/TXT 文件夹、单个 ZIP、多个 ZIP；选择一个只包含 ZIP 的文件夹时，会自动处理其中的一个或多个 ZIP。ZIP 仅在后台临时目录中解压，处理完成后自动清理。
 
 ## 处理主线
 

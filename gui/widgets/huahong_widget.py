@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 import re
+from typing import Sequence
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QLineEdit, QPushButton, QTextEdit, QFileDialog, 
                              QMessageBox, QProgressBar)
@@ -23,6 +24,12 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 # 导入项目模块
 from clean_dcp_data import process_directory as clean_dcp_process_directory
 from dcp_spec_extractor import generate_spec_file as extract_spec_main
+from cp_data_processor.processing.zip_input import (
+    ZipInputError,
+    discover_zip_archives,
+    normalize_input_paths,
+    prepare_dcp_input,
+)
 from frontend.charts.yield_chart import YieldChart
 from frontend.charts.boxplot_chart import BoxplotChart
 
@@ -51,7 +58,10 @@ def extract_lot_id_from_folder_name(folder_name: str):
     - lot_id: _ 后面到 @ 之间的部分 (FA54-5342)
     """
     underscore_pos = folder_name.find('_')
-    at_pos = folder_name.find('@')
+    at_pos = folder_name.find('@', underscore_pos + 1)
+
+    if underscore_pos <= 0 or at_pos <= underscore_pos + 1:
+        return folder_name, folder_name
     
     product_name = folder_name[:underscore_pos]
     lot_id = folder_name[underscore_pos + 1:at_pos]
@@ -65,7 +75,7 @@ def extract_first_lot_id(directory_path):
         input_path = Path(directory_path)
         
         # 优先使用文件夹名称提取规则
-        folder_name = input_path.name
+        folder_name = input_path.stem if input_path.is_file() else input_path.name
         product_name, lot_id = extract_lot_id_from_folder_name(folder_name)
         
         # 如果提取的lot_id与原始文件夹名不同，说明成功应用了规则
@@ -78,10 +88,11 @@ def extract_first_lot_id(directory_path):
         
         # 搜索所有DCP文件
         dcp_files = []
-        dcp_files.extend(list(input_path.rglob("*.txt")))
-        dcp_files.extend(list(input_path.rglob("*.TXT")))
-        dcp_files.extend(list(input_path.rglob("*.dcp")))
-        dcp_files.extend(list(input_path.rglob("*.DCP")))
+        if input_path.is_dir():
+            dcp_files.extend(list(input_path.rglob("*.txt")))
+            dcp_files.extend(list(input_path.rglob("*.TXT")))
+            dcp_files.extend(list(input_path.rglob("*.dcp")))
+            dcp_files.extend(list(input_path.rglob("*.DCP")))
         
         if not dcp_files:
             return None
@@ -137,11 +148,21 @@ def extract_first_lot_id(directory_path):
         return None
 
 
-def generate_output_folder_name(input_dir):
+def generate_output_folder_name(input_paths: str | Path | Sequence[str | Path]):
     """生成输出文件夹名称：批次号_YYYYMMDD_HHMMSS"""
     try:
-        # 提取第一个批次号
-        lot_id = extract_first_lot_id(input_dir)
+        normalized_paths = normalize_input_paths(input_paths)
+        archives = discover_zip_archives(normalized_paths)
+
+        if len(archives) == 1:
+            lot_id = extract_first_lot_id(archives[0])
+        elif len(archives) > 1:
+            lot_id = f"HH_MultiLot_{len(archives)}ZIP"
+        elif len(normalized_paths) > 1:
+            lot_id = f"HH_MultiSource_{len(normalized_paths)}"
+        else:
+            lot_id = extract_first_lot_id(normalized_paths[0])
+
         if not lot_id:
             lot_id = "CP_Analysis"
         
@@ -168,9 +189,10 @@ class HHDataProcessingThread(QThread):
     progress_updated = pyqtSignal(str)  # 进度更新信号
     finished = pyqtSignal(bool, str)    # 完成信号(成功/失败, 消息)
     
-    def __init__(self, input_dir, output_dir, operation_type):
+    def __init__(self, input_paths, output_dir, operation_type):
         super().__init__()
-        self.input_dir = input_dir
+        self.input_paths = normalize_input_paths(input_paths)
+        self.input_dir = str(self.input_paths[0])
         self.output_dir = output_dir
         self.operation_type = operation_type  # 'clean' 或 'generate'
     
@@ -187,46 +209,41 @@ class HHDataProcessingThread(QThread):
     
     def _clean_data(self):
         """清洗数据"""
-        self.progress_updated.emit("🔍 正在扫描华虹数据文件...")
-        
-        # 查找DCP文件
-        input_path = Path(self.input_dir)
-        
-        dcp_files = []
-        dcp_files.extend(list(input_path.rglob("*.txt")))
-        dcp_files.extend(list(input_path.rglob("*.TXT")))
-        dcp_files.extend(list(input_path.rglob("*.dcp")))
-        dcp_files.extend(list(input_path.rglob("*.DCP")))
-        
-        dcp_files = list(set(dcp_files))  # 去重
-        
-        self.progress_updated.emit(f"📁 发现 {len(dcp_files)} 个华虹DCP数据文件")
-        
-        if not dcp_files:
-            self.finished.emit(False, "未找到华虹DCP数据文件(.txt或.dcp)\n请确保选择的文件夹或其子文件夹中包含数据文件")
-            return
-        
-        # 确保输出目录存在
-        os.makedirs(self.output_dir, exist_ok=True)
-        self.progress_updated.emit(f"📁 华虹输出文件夹已创建: {self.output_dir}")
-        
-        # 处理整个目录
-        self.progress_updated.emit("🧹 正在处理华虹数据文件...")
-        
         try:
-            result = clean_dcp_process_directory(
-                directory_path=self.input_dir,
-                output_dir=self.output_dir,
-                outlier_method='iqr',
-                convert_units=True
-            )
-            
-            if result:
-                self.progress_updated.emit("✅ 华虹数据清洗完成！")
-                self.finished.emit(True, f"成功处理 {len(dcp_files)} 个华虹数据文件")
-            else:
-                self.finished.emit(False, "华虹数据处理失败，请检查数据文件格式")
-                
+            self.progress_updated.emit("🔍 正在扫描华虹数据来源...")
+            with prepare_dcp_input(
+                self.input_paths,
+                progress=self.progress_updated.emit,
+            ) as prepared_input:
+                dcp_files = prepared_input.data_files
+                self.progress_updated.emit(f"📁 发现 {len(dcp_files)} 个华虹DCP/TXT候选文件")
+
+                os.makedirs(self.output_dir, exist_ok=True)
+                self.progress_updated.emit(f"📁 华虹输出文件夹已创建: {self.output_dir}")
+                self.progress_updated.emit("🧹 正在处理华虹数据文件...")
+
+                result = clean_dcp_process_directory(
+                    directory_path=str(prepared_input.directory),
+                    output_dir=self.output_dir,
+                    outlier_method='iqr',
+                    convert_units=True
+                )
+
+                if result:
+                    archive_note = (
+                        f"，来源为 {len(prepared_input.archives)} 个ZIP"
+                        if prepared_input.archives
+                        else ""
+                    )
+                    self.progress_updated.emit("✅ 华虹数据清洗完成！")
+                    self.finished.emit(
+                        True,
+                        f"成功处理 {len(dcp_files)} 个华虹数据文件{archive_note}",
+                    )
+                else:
+                    self.finished.emit(False, "华虹数据处理失败，请检查数据文件格式")
+        except ZipInputError as e:
+            self.finished.emit(False, str(e))
         except Exception as e:
             logger.error(f"华虹数据处理失败: {e}")
             self.finished.emit(False, f"华虹处理失败: {str(e)}")
@@ -329,16 +346,17 @@ class HuaHongWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.input_dir = ""
+        self.input_paths = []
         self.output_dir = ""
         self.processing_thread = None
+        self._updating_input_path = False
         self.init_ui()
         self.set_default_paths()
     
     def set_default_paths(self):
         """设置华虹业务数据的默认输入、输出路径。"""
         input_path = get_default_input_path()
-        self.input_path_edit.setText(input_path)
-        self.input_dir = input_path
+        self.set_input_sources([input_path])
         self.output_path_edit.setText(get_default_output_path())
     
     def init_ui(self):
@@ -358,24 +376,31 @@ class HuaHongWidget(QWidget):
         title_label.setStyleSheet("color: #2196F3; margin-bottom: 10px;")
         main_layout.addWidget(title_label)
         
-        # 输入文件夹选择
+        # 输入文件夹或ZIP选择
         input_layout = QHBoxLayout()
-        input_label = QLabel("📁 数据文件夹:")
+        input_label = QLabel("📁 数据来源:")
         input_label.setMinimumWidth(125)
         input_label.setFont(QFont("", 12))
         self.input_path_edit = QLineEdit()
-        self.input_path_edit.setPlaceholderText("选择包含DCP数据文件的文件夹...")
+        self.input_path_edit.setPlaceholderText("选择数据文件夹，或选择一个/多个ZIP文件...")
         self.input_path_edit.setMinimumHeight(35)
         self.input_path_edit.setFont(QFont("", 11))
         self.input_browse_btn = QPushButton("选择文件夹...")
         self.input_browse_btn.setMinimumHeight(35)
-        self.input_browse_btn.setMinimumWidth(120)
+        self.input_browse_btn.setMinimumWidth(105)
         self.input_browse_btn.setFont(QFont("", 11))
         self.input_browse_btn.clicked.connect(self.browse_input_dir)
+
+        self.input_zip_browse_btn = QPushButton("选择ZIP...")
+        self.input_zip_browse_btn.setMinimumHeight(35)
+        self.input_zip_browse_btn.setMinimumWidth(95)
+        self.input_zip_browse_btn.setFont(QFont("", 11))
+        self.input_zip_browse_btn.clicked.connect(self.browse_input_zips)
         
         input_layout.addWidget(input_label)
         input_layout.addWidget(self.input_path_edit)
         input_layout.addWidget(self.input_browse_btn)
+        input_layout.addWidget(self.input_zip_browse_btn)
         main_layout.addLayout(input_layout)
         
         # 输出文件夹选择
@@ -480,60 +505,87 @@ class HuaHongWidget(QWidget):
         self.input_path_edit.textChanged.connect(self.on_input_path_changed)
     
     def browse_input_dir(self):
-        """浏览输入目录"""
+        """浏览原始数据目录，目录内可以直接放数据或一个/多个ZIP。"""
         start_dir = self.input_path_edit.text().strip() or get_default_input_path()
+        if ";" in start_dir or not Path(start_dir).is_dir():
+            start_dir = get_default_input_path()
         dir_path = QFileDialog.getExistingDirectory(self, "选择华虹数据文件夹", start_dir)
         if dir_path:
-            self.input_dir = dir_path
-            self.input_path_edit.setText(dir_path)
+            self.set_input_sources([dir_path])
+
+    def browse_input_zips(self):
+        """浏览并选择一个或多个华虹ZIP文件。"""
+        current_sources = self.get_input_sources()
+        if current_sources:
+            first_source = Path(current_sources[0])
+            start_dir = str(first_source if first_source.is_dir() else first_source.parent)
+        else:
+            start_dir = get_default_input_path()
+
+        zip_paths, _ = QFileDialog.getOpenFileNames(
+            self,
+            "选择一个或多个华虹ZIP文件",
+            start_dir,
+            "ZIP压缩包 (*.zip *.ZIP)",
+        )
+        if zip_paths:
+            self.set_input_sources(zip_paths)
+
+    def set_input_sources(self, paths):
+        """设置输入来源，并在输入框中显示可编辑的多路径预览。"""
+        self.input_paths = [str(path) for path in paths if str(path).strip()]
+        self.input_dir = self.input_paths[0] if self.input_paths else ""
+        self._updating_input_path = True
+        try:
+            self.input_path_edit.setText("; ".join(self.input_paths))
+        finally:
+            self._updating_input_path = False
+        self.clean_btn.setEnabled(bool(self.input_paths))
+
+    def get_input_sources(self):
+        """读取输入框中的单路径或分号分隔多路径。"""
+        return [
+            item.strip().strip('"')
+            for item in self.input_path_edit.text().split(";")
+            if item.strip().strip('"')
+        ]
     
     def browse_output_dir(self):
-        """浏览输出目录并创建基于lot_id+时间戳的文件夹"""
+        """浏览输出父目录，开始处理时再创建批次时间戳文件夹。"""
         start_dir = self.output_path_edit.text().strip() or get_default_output_path()
         parent_dir = QFileDialog.getExistingDirectory(self, "选择华虹输出文件夹的父目录", start_dir)
         if parent_dir:
-            # 如果用户已选择输入目录，尝试生成基于lot_id的文件夹名
-            if self.input_dir:
-                folder_name = generate_output_folder_name(self.input_dir)
-                suggested_output_dir = os.path.join(parent_dir, folder_name)
-                
-                # 显示建议的完整路径给用户确认
-                reply = QMessageBox.question(
-                    self, 
-                    "确认输出文件夹", 
-                    f"将在以下位置创建输出文件夹：\n\n{suggested_output_dir}\n\n继续吗？",
-                    QMessageBox.Yes | QMessageBox.No
-                )
-                
-                if reply == QMessageBox.Yes:
-                    self.output_path_edit.setText(suggested_output_dir)
-                else:
-                    # 用户取消，使用选择的父目录
-                    self.output_path_edit.setText(parent_dir)
-            else:
-                # 如果没有输入目录，提示用户先选择输入目录
-                QMessageBox.information(
-                    self, 
-                    "提示", 
-                    "建议先选择输入文件夹，这样可以自动生成基于批次号+时间戳的输出文件夹名称。\n\n当前将使用您选择的文件夹作为输出目录。"
-                )
-                self.output_path_edit.setText(parent_dir)
+            self.output_path_edit.setText(parent_dir)
     
     def on_input_path_changed(self):
         """输入路径变化时的处理"""
-        has_input = bool(self.input_path_edit.text().strip())
-        self.clean_btn.setEnabled(has_input)
-        self.input_dir = self.input_path_edit.text().strip() if has_input else ""
+        if self._updating_input_path:
+            return
+        self.input_paths = self.get_input_sources()
+        self.input_dir = self.input_paths[0] if self.input_paths else ""
+        self.clean_btn.setEnabled(bool(self.input_paths))
     
     def start_cleaning(self):
         """开始华虹数据清洗"""
-        if not self.input_dir:
-            QMessageBox.warning(self, "警告", "请先选择华虹数据文件夹！")
+        input_sources = self.get_input_sources()
+        if not input_sources:
+            QMessageBox.warning(self, "警告", "请先选择华虹数据文件夹或ZIP文件！")
+            return
+
+        try:
+            normalized_sources = normalize_input_paths(input_sources)
+            for source in normalized_sources:
+                if not source.exists():
+                    raise ZipInputError(f"输入路径不存在: {source}")
+                if source.is_file() and source.suffix.casefold() != ".zip":
+                    raise ZipInputError(f"不支持的输入文件类型（仅支持ZIP）: {source.name}")
+        except ZipInputError as e:
+            QMessageBox.warning(self, "输入无效", str(e))
             return
         
         # 生成输出文件夹名称
         base_output_dir = self.output_path_edit.text().strip() or get_default_output_path()
-        folder_name = generate_output_folder_name(self.input_dir)
+        folder_name = generate_output_folder_name(normalized_sources)
         self.output_dir = os.path.join(base_output_dir, folder_name)
         
         # 确保输出目录存在
@@ -546,13 +598,18 @@ class HuaHongWidget(QWidget):
             return
 
         self.log_message("🚀 开始华虹数据清洗流程...")
-        self.log_message(f"📁 华虹输入目录: {self.input_dir}")
+        if len(normalized_sources) == 1:
+            self.log_message(f"📁 华虹输入来源: {normalized_sources[0]}")
+        else:
+            self.log_message(f"📦 已选择 {len(normalized_sources)} 个华虹ZIP文件")
+            for source in normalized_sources:
+                self.log_message(f"  - {source}")
         self.log_message(f"📁 华虹输出目录: {self.output_dir}")
         self.set_processing_state(True)
         
         # 启动后台处理线程
         self.processing_thread = HHDataProcessingThread(
-            self.input_dir, self.output_dir, 'clean'
+            normalized_sources, self.output_dir, 'clean'
         )
         self.processing_thread.progress_updated.connect(self.log_message)
         self.processing_thread.finished.connect(self.on_cleaning_finished)
@@ -634,7 +691,10 @@ class HuaHongWidget(QWidget):
         self.clean_btn.setEnabled(not is_processing and bool(self.input_dir))
         self.cockpit_btn.setEnabled(not is_processing)
         self.input_browse_btn.setEnabled(not is_processing)
+        self.input_zip_browse_btn.setEnabled(not is_processing)
         self.output_browse_btn.setEnabled(not is_processing)
+        self.input_path_edit.setEnabled(not is_processing)
+        self.output_path_edit.setEnabled(not is_processing)
         
         # 显示/隐藏进度条
         if is_processing:

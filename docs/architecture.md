@@ -62,7 +62,7 @@ flowchart LR
 
 ### HH / 华虹宏力
 
-GUI 调用 `clean_dcp_data.process_directory()`，流程包含 DCP 读取、IQR 清洗、cleaned CSV、yield CSV、spec 提取和可选单位转换。图表直接使用共用 `frontend` 组件。
+GUI 支持原始 DCP/TXT 文件夹、单个 ZIP、多个 ZIP，以及只包含 ZIP 的输入文件夹。ZIP 输入先由 `cp_data_processor.processing.zip_input` 安全解压并规整为原处理器可识别的一层/两层临时目录，再调用 `clean_dcp_data.process_directory()`；临时文件在处理结束后自动删除。后续流程仍包含 DCP 读取、IQR 清洗、cleaned CSV、yield CSV、spec 提取和可选单位转换，图表直接使用共用 `frontend` 组件。
 
 ### JT / Jetech
 
