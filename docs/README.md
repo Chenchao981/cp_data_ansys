@@ -16,6 +16,8 @@
 | [新增公司支持](company-integration.md) | 接入新的晶圆厂或测试厂格式 |
 | [CP 数据 FTP 接入设计](ftp-integration-design.md) | 未来开发多厂家 FTP 查询、下载、防重复和手动清洗功能 |
 | [运行与发布](operations.md) | 日常运行、排障和生成发布包 |
+| [发布版用户手册](release-user-manual.md) | 安装、输入、清洗、图表与常见问题 |
+| [发布版参数速查](release-quick-reference.md) | 四家公司输入结构、输出文件与参数说明 |
 | [技术债与升级路线](technical-debt.md) | 规划重构、测试补强和版本升级 |
 | [文档维护规范](documentation-governance.md) | 保持文档与代码同步 |
 
@@ -33,7 +35,7 @@
 1. 阅读根目录 `README.md`
 2. 阅读 `frontend-user-quickstart.md`
 3. 需要安装或桌面快捷方式时阅读 `frontend-desktop-deployment.md`
-4. 必要时参考 `operations.md` 或 `packaging/release/用户手册.md`
+4. 必要时参考 `operations.md` 或 `release-user-manual.md`
 
 ## 文档状态规则
 

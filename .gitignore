@@ -169,8 +169,6 @@ logs/
 # YoYo AI version control directory
 .yoyo/
 .kiro/
-# Local release archives
-packaging/release.zip
-packaging/release/app.pyz
+# Local primary release artifacts
 packaging/release_frontend/
 packaging/release_frontend.zip

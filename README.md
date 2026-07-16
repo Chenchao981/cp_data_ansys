@@ -66,6 +66,8 @@ python guoyu_batch_processor.py data/257375 --output output
 - [新增公司支持](docs/company-integration.md)
 - [CP 数据 FTP 接入设计（未来规划）](docs/ftp-integration-design.md)
 - [运行与发布](docs/operations.md)
+- [发布版用户手册](docs/release-user-manual.md)
+- [发布版参数速查](docs/release-quick-reference.md)
 - [技术债与升级路线](docs/technical-debt.md)
 - [AI / Codex 协作说明](AGENTS.md)
 

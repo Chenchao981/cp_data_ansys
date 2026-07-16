@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Build a separate release folder for the GUI + CP Cockpit frontend.
-
-This script intentionally does not overwrite packaging/release, so the previous
-GUI release remains available for users who do not need the new frontend.
-"""
+"""Build the primary GUI + CP Cockpit release in packaging/release_frontend."""
 
 from __future__ import annotations
 
@@ -82,6 +77,8 @@ DOCS_TO_COPY = [
     "docs/frontend-user-quickstart.md",
     "docs/data-contracts.md",
     "docs/operations.md",
+    "docs/release-user-manual.md",
+    "docs/release-quick-reference.md",
 ]
 
 RUNTIME_REQUIREMENTS = """# CP Data Analysis Tool - GUI + CP Cockpit frontend runtime dependencies
@@ -263,6 +260,70 @@ fi
 "$PYTHON_EXE" app.pyz
 """
 
+INSTALL_ANACONDA_BAT = r"""@echo off
+setlocal
+cd /d "%~dp0"
+
+REM Force UTF-8 for Python and pip on Windows systems using CP936/GBK.
+set "PYTHONUTF8=1"
+set "PYTHONIOENCODING=utf-8"
+
+if exist "%SystemRoot%\System32\chcp.com" (
+    "%SystemRoot%\System32\chcp.com" 65001 >nul
+)
+
+echo CP Data Analysis Tool - Dependency Setup
+echo.
+
+set "PYTHON_EXE="
+if exist "D:\ProgramData\anaconda3\python.exe" (
+    set "PYTHON_EXE=D:\ProgramData\anaconda3\python.exe"
+)
+
+if not defined PYTHON_EXE (
+    for /f "delims=" %%P in ('"%SystemRoot%\System32\where.exe" python 2^>nul') do (
+        if not defined PYTHON_EXE set "PYTHON_EXE=%%P"
+    )
+)
+
+if not defined PYTHON_EXE (
+    echo ERROR: Python was not found.
+    echo Install Anaconda under D:\ProgramData\anaconda3 or add Python to PATH.
+    goto :failed
+)
+
+echo Using Python:
+"%PYTHON_EXE%" -c "import sys; print(sys.executable); print(sys.version)"
+echo.
+
+echo Installing required packages...
+"%PYTHON_EXE%" -m pip install -r "requirements_anaconda.txt"
+if errorlevel 1 (
+    echo ERROR: Dependency installation failed.
+    goto :failed
+)
+
+echo.
+echo Verifying runtime dependencies...
+"%PYTHON_EXE%" -c "import PyQt5, pandas, numpy, openpyxl, xlrd, plotly, matplotlib, seaborn, streamlit; print('All runtime dependencies are available.')"
+if errorlevel 1 (
+    echo ERROR: Dependency verification failed.
+    goto :failed
+)
+
+echo.
+echo Environment setup completed. Run start.bat to launch the application.
+pause
+endlocal
+exit /b 0
+
+:failed
+echo.
+pause
+endlocal
+exit /b 1
+"""
+
 
 def normalize(path: Path) -> str:
     return path.as_posix()
@@ -362,31 +423,40 @@ def copy_release_assets() -> None:
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
 
-    install_src = PACKAGING_DIR / "release" / "install_anaconda.bat"
-    if install_src.exists():
-        shutil.copy2(install_src, RELEASE_DIR / "install_anaconda.bat")
-
     (RELEASE_DIR / "requirements_anaconda.txt").write_text(RUNTIME_REQUIREMENTS, encoding="utf-8")
     (RELEASE_DIR / "start.bat").write_text(START_BAT, encoding="utf-8", newline="\r\n")
     (RELEASE_DIR / "start.sh").write_text(START_SH, encoding="utf-8", newline="\n")
+    (RELEASE_DIR / "install_anaconda.bat").write_text(
+        INSTALL_ANACONDA_BAT,
+        encoding="utf-8",
+        newline="\r\n",
+    )
     (RELEASE_DIR / "USAGE_FRONTEND_RELEASE.md").write_text(
-        """# CP Data Analysis Tool - GUI + CP Cockpit Frontend Release
+        """# CP 数据分析工具 - GUI + CP Cockpit 主发布版
 
-## Start
+## 启动与检查
 
-Run `start.bat`.
+- 首次部署：运行 `install_anaconda.bat`
+- 启动程序：运行 `start.bat`
+- 仅检查环境与发布包：运行 `start.bat --check`
 
-## Check environment
+## 数据输入
 
-Run `start.bat --check`.
+- 华虹、Jetech、Lion、国宇FRD均保留“选择文件夹”和“选择ZIP”两个入口。
+- “选择ZIP”支持一次选择一个或多个ZIP；“选择文件夹”也可选择只包含ZIP的目录。
+- ZIP仅解压到临时目录，处理结束后自动清理。
 
-## Main entries
+## 输出命名
 
-- `CP Cockpit`: opens the Streamlit frontend with the current output folder.
+输出路径填写父目录，程序自动创建“首个真实批次号_YYYYMMDD_HHMMSS”文件夹。
 
-## Data safety
+## CP Cockpit
 
-This release folder does not include raw CP data or generated output CSV/HTML reports.
+清洗完成后点击公司页面中的 `CP Cockpit`，打开当前输出目录的交互分析页面。
+
+## 数据安全
+
+发布目录不包含原始CP数据、生成的CSV/HTML结果、日志或账号密钥。
 """,
         encoding="utf-8",
     )
