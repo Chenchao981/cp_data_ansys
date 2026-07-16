@@ -170,5 +170,5 @@ logs/
 .yoyo/
 .kiro/
 # Local primary release artifacts
-packaging/release_frontend/
-packaging/release_frontend.zip
+packaging/release/
+packaging/release.zip

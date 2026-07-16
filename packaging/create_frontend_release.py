@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Build the primary GUI + CP Cockpit release in packaging/release_frontend."""
+"""Build the primary GUI + CP Cockpit release in packaging/release."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PACKAGING_DIR = Path(__file__).resolve().parent
-RELEASE_DIR = PACKAGING_DIR / "release_frontend"
+RELEASE_DIR = PACKAGING_DIR / "release"
 TARGET_PYZ = RELEASE_DIR / "app.pyz"
 TEMP_BUILD_DIR = PACKAGING_DIR / "_temp_frontend_build_src"
 MAIN_ENTRY_POINT = "gui.multi_company_main:main"
