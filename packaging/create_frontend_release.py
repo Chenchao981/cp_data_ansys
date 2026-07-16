@@ -124,7 +124,7 @@ for %%D in (
     if not exist "%%~D" mkdir "%%~D" >nul 2>&1
     if not exist "%%~D" (
         echo ERROR: Cannot create required data directory:
-        echo   %%~D
+        echo   "%%~D"
         goto :failed
     )
 )
@@ -166,16 +166,18 @@ echo Using Python: %PYTHON_EXE%
 "%PYTHON_EXE%" -c "import PyQt5, pandas, numpy, openpyxl, xlrd, plotly, streamlit" >nul 2>&1
 if errorlevel 1 (
     echo ERROR: Required packages are missing from:
-    echo   %PYTHON_EXE%
+    echo   "%PYTHON_EXE%"
     echo.
     echo Run:
-    echo   %PYTHON_EXE% -m pip install -r requirements_anaconda.txt
+    echo   "%PYTHON_EXE%" -m pip install -r requirements_anaconda.txt
     goto :failed
 )
 
 if not exist "app.pyz" (
     echo ERROR: app.pyz was not found in:
-    echo   %CD%
+    REM Keep the expanded path quoted. An unquoted ')' in a directory name
+    REM would otherwise terminate this IF block during CMD parsing.
+    echo   "%CD%"
     goto :failed
 )
 

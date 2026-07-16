@@ -187,6 +187,16 @@ C:\Users\<用户名>\Desktop
 
 ## 9. 常见问题
 
+### `start.bat` 一闪而过并提示 `was unexpected at this time`
+
+旧版发布脚本在程序目录名包含括号时可能触发 CMD 解析错误，例如：
+
+```text
+D:\tools\release_frontend(1)\release_frontend
+```
+
+应优先使用已修复的新版发布包。暂时无法更新时，可把外层目录改为不含括号的名称，例如 `release_frontend_1`，或按推荐路径部署到 `D:\CPDataAnalysis`。这类 `was unexpected at this time` 提示是批处理语法错误，不应先关闭 360；只有 360 明确显示拦截或隔离记录时，才由 IT 在核实程序来源后处理对应文件。
+
 ### 点击 CP Cockpit 没反应
 
 检查：
