@@ -4,6 +4,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
+from typing import Sequence
 
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont
@@ -20,6 +21,15 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 logger = logging.getLogger(__name__)
+
+from cp_data_processor.processing.archive_input import (
+    ArchiveInputError,
+    normalize_input_paths,
+    prepare_archive_input,
+)
+
+
+GUOYU_EXCEL_SUFFIXES = (".xls", ".xlsx")
 
 
 def get_desktop_path() -> str:
@@ -41,32 +51,50 @@ class GuoyuDataProcessingThread(QThread):
     progress_updated = pyqtSignal(str)
     finished = pyqtSignal(bool, str)
 
-    def __init__(self, input_dir: str, output_dir: str):
+    def __init__(self, input_paths, output_dir: str):
         super().__init__()
-        self.input_dir = input_dir
+        self.input_paths = normalize_input_paths(input_paths)
+        self.input_dir = str(self.input_paths[0])
         self.output_dir = output_dir
 
     def run(self):
         try:
             from guoyu_batch_processor import process_guoyu_directory
 
-            self.progress_updated.emit("正在递归识别产品、批次及 EDS 数据目录...")
-            result = process_guoyu_directory(self.input_dir, self.output_dir)
-            files = result["files"]
-            self.output_dir = result["output_dir"]
-            self.progress_updated.emit(
-                f"已识别产品 {result['product_name']}、{result['batch_count']} 个批次、"
-                f"{result['wafer_count']} 片 Wafer。"
-            )
-            self.progress_updated.emit("已完成工程单位转换，明细参数均为纯数值。")
-            self.progress_updated.emit("已生成 cleaned、yield、spec 标准 CSV。")
-            message = "国宇FRD数据清洗完成：\n" + "\n".join(
-                f"- {file_type}: {Path(file_path).name}"
-                for file_type, file_path in files.items()
-            )
-            message += f"\n- 输出文件夹: {self.output_dir}"
-            message += f"\n- 产品名称: {result['product_name']}"
-            self.finished.emit(True, message)
+            with prepare_archive_input(
+                self.input_paths,
+                allowed_suffixes=GUOYU_EXCEL_SUFFIXES,
+                source_label="国宇FRD Excel",
+                progress=self.progress_updated.emit,
+                preserve_member_paths=True,
+                temporary_prefix="cp_guoyu_zip_",
+            ) as prepared_input:
+                if prepared_input.archives:
+                    self.progress_updated.emit(
+                        f"已准备 {len(prepared_input.archives)} 个国宇FRD ZIP文件。"
+                    )
+                self.progress_updated.emit("正在递归识别产品、批次及 EDS 数据目录...")
+                result = process_guoyu_directory(
+                    str(prepared_input.directory), self.output_dir
+                )
+                files = result["files"]
+                self.output_dir = result["output_dir"]
+                self.progress_updated.emit(
+                    f"已识别产品 {result['product_name']}、{result['batch_count']} 个批次、"
+                    f"{result['wafer_count']} 片 Wafer。"
+                )
+                self.progress_updated.emit("已完成工程单位转换，明细参数均为纯数值。")
+                self.progress_updated.emit("已生成 cleaned、yield、spec 标准 CSV。")
+                message = "国宇FRD数据清洗完成：\n" + "\n".join(
+                    f"- {file_type}: {Path(file_path).name}"
+                    for file_type, file_path in files.items()
+                )
+                message += f"\n- 输出文件夹: {self.output_dir}"
+                message += f"\n- 产品名称: {result['product_name']}"
+                self.finished.emit(True, message)
+        except ArchiveInputError as exc:
+            logger.error("国宇FRD ZIP输入准备失败: %s", exc)
+            self.finished.emit(False, str(exc))
         except Exception as exc:
             logger.error("国宇FRD数据清洗失败: %s", exc, exc_info=True)
             self.finished.emit(False, str(exc))
@@ -80,6 +108,8 @@ class GuoyuWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.input_dir = ""
+        self.input_paths = []
+        self._updating_input_path = False
         self.output_dir = ""
         self.processing_thread = None
         self.init_ui()
@@ -87,9 +117,7 @@ class GuoyuWidget(QWidget):
 
     def set_default_paths(self):
         """设置默认输入、输出路径。"""
-        input_path = get_default_input_path()
-        self.input_path_edit.setText(input_path)
-        self.input_dir = input_path
+        self.set_input_sources([get_default_input_path()])
         self.output_path_edit.setText(get_default_output_path())
 
     def init_ui(self):
@@ -108,11 +136,13 @@ class GuoyuWidget(QWidget):
         main_layout.addWidget(title_label)
 
         input_layout = QHBoxLayout()
-        input_label = QLabel("数据文件夹:")
+        input_label = QLabel("数据来源:")
         input_label.setMinimumWidth(125)
         input_label.setFont(QFont("", 12))
         self.input_path_edit = QLineEdit()
-        self.input_path_edit.setPlaceholderText("选择批次目录，或包含批次/EDS多层目录的产品目录...")
+        self.input_path_edit.setPlaceholderText(
+            "选择批次/产品目录，或选择一个/多个ZIP文件..."
+        )
         self.input_path_edit.setMinimumHeight(35)
         self.input_path_edit.setFont(QFont("", 11))
         self.input_browse_btn = QPushButton("选择文件夹...")
@@ -120,9 +150,15 @@ class GuoyuWidget(QWidget):
         self.input_browse_btn.setMinimumWidth(120)
         self.input_browse_btn.setFont(QFont("", 11))
         self.input_browse_btn.clicked.connect(self.browse_input_dir)
+        self.input_zip_browse_btn = QPushButton("选择ZIP...")
+        self.input_zip_browse_btn.setMinimumHeight(35)
+        self.input_zip_browse_btn.setMinimumWidth(120)
+        self.input_zip_browse_btn.setFont(QFont("", 11))
+        self.input_zip_browse_btn.clicked.connect(self.browse_input_zip)
         input_layout.addWidget(input_label)
         input_layout.addWidget(self.input_path_edit)
         input_layout.addWidget(self.input_browse_btn)
+        input_layout.addWidget(self.input_zip_browse_btn)
         main_layout.addLayout(input_layout)
 
         output_layout = QHBoxLayout()
@@ -223,7 +259,37 @@ class GuoyuWidget(QWidget):
             self, "选择国宇FRD数据文件夹", self.input_dir or get_default_input_path()
         )
         if dir_path:
-            self.input_path_edit.setText(dir_path)
+            self.set_input_sources([dir_path])
+
+    def browse_input_zip(self):
+        """选择一个或多个国宇FRD ZIP压缩包。"""
+        zip_paths, _ = QFileDialog.getOpenFileNames(
+            self,
+            "选择国宇FRD ZIP文件（可多选）",
+            self.input_dir or get_default_input_path(),
+            "ZIP压缩包 (*.zip *.ZIP)",
+        )
+        if zip_paths:
+            self.set_input_sources(zip_paths)
+
+    def set_input_sources(self, paths: Sequence[str | Path]):
+        """设置输入来源并显示可编辑的多路径预览。"""
+        self.input_paths = [str(path) for path in paths if str(path).strip()]
+        self.input_dir = self.input_paths[0] if self.input_paths else ""
+        self._updating_input_path = True
+        try:
+            self.input_path_edit.setText("; ".join(self.input_paths))
+        finally:
+            self._updating_input_path = False
+        self.clean_btn.setEnabled(bool(self.input_paths))
+
+    def get_input_sources(self):
+        """读取输入框中的单路径或分号分隔多路径。"""
+        return [
+            item.strip().strip('"')
+            for item in self.input_path_edit.text().split(";")
+            if item.strip().strip('"')
+        ]
 
     def browse_output_dir(self):
         """浏览标准 CSV 输出父目录。"""
@@ -235,33 +301,54 @@ class GuoyuWidget(QWidget):
 
     def on_input_path_changed(self):
         """输入路径变化时更新清洗按钮状态。"""
-        self.input_dir = self.input_path_edit.text().strip()
-        self.clean_btn.setEnabled(bool(self.input_dir))
+        if self._updating_input_path:
+            return
+        self.input_paths = self.get_input_sources()
+        self.input_dir = self.input_paths[0] if self.input_paths else ""
+        self.clean_btn.setEnabled(bool(self.input_paths))
 
     def start_cleaning(self):
         """启动国宇 FRD 数据清洗。"""
-        self.input_dir = self.input_path_edit.text().strip()
+        input_sources = self.get_input_sources()
         self.output_dir = self.output_path_edit.text().strip()
-        if not self.input_dir:
-            QMessageBox.warning(self, "警告", "请先选择国宇FRD数据文件夹！")
+        if not input_sources:
+            QMessageBox.warning(self, "警告", "请先选择国宇FRD数据文件夹或ZIP文件！")
             return
         if not self.output_dir:
             QMessageBox.warning(self, "警告", "请先选择国宇FRD输出父目录！")
             return
 
         try:
+            normalized_sources = normalize_input_paths(input_sources)
+            for source in normalized_sources:
+                if not source.exists():
+                    raise ArchiveInputError(f"输入路径不存在: {source}")
+                if source.is_file() and source.suffix.casefold() != ".zip":
+                    raise ArchiveInputError(
+                        f"不支持的输入文件类型（仅支持ZIP）: {source.name}"
+                    )
             Path(self.output_dir).mkdir(parents=True, exist_ok=True)
+        except ArchiveInputError as exc:
+            QMessageBox.warning(self, "输入无效", str(exc))
+            return
         except Exception as exc:
             self.log_message(f"创建输出文件夹失败: {exc}")
             QMessageBox.critical(self, "错误", f"创建输出文件夹失败: {exc}")
             return
 
         self.log_message("开始国宇FRD数据清洗流程...")
-        self.log_message(f"输入目录: {self.input_dir}")
+        if len(normalized_sources) == 1:
+            self.log_message(f"输入来源: {normalized_sources[0]}")
+        else:
+            self.log_message(f"已选择 {len(normalized_sources)} 个国宇FRD ZIP文件")
+            for source in normalized_sources:
+                self.log_message(f"  - {source}")
         self.log_message(f"输出父目录: {self.output_dir}")
         self.set_processing_state(True)
 
-        self.processing_thread = GuoyuDataProcessingThread(self.input_dir, self.output_dir)
+        self.processing_thread = GuoyuDataProcessingThread(
+            normalized_sources, self.output_dir
+        )
         self.processing_thread.progress_updated.connect(self.log_message)
         self.processing_thread.finished.connect(self.on_cleaning_finished)
         self.processing_thread.start()
@@ -284,6 +371,7 @@ class GuoyuWidget(QWidget):
         self.clean_btn.setEnabled(not is_processing and bool(self.input_dir))
         self.cockpit_btn.setEnabled(not is_processing)
         self.input_browse_btn.setEnabled(not is_processing)
+        self.input_zip_browse_btn.setEnabled(not is_processing)
         self.output_browse_btn.setEnabled(not is_processing)
         self.input_path_edit.setEnabled(not is_processing)
         self.output_path_edit.setEnabled(not is_processing)

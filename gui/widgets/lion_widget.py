@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 import re
+from typing import Sequence
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QLineEdit, QPushButton, QTextEdit, QFileDialog, 
                              QMessageBox, QProgressBar)
@@ -21,6 +22,15 @@ import logging
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 logger = logging.getLogger(__name__)
+
+from cp_data_processor.processing.archive_input import (
+    ArchiveInputError,
+    normalize_input_paths,
+    prepare_archive_input,
+)
+
+
+LION_EXCEL_SUFFIXES = (".xls", ".xlsx")
 
 
 def get_desktop_path():
@@ -89,9 +99,10 @@ class LionDataProcessingThread(QThread):
     finished = pyqtSignal(bool, str)    # 完成信号(成功/失败, 消息)
     output_dir_created = pyqtSignal(str)  # 输出目录创建信号
     
-    def __init__(self, input_dir, base_output_dir, operation_type):
+    def __init__(self, input_paths, base_output_dir, operation_type):
         super().__init__()
-        self.input_dir = input_dir
+        self.input_paths = normalize_input_paths(input_paths)
+        self.input_dir = str(self.input_paths[0])
         self.base_output_dir = base_output_dir  # 基础输出目录
         self.output_dir = None  # 实际输出目录，会在处理过程中确定
         self.operation_type = operation_type  # 'clean' 或 'generate'
@@ -110,17 +121,47 @@ class LionDataProcessingThread(QThread):
     def _process_lion_data(self):
         """处理Lion数据 - 直接调用完善的lion_batch_processor.py功能"""
         self.progress_updated.emit("🦁 启动Lion专用数据处理器...")
-        
+
         try:
-            # 导入Lion批次处理器
-            from lion_batch_processor import discover_batch_files, process_lion_batch_files, create_combined_lot
-            from cp_data_processor.processing.standard_csv_generator import StandardCSVGenerator
-            from pathlib import Path
-            
-            # 设置处理路径
-            input_path = Path(self.input_dir)
-            base_output_path = Path(self.base_output_dir)
-            
+            with prepare_archive_input(
+                self.input_paths,
+                allowed_suffixes=LION_EXCEL_SUFFIXES,
+                source_label="Lion Excel",
+                progress=self.progress_updated.emit,
+                temporary_prefix="cp_lion_zip_",
+            ) as prepared_input:
+                if prepared_input.archives:
+                    self.progress_updated.emit(
+                        f"📦 已准备 {len(prepared_input.archives)} 个Lion ZIP文件"
+                    )
+                self._process_lion_directory(prepared_input.directory)
+        except ArchiveInputError as exc:
+            logger.error("Lion ZIP输入准备失败: %s", exc)
+            self.finished.emit(False, str(exc))
+        except ImportError as exc:
+            logger.error("Lion批次处理器导入失败: %s", exc)
+            self.progress_updated.emit("❌ Lion批次处理器导入失败...")
+            self.finished.emit(
+                False,
+                f"无法导入Lion批次处理器: {exc}\n请确保lion_batch_processor模块可用",
+            )
+        except Exception as exc:
+            logger.error("Lion数据处理失败: %s", exc, exc_info=True)
+            self.progress_updated.emit(f"❌ Lion数据处理失败: {exc}")
+            self.finished.emit(False, f"Lion数据处理失败: {exc}")
+
+    def _process_lion_directory(self, input_path: Path):
+        """使用既有Lion处理器处理已准备好的目录。"""
+        from lion_batch_processor import (
+            create_combined_lot,
+            discover_batch_files,
+            process_lion_batch_files,
+        )
+        from cp_data_processor.processing.standard_csv_generator import StandardCSVGenerator
+
+        base_output_path = Path(self.base_output_dir)
+
+        try:
             self.progress_updated.emit(f"📁 输入目录: {input_path}")
             self.progress_updated.emit(f"📁 基础输出目录: {base_output_path}")
             
@@ -232,13 +273,7 @@ class LionDataProcessingThread(QThread):
             else:
                 self.finished.emit(False, "CSV文件生成失败")
                 
-        except ImportError as ie:
-            logger.error(f"Lion批次处理器导入失败: {ie}")
-            self.progress_updated.emit("❌ Lion批次处理器导入失败...")
-            self.finished.emit(False, f"无法导入Lion批次处理器: {str(ie)}\n请确保lion_batch_processor模块可用")
-            
         except Exception as e:
-            error_msg = str(e)
             logger.error(f"Lion数据处理失败: {e}")
             self.progress_updated.emit(f"❌ Lion数据处理失败: {str(e)}")
             self.finished.emit(False, f"Lion数据处理失败: {str(e)}")
@@ -369,6 +404,8 @@ class LionWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.input_dir = ""
+        self.input_paths = []
+        self._updating_input_path = False
         self.output_dir = ""
         self.processing_thread = None
         self.init_ui()
@@ -376,9 +413,7 @@ class LionWidget(QWidget):
     
     def set_default_paths(self):
         """设置 Lion 业务数据的默认输入、输出路径。"""
-        input_path = get_default_input_path()
-        self.input_path_edit.setText(input_path)
-        self.input_dir = input_path
+        self.set_input_sources([get_default_input_path()])
         self.output_path_edit.setText(get_default_output_path())
     
     def init_ui(self):
@@ -398,13 +433,15 @@ class LionWidget(QWidget):
         title_label.setStyleSheet("color: #FF9800; margin-bottom: 10px;")
         main_layout.addWidget(title_label)
         
-        # 输入文件夹选择
+        # 输入文件夹或ZIP选择
         input_layout = QHBoxLayout()
-        input_label = QLabel("📁 数据文件夹:")
+        input_label = QLabel("📁 数据来源:")
         input_label.setMinimumWidth(125)
         input_label.setFont(QFont("", 12))
         self.input_path_edit = QLineEdit()
-        self.input_path_edit.setPlaceholderText("选择包含Lion Excel数据文件的文件夹...")
+        self.input_path_edit.setPlaceholderText(
+            "选择Lion数据文件夹，或选择一个/多个ZIP文件..."
+        )
         self.input_path_edit.setMinimumHeight(35)
         self.input_path_edit.setFont(QFont("", 11))
         self.input_browse_btn = QPushButton("选择文件夹...")
@@ -412,10 +449,16 @@ class LionWidget(QWidget):
         self.input_browse_btn.setMinimumWidth(120)
         self.input_browse_btn.setFont(QFont("", 11))
         self.input_browse_btn.clicked.connect(self.browse_input_dir)
+        self.input_zip_browse_btn = QPushButton("选择ZIP...")
+        self.input_zip_browse_btn.setMinimumHeight(35)
+        self.input_zip_browse_btn.setMinimumWidth(120)
+        self.input_zip_browse_btn.setFont(QFont("", 11))
+        self.input_zip_browse_btn.clicked.connect(self.browse_input_zip)
         
         input_layout.addWidget(input_label)
         input_layout.addWidget(self.input_path_edit)
         input_layout.addWidget(self.input_browse_btn)
+        input_layout.addWidget(self.input_zip_browse_btn)
         main_layout.addLayout(input_layout)
         
         # 输出文件夹选择
@@ -521,70 +564,93 @@ class LionWidget(QWidget):
     
     def browse_input_dir(self):
         """浏览输入目录"""
-        start_dir = self.input_path_edit.text().strip() or get_default_input_path()
+        start_dir = self.input_dir or get_default_input_path()
         dir_path = QFileDialog.getExistingDirectory(self, "选择Lion数据文件夹", start_dir)
         if dir_path:
-            self.input_dir = dir_path
-            self.input_path_edit.setText(dir_path)
+            self.set_input_sources([dir_path])
+
+    def browse_input_zip(self):
+        """选择一个或多个Lion ZIP压缩包。"""
+        start_dir = self.input_dir or get_default_input_path()
+        zip_paths, _ = QFileDialog.getOpenFileNames(
+            self,
+            "选择Lion ZIP文件（可多选）",
+            start_dir,
+            "ZIP压缩包 (*.zip *.ZIP)",
+        )
+        if zip_paths:
+            self.set_input_sources(zip_paths)
+
+    def set_input_sources(self, paths: Sequence[str | Path]):
+        """设置输入来源并显示可编辑的多路径预览。"""
+        self.input_paths = [str(path) for path in paths if str(path).strip()]
+        self.input_dir = self.input_paths[0] if self.input_paths else ""
+        self._updating_input_path = True
+        try:
+            self.input_path_edit.setText("; ".join(self.input_paths))
+        finally:
+            self._updating_input_path = False
+        self.clean_btn.setEnabled(bool(self.input_paths))
+
+    def get_input_sources(self):
+        """读取输入框中的单路径或分号分隔多路径。"""
+        return [
+            item.strip().strip('"')
+            for item in self.input_path_edit.text().split(";")
+            if item.strip().strip('"')
+        ]
     
     def browse_output_dir(self):
-        """浏览输出目录并创建基于lot_id+时间戳的文件夹"""
+        """浏览输出父目录；处理时再创建批次号+流水号文件夹。"""
         start_dir = self.output_path_edit.text().strip() or get_default_output_path()
         parent_dir = QFileDialog.getExistingDirectory(self, "选择Lion输出文件夹的父目录", start_dir)
         if parent_dir:
-            # 如果用户已选择输入目录，尝试生成基于lot_id的文件夹名
-            if self.input_dir:
-                folder_name = generate_lion_output_folder_name(self.input_dir)
-                suggested_output_dir = os.path.join(parent_dir, folder_name)
-                
-                # 显示建议的完整路径给用户确认
-                reply = QMessageBox.question(
-                    self, 
-                    "确认输出文件夹", 
-                    f"将在以下位置创建输出文件夹：\n\n{suggested_output_dir}\n\n继续吗？",
-                    QMessageBox.Yes | QMessageBox.No
-                )
-                
-                if reply == QMessageBox.Yes:
-                    self.output_path_edit.setText(suggested_output_dir)
-                else:
-                    # 用户取消，使用选择的父目录
-                    self.output_path_edit.setText(parent_dir)
-            else:
-                # 如果没有输入目录，提示用户先选择输入目录
-                QMessageBox.information(
-                    self, 
-                    "提示", 
-                    "建议先选择输入文件夹，这样可以自动生成基于批次号+时间戳的输出文件夹名称。\n\n当前将使用您选择的文件夹作为输出目录。"
-                )
-                self.output_path_edit.setText(parent_dir)
+            self.output_path_edit.setText(parent_dir)
     
     def on_input_path_changed(self):
         """输入路径变化时的处理"""
-        has_input = bool(self.input_path_edit.text().strip())
-        self.clean_btn.setEnabled(has_input)
-        self.input_dir = self.input_path_edit.text().strip() if has_input else ""
+        if self._updating_input_path:
+            return
+        self.input_paths = self.get_input_sources()
+        self.input_dir = self.input_paths[0] if self.input_paths else ""
+        self.clean_btn.setEnabled(bool(self.input_paths))
     
     def start_cleaning(self):
         """开始Lion数据清洗"""
-        if not self.input_dir:
-            QMessageBox.warning(self, "警告", "请先选择Lion数据文件夹！")
+        input_sources = self.get_input_sources()
+        if not input_sources:
+            QMessageBox.warning(self, "警告", "请先选择Lion数据文件夹或ZIP文件！")
             return
-        
-        # 预生成输出文件夹名称（会在处理过程中根据第一个文件的lot_id重新调整）
+
+        try:
+            normalized_sources = normalize_input_paths(input_sources)
+            for source in normalized_sources:
+                if not source.exists():
+                    raise ArchiveInputError(f"输入路径不存在: {source}")
+                if source.is_file() and source.suffix.casefold() != ".zip":
+                    raise ArchiveInputError(
+                        f"不支持的输入文件类型（仅支持ZIP）: {source.name}"
+                    )
+        except ArchiveInputError as exc:
+            QMessageBox.warning(self, "输入无效", str(exc))
+            return
+
         base_output_dir = self.output_path_edit.text().strip() or get_default_output_path()
-        temp_folder_name = generate_lion_output_folder_name(self.input_dir)
-        temp_output_dir = os.path.join(base_output_dir, temp_folder_name)
-        
+
         self.log_message("🚀 开始Lion数据清洗流程...")
-        self.log_message(f"📁 Lion输入目录: {self.input_dir}")
+        if len(normalized_sources) == 1:
+            self.log_message(f"📁 Lion输入来源: {normalized_sources[0]}")
+        else:
+            self.log_message(f"📦 已选择 {len(normalized_sources)} 个Lion ZIP文件")
+            for source in normalized_sources:
+                self.log_message(f"  - {source}")
         self.log_message(f"📁 基础输出目录: {base_output_dir}")
         self.log_message("📋 输出文件夹名称将根据第一个处理文件的lot_id确定")
         self.set_processing_state(True)
         
         # 启动后台处理线程，传入基础输出目录，让线程自己创建具体文件夹
         self.processing_thread = LionDataProcessingThread(
-            self.input_dir, base_output_dir, 'clean'
+            normalized_sources, base_output_dir, 'clean'
         )
         self.processing_thread.progress_updated.connect(self.log_message)
         self.processing_thread.finished.connect(self.on_cleaning_finished)
@@ -614,7 +680,7 @@ class LionWidget(QWidget):
         
         # 启动后台处理线程（对于generate操作，直接使用已确定的output_dir）
         self.processing_thread = LionDataProcessingThread(
-            self.input_dir, os.path.dirname(self.output_dir), 'generate'
+            self.input_paths or [self.input_dir], os.path.dirname(self.output_dir), 'generate'
         )
         self.processing_thread.output_dir = self.output_dir  # 直接设置输出目录
         self.processing_thread.progress_updated.connect(self.log_message)
@@ -673,7 +739,10 @@ class LionWidget(QWidget):
         self.clean_btn.setEnabled(not is_processing and bool(self.input_dir))
         self.cockpit_btn.setEnabled(not is_processing)
         self.input_browse_btn.setEnabled(not is_processing)
+        self.input_zip_browse_btn.setEnabled(not is_processing)
         self.output_browse_btn.setEnabled(not is_processing)
+        self.input_path_edit.setEnabled(not is_processing)
+        self.output_path_edit.setEnabled(not is_processing)
         
         # 显示/隐藏进度条
         if is_processing:

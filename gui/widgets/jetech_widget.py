@@ -10,6 +10,8 @@ import os
 from pathlib import Path
 from datetime import datetime
 import re
+from typing import Sequence
+from zipfile import BadZipFile, ZipFile
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QLineEdit, QPushButton, QTextEdit, QFileDialog, 
                              QMessageBox, QProgressBar)
@@ -21,6 +23,16 @@ import logging
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 logger = logging.getLogger(__name__)
+
+from cp_data_processor.processing.archive_input import (
+    ArchiveInputError,
+    discover_zip_archives,
+    normalize_input_paths,
+    prepare_archive_input,
+)
+
+
+JT_EXCEL_SUFFIXES = (".xls", ".xlsx")
 
 
 def get_desktop_path():
@@ -42,7 +54,7 @@ def extract_jt_lot_id_from_folder(input_dir):
         input_path = Path(input_dir)
         
         # 方法1: 从文件夹名称提取
-        folder_name = input_path.name
+        folder_name = input_path.stem if input_path.is_file() else input_path.name
         
         # JT文件夹命名模式: FA44-4149, FA123-456 等
         import re
@@ -55,10 +67,12 @@ def extract_jt_lot_id_from_folder(input_dir):
         
         # 方法2: 从Excel文件名提取
         excel_files = []
-        excel_files.extend(list(input_path.rglob("*.xls")))
-        excel_files.extend(list(input_path.rglob("*.xlsx")))
-        excel_files.extend(list(input_path.rglob("*.XLS")))
-        excel_files.extend(list(input_path.rglob("*.XLSX")))
+        if input_path.is_dir():
+            excel_files.extend(list(input_path.rglob("*.xls")))
+            excel_files.extend(list(input_path.rglob("*.xlsx")))
+            excel_files.extend(list(input_path.rglob("*.XLS")))
+            excel_files.extend(list(input_path.rglob("*.XLSX")))
+            excel_files = sorted(set(excel_files), key=lambda path: str(path).casefold())
         
         if excel_files:
             # 从第一个Excel文件名提取
@@ -88,14 +102,52 @@ def extract_jt_lot_id_from_folder(input_dir):
         return "JT_Analysis"
 
 
-def generate_jt_output_folder_name(input_dir):
+def extract_jt_lot_id_from_name(name: str):
+    """从JT批次目录、ZIP或Excel文件名提取标准批次号。"""
+    dashed_match = re.search(r'(FA\d+-\d+)', name, re.IGNORECASE)
+    if dashed_match:
+        return dashed_match.group(1).upper()
+
+    compact_match = re.search(r'FA(\d{2})(\d{4})', name, re.IGNORECASE)
+    if compact_match:
+        return f"FA{compact_match.group(1)}-{compact_match.group(2)}"
+    return None
+
+
+def extract_jt_lot_id_from_sources(
+    input_paths: str | Path | Sequence[str | Path],
+):
+    """从文件夹或ZIP选择中确定首个JT批次号。"""
+    normalized_paths = normalize_input_paths(input_paths)
+    archives = discover_zip_archives(normalized_paths)
+    if not archives:
+        return extract_jt_lot_id_from_folder(normalized_paths[0])
+
+    for archive in archives:
+        candidates = [archive.stem]
+        try:
+            with ZipFile(archive) as zip_file:
+                candidates.extend(zip_file.namelist())
+        except (BadZipFile, OSError):
+            pass
+        for candidate in candidates:
+            lot_id = extract_jt_lot_id_from_name(candidate)
+            if lot_id:
+                return lot_id
+
+    return archives[0].stem or "JT_Analysis"
+
+
+def generate_jt_output_folder_name(
+    input_paths: str | Path | Sequence[str | Path],
+):
     """生成JT输出文件夹名称：批次号_YYYYMMDD_HHMMSS"""
     try:
         from datetime import datetime
         import re
         
         # 提取批次号
-        lot_id = extract_jt_lot_id_from_folder(input_dir)
+        lot_id = extract_jt_lot_id_from_sources(input_paths)
         if not lot_id:
             lot_id = "JT_Analysis"
         
@@ -125,9 +177,10 @@ class JTDataProcessingThread(QThread):
     progress_updated = pyqtSignal(str)  # 进度更新信号
     finished = pyqtSignal(bool, str)    # 完成信号(成功/失败, 消息)
     
-    def __init__(self, input_dir, output_dir, operation_type):
+    def __init__(self, input_paths, output_dir, operation_type):
         super().__init__()
-        self.input_dir = input_dir
+        self.input_paths = normalize_input_paths(input_paths)
+        self.input_dir = str(self.input_paths[0])
         self.output_dir = output_dir
         self.operation_type = operation_type  # 'clean' 或 'generate'
     
@@ -144,64 +197,55 @@ class JTDataProcessingThread(QThread):
     
     def _process_jt_data(self):
         """处理JT数据"""
-        self.progress_updated.emit("🔍 正在扫描JT Excel文件...")
-        
-        # 查找Excel文件
-        input_path = Path(self.input_dir)
-        
-        excel_files = []
-        excel_files.extend(list(input_path.rglob("*.xlsx")))
-        excel_files.extend(list(input_path.rglob("*.xls")))
-        excel_files.extend(list(input_path.rglob("*.XLSX")))
-        excel_files.extend(list(input_path.rglob("*.XLS")))
-        
-        excel_files = list(set(excel_files))  # 去重
-        
-        self.progress_updated.emit(f"📁 发现 {len(excel_files)} 个JT Excel文件")
-        
-        if not excel_files:
-            self.finished.emit(False, "未找到JT Excel文件(.xlsx或.xls)\n请确保选择的文件夹或其子文件夹中包含JT Excel数据文件")
-            return
-        
-        # 确保输出目录存在
-        os.makedirs(self.output_dir, exist_ok=True)
-        self.progress_updated.emit(f"📁 JT输出文件夹已创建: {self.output_dir}")
-        
-        # 调用JT主处理器
-        self.progress_updated.emit("🧹 正在处理JT Excel数据...")
-        
         try:
-            # 导入JT处理模块
-            from jt_data_processor.jt_main_processor import process_jt_files
-            
-            # 处理JT数据 - 使用正确的函数名称
-            self.progress_updated.emit("📊 调用JT数据处理器...")
-            result = process_jt_files(
-                input_paths=self.input_dir,
-                output_dir=self.output_dir,
-                pass_bin=1  # 默认合格bin为1
-            )
-            
-            # 检查处理结果
-            if result and isinstance(result, dict):
-                lot_id = result.get('lot_id', 'Unknown')
-                wafer_count = result.get('wafer_count', 0)
-                total_chips = result.get('total_chip_count', 0)
-                param_count = result.get('parameter_count', 0)
-                output_files = result.get('output_files', [])
-                
-                self.progress_updated.emit("✅ JT数据处理完成！")
-                success_msg = f"成功处理JT数据：\n" \
-                             f"- 批次ID: {lot_id}\n" \
-                             f"- 晶圆数: {wafer_count}\n" \
-                             f"- 芯片总数: {total_chips}\n" \
-                             f"- 参数数: {param_count}\n" \
-                             f"- 输出文件: {len(output_files)}个"
-                
-                self.finished.emit(True, success_msg)
-            else:
-                self.finished.emit(False, "JT数据处理返回结果异常，请检查输入数据格式")
-                
+            self.progress_updated.emit("🔍 正在扫描JT数据来源...")
+            with prepare_archive_input(
+                self.input_paths,
+                allowed_suffixes=JT_EXCEL_SUFFIXES,
+                source_label="JT Excel",
+                progress=self.progress_updated.emit,
+                temporary_prefix="cp_jt_zip_",
+            ) as prepared_input:
+                excel_files = prepared_input.data_files
+                self.progress_updated.emit(f"📁 发现 {len(excel_files)} 个JT Excel文件")
+
+                os.makedirs(self.output_dir, exist_ok=True)
+                self.progress_updated.emit(f"📁 JT输出文件夹已创建: {self.output_dir}")
+                self.progress_updated.emit("🧹 正在处理JT Excel数据...")
+
+                from jt_data_processor.jt_main_processor import process_jt_files
+
+                self.progress_updated.emit("📊 调用JT数据处理器...")
+                result = process_jt_files(
+                    input_paths=[str(path) for path in excel_files],
+                    output_dir=self.output_dir,
+                    pass_bin=1,
+                )
+
+                if result and isinstance(result, dict):
+                    lot_id = result.get('lot_id', 'Unknown')
+                    wafer_count = result.get('wafer_count', 0)
+                    total_chips = result.get('total_chip_count', 0)
+                    param_count = result.get('parameter_count', 0)
+                    output_files = result.get('output_files', [])
+                    archive_note = (
+                        f"\n- ZIP文件: {len(prepared_input.archives)}个"
+                        if prepared_input.archives else ""
+                    )
+                    self.progress_updated.emit("✅ JT数据处理完成！")
+                    success_msg = f"成功处理JT数据：\n" \
+                                 f"- 批次ID: {lot_id}\n" \
+                                 f"- 晶圆数: {wafer_count}\n" \
+                                 f"- 芯片总数: {total_chips}\n" \
+                                 f"- 参数数: {param_count}\n" \
+                                 f"- 输出文件: {len(output_files)}个" \
+                                 f"{archive_note}"
+                    self.finished.emit(True, success_msg)
+                else:
+                    self.finished.emit(False, "JT数据处理返回结果异常，请检查输入数据格式")
+
+        except ArchiveInputError as exc:
+            self.finished.emit(False, str(exc))
         except ImportError as ie:
             logger.error(f"JT模块导入失败: {ie}")
             self.progress_updated.emit("❌ JT处理模块导入失败...")
@@ -416,16 +460,17 @@ class JeTechWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.input_dir = ""
+        self.input_paths = []
         self.output_dir = ""
         self.processing_thread = None
+        self._updating_input_path = False
         self.init_ui()
         self.set_default_paths()
     
     def set_default_paths(self):
         """设置 JT 业务数据的默认输入、输出路径。"""
         input_path = get_default_input_path()
-        self.input_path_edit.setText(input_path)
-        self.input_dir = input_path
+        self.set_input_sources([input_path])
         self.output_path_edit.setText(get_default_output_path())
     
     def init_ui(self):
@@ -445,24 +490,31 @@ class JeTechWidget(QWidget):
         title_label.setStyleSheet("color: #4CAF50; margin-bottom: 10px;")
         main_layout.addWidget(title_label)
         
-        # 输入文件夹选择
+        # 输入文件夹或ZIP选择
         input_layout = QHBoxLayout()
-        input_label = QLabel("📁 数据文件夹:")
+        input_label = QLabel("📁 数据来源:")
         input_label.setMinimumWidth(125)
         input_label.setFont(QFont("", 12))
         self.input_path_edit = QLineEdit()
-        self.input_path_edit.setPlaceholderText("选择包含JT Excel数据文件的文件夹...")
+        self.input_path_edit.setPlaceholderText("选择JT数据文件夹，或选择一个/多个ZIP文件...")
         self.input_path_edit.setMinimumHeight(35)
         self.input_path_edit.setFont(QFont("", 11))
         self.input_browse_btn = QPushButton("选择文件夹...")
         self.input_browse_btn.setMinimumHeight(35)
-        self.input_browse_btn.setMinimumWidth(120)
+        self.input_browse_btn.setMinimumWidth(105)
         self.input_browse_btn.setFont(QFont("", 11))
         self.input_browse_btn.clicked.connect(self.browse_input_dir)
+
+        self.input_zip_browse_btn = QPushButton("选择ZIP...")
+        self.input_zip_browse_btn.setMinimumHeight(35)
+        self.input_zip_browse_btn.setMinimumWidth(95)
+        self.input_zip_browse_btn.setFont(QFont("", 11))
+        self.input_zip_browse_btn.clicked.connect(self.browse_input_zips)
         
         input_layout.addWidget(input_label)
         input_layout.addWidget(self.input_path_edit)
         input_layout.addWidget(self.input_browse_btn)
+        input_layout.addWidget(self.input_zip_browse_btn)
         main_layout.addLayout(input_layout)
         
         # 输出文件夹选择
@@ -471,7 +523,7 @@ class JeTechWidget(QWidget):
         output_label.setMinimumWidth(125)
         output_label.setFont(QFont("", 12))
         self.output_path_edit = QLineEdit()
-        self.output_path_edit.setPlaceholderText("将自动创建以JT_Analysis+时间戳命名的文件夹...")
+        self.output_path_edit.setPlaceholderText("将自动创建以批次号+流水号命名的文件夹...")
         self.output_path_edit.setMinimumHeight(35)
         self.output_path_edit.setFont(QFont("", 11))
         self.output_browse_btn = QPushButton("选择文件夹...")
@@ -567,60 +619,86 @@ class JeTechWidget(QWidget):
         self.input_path_edit.textChanged.connect(self.on_input_path_changed)
     
     def browse_input_dir(self):
-        """浏览输入目录"""
+        """浏览JT原始目录或只包含ZIP的目录。"""
         start_dir = self.input_path_edit.text().strip() or get_default_input_path()
+        if ";" in start_dir or not Path(start_dir).is_dir():
+            start_dir = get_default_input_path()
         dir_path = QFileDialog.getExistingDirectory(self, "选择JT数据文件夹", start_dir)
         if dir_path:
-            self.input_dir = dir_path
-            self.input_path_edit.setText(dir_path)
+            self.set_input_sources([dir_path])
+
+    def browse_input_zips(self):
+        """浏览并选择一个或多个JT ZIP文件。"""
+        current_sources = self.get_input_sources()
+        if current_sources:
+            first_source = Path(current_sources[0])
+            start_dir = str(first_source if first_source.is_dir() else first_source.parent)
+        else:
+            start_dir = get_default_input_path()
+        zip_paths, _ = QFileDialog.getOpenFileNames(
+            self,
+            "选择一个或多个JT ZIP文件",
+            start_dir,
+            "ZIP压缩包 (*.zip *.ZIP)",
+        )
+        if zip_paths:
+            self.set_input_sources(zip_paths)
+
+    def set_input_sources(self, paths):
+        """设置输入来源并显示可编辑的多路径预览。"""
+        self.input_paths = [str(path) for path in paths if str(path).strip()]
+        self.input_dir = self.input_paths[0] if self.input_paths else ""
+        self._updating_input_path = True
+        try:
+            self.input_path_edit.setText("; ".join(self.input_paths))
+        finally:
+            self._updating_input_path = False
+        self.clean_btn.setEnabled(bool(self.input_paths))
+
+    def get_input_sources(self):
+        """读取输入框中的单路径或分号分隔多路径。"""
+        return [
+            item.strip().strip('"')
+            for item in self.input_path_edit.text().split(";")
+            if item.strip().strip('"')
+        ]
     
     def browse_output_dir(self):
-        """浏览输出目录并创建基于lot_id+时间戳的文件夹"""
+        """浏览输出父目录，开始处理时创建批次号+流水号文件夹。"""
         start_dir = self.output_path_edit.text().strip() or get_default_output_path()
         parent_dir = QFileDialog.getExistingDirectory(self, "选择JT输出文件夹的父目录", start_dir)
         if parent_dir:
-            # 如果用户已选择输入目录，尝试生成基于lot_id的文件夹名
-            if self.input_dir:
-                folder_name = generate_jt_output_folder_name(self.input_dir)
-                suggested_output_dir = os.path.join(parent_dir, folder_name)
-                
-                # 显示建议的完整路径给用户确认
-                reply = QMessageBox.question(
-                    self, 
-                    "确认输出文件夹", 
-                    f"将在以下位置创建输出文件夹：\n\n{suggested_output_dir}\n\n继续吗？",
-                    QMessageBox.Yes | QMessageBox.No
-                )
-                
-                if reply == QMessageBox.Yes:
-                    self.output_path_edit.setText(suggested_output_dir)
-                else:
-                    # 用户取消，使用选择的父目录
-                    self.output_path_edit.setText(parent_dir)
-            else:
-                # 如果没有输入目录，提示用户先选择输入目录
-                QMessageBox.information(
-                    self, 
-                    "提示", 
-                    "建议先选择输入文件夹，这样可以自动生成基于批次号+时间戳的输出文件夹名称。\n\n当前将使用您选择的文件夹作为输出目录。"
-                )
-                self.output_path_edit.setText(parent_dir)
+            self.output_path_edit.setText(parent_dir)
     
     def on_input_path_changed(self):
         """输入路径变化时的处理"""
-        has_input = bool(self.input_path_edit.text().strip())
-        self.clean_btn.setEnabled(has_input)
-        self.input_dir = self.input_path_edit.text().strip() if has_input else ""
+        if self._updating_input_path:
+            return
+        self.input_paths = self.get_input_sources()
+        self.input_dir = self.input_paths[0] if self.input_paths else ""
+        self.clean_btn.setEnabled(bool(self.input_paths))
     
     def start_cleaning(self):
         """开始JT数据清洗"""
-        if not self.input_dir:
-            QMessageBox.warning(self, "警告", "请先选择JT数据文件夹！")
+        input_sources = self.get_input_sources()
+        if not input_sources:
+            QMessageBox.warning(self, "警告", "请先选择JT数据文件夹或ZIP文件！")
+            return
+
+        try:
+            normalized_sources = normalize_input_paths(input_sources)
+            for source in normalized_sources:
+                if not source.exists():
+                    raise ArchiveInputError(f"输入路径不存在: {source}")
+                if source.is_file() and source.suffix.casefold() != ".zip":
+                    raise ArchiveInputError(f"不支持的输入文件类型（仅支持ZIP）: {source.name}")
+        except ArchiveInputError as exc:
+            QMessageBox.warning(self, "输入无效", str(exc))
             return
         
         # 生成输出文件夹名称
         base_output_dir = self.output_path_edit.text().strip() or get_default_output_path()
-        folder_name = generate_jt_output_folder_name(self.input_dir)
+        folder_name = generate_jt_output_folder_name(normalized_sources)
         self.output_dir = os.path.join(base_output_dir, folder_name)
         
         # 确保输出目录存在
@@ -633,13 +711,18 @@ class JeTechWidget(QWidget):
             return
 
         self.log_message("🚀 开始JT数据清洗流程...")
-        self.log_message(f"📁 JT输入目录: {self.input_dir}")
+        if len(normalized_sources) == 1:
+            self.log_message(f"📁 JT输入来源: {normalized_sources[0]}")
+        else:
+            self.log_message(f"📦 已选择 {len(normalized_sources)} 个JT ZIP文件")
+            for source in normalized_sources:
+                self.log_message(f"  - {source}")
         self.log_message(f"📁 JT输出目录: {self.output_dir}")
         self.set_processing_state(True)
         
         # 启动后台处理线程
         self.processing_thread = JTDataProcessingThread(
-            self.input_dir, self.output_dir, 'clean'
+            normalized_sources, self.output_dir, 'clean'
         )
         self.processing_thread.progress_updated.connect(self.log_message)
         self.processing_thread.finished.connect(self.on_cleaning_finished)
@@ -663,7 +746,7 @@ class JeTechWidget(QWidget):
         
         # 启动后台处理线程
         self.processing_thread = JTDataProcessingThread(
-            self.input_dir, self.output_dir, 'generate'
+            self.input_paths or [self.input_dir], self.output_dir, 'generate'
         )
         self.processing_thread.progress_updated.connect(self.log_message)
         self.processing_thread.finished.connect(self.on_generating_finished)
@@ -721,7 +804,10 @@ class JeTechWidget(QWidget):
         self.clean_btn.setEnabled(not is_processing and bool(self.input_dir))
         self.cockpit_btn.setEnabled(not is_processing)
         self.input_browse_btn.setEnabled(not is_processing)
+        self.input_zip_browse_btn.setEnabled(not is_processing)
         self.output_browse_btn.setEnabled(not is_processing)
+        self.input_path_edit.setEnabled(not is_processing)
+        self.output_path_edit.setEnabled(not is_processing)
         
         # 显示/隐藏进度条
         if is_processing:

@@ -4,7 +4,7 @@
 
 ## 当前能力
 
-- 读取并清洗多种 CP 原始数据：HH DCP/TXT（GUI 支持文件夹、单 ZIP、多 ZIP）、JT Excel、Lion Excel、扬州国宇 FRD Excel
+- 读取并清洗多种 CP 原始数据：HH DCP/TXT、JT Excel、Lion Excel、扬州国宇 FRD Excel；四家公司 GUI 均支持文件夹、单 ZIP 和多 ZIP
 - 将不同来源转换为统一的 `CPLot` / `CPWafer` / `CPParameter` 数据模型
 - 输出 cleaned、yield、spec 三类标准 CSV
 - 生成良率趋势、失效分析、参数箱体图、散点图和汇总 HTML
@@ -38,7 +38,7 @@ python guoyu_batch_processor.py data/257375 --output output
 
 > 实际参数以各命令的 `--help` 为准。GUI 是当前最完整、最适合日常使用的入口。
 
-华虹 GUI 的“数据来源”支持三种选择：原始 DCP/TXT 文件夹、单个 ZIP、多个 ZIP；选择一个只包含 ZIP 的文件夹时，会自动处理其中的一个或多个 ZIP。ZIP 仅在后台临时目录中解压，处理完成后自动清理。
+四家公司 GUI 都保留“选择文件夹”和“选择ZIP”两个入口。“选择ZIP”可一次多选；“选择文件夹”既可选择原始数据目录，也可选择只包含一个或多个 ZIP 的目录。ZIP 仅在后台临时目录中安全解压，处理完成后自动清理。输出路径选择父目录，最终仍按原流程创建“首个真实批次号_YYYYMMDD_HHMMSS”文件夹。
 
 ## 处理主线
 
@@ -77,6 +77,7 @@ frontend/            基于标准 CSV 的 Plotly 图表模块
 gui/                 PyQt5 多公司桌面 GUI
 jt_data_processor/   JT 成熟专用处理流程
 lion/                Lion Reader、适配器与图表生成
+guoyu/               扬州国宇 FRD Reader 与批次处理
 python_cp/           华虹流程仍在使用的兼容模块
 packaging/           .pyz 打包与发布文件
 docs/                当前有效文档
@@ -84,9 +85,9 @@ docs/                当前有效文档
 
 ## 当前验证状态
 
-- 已确认三个公司入口及标准 CSV/图表处理路径。
-- `jt_data_processor/tests/` 是当前唯一成体系的测试目录。
-- 首选 Anaconda 环境可加载核心依赖，但 JT 测试当前在 collection 阶段被根包导入错误阻塞。
+- 已确认四家公司入口及标准 CSV/图表处理路径。
+- HH/JT/Lion/国宇均已有针对输入发现或处理路径的回归测试；ZIP 公共输入层另有安全与目录结构测试。
+- 首选 Anaconda 环境可加载核心依赖，当前厂商定向测试可正常收集和运行。
 - `frontend/main.py` 与 `frontend/utils/data_loader.py` 当前含 null bytes，不能通过 `compileall`。
 
 这些限制与后续治理顺序记录在 [技术债与升级路线](docs/technical-debt.md)。

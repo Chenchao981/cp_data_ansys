@@ -20,6 +20,11 @@ flowchart LR
     B["JT Excel"] --> J["jt_data_processor"]
     C["Lion Excel"] --> L["lion_batch_processor.py"]
     D["扬州国宇 FRD Excel"] --> Y["guoyu_batch_processor.py"]
+    Z["文件夹 / 单ZIP / 多ZIP"] --> P["archive_input 安全准备层"]
+    P --> H
+    P --> J
+    P --> L
+    P --> Y
     H --> M["CPLot / CSV"]
     J --> M
     L --> M
@@ -50,7 +55,7 @@ flowchart LR
 | `cp_data_processor/data_models/` | 定义 `CPLot`、`CPWafer`、`CPParameter` | 核心 |
 | `cp_data_processor/readers/` | HH Reader、统一 Reader、公司注册 | 核心 |
 | `cp_data_processor/readers/company_adapters/` | 字段映射、单位转换、公司识别 | 核心 |
-| `cp_data_processor/processing/` | 清洗、转换、标准 CSV、性能处理 | 核心 |
+| `cp_data_processor/processing/` | ZIP 安全准备、清洗、转换、标准 CSV、性能处理 | 核心 |
 | `frontend/charts/` | 标准 CSV 到 Plotly HTML | 核心 |
 | `gui/widgets/` | 多公司 GUI 工作流编排 | 核心 |
 | `jt_data_processor/` | JT 专用成熟处理链 | 兼容且仍在用 |
@@ -62,19 +67,19 @@ flowchart LR
 
 ### HH / 华虹宏力
 
-GUI 支持原始 DCP/TXT 文件夹、单个 ZIP、多个 ZIP，以及只包含 ZIP 的输入文件夹。ZIP 输入先由 `cp_data_processor.processing.zip_input` 安全解压并规整为原处理器可识别的一层/两层临时目录，再调用 `clean_dcp_data.process_directory()`；临时文件在处理结束后自动删除。后续流程仍包含 DCP 读取、IQR 清洗、cleaned CSV、yield CSV、spec 提取和可选单位转换，图表直接使用共用 `frontend` 组件。
+GUI 支持原始 DCP/TXT 文件夹、单个 ZIP、多个 ZIP，以及只包含 ZIP 的输入文件夹。ZIP 输入通过 `cp_data_processor.processing.zip_input` 兼容入口调用公共 `archive_input` 安全准备层，规整为原处理器可识别的一层/两层临时目录，再调用 `clean_dcp_data.process_directory()`；临时文件在处理结束后自动删除。后续流程仍包含 DCP 读取、IQR 清洗、cleaned CSV、yield CSV、spec 提取和可选单位转换，图表直接使用共用 `frontend` 组件。
 
 ### JT / Jetech
 
-GUI 调用 `jt_data_processor.jt_main_processor.process_jt_files()`。JT 专用 Reader 和 Adapter 处理 Excel、目录结构、字段映射、清洗及三类 CSV，再复用共用图表组件。
+GUI 支持 Excel 文件夹、单个/多个 ZIP 和只包含 ZIP 的文件夹。ZIP 经公共安全准备层提取 Excel 后，仍调用 `jt_data_processor.jt_main_processor.process_jt_files()`；输出目录名从真实 JT 批次号生成，再复用共用图表组件。
 
 ### Lion
 
-GUI 调用 `lion_batch_processor` 发现批次、读取每个 Excel、标准化并合并为一个 `CPLot`，通过 `StandardCSVGenerator` 输出 CSV；Lion 图表生成器会增加异常值处理和列名标准化步骤。
+GUI 支持 Excel 文件夹、单个/多个 ZIP 和只包含 ZIP 的文件夹。准备完成后仍由 `lion_batch_processor` 发现批次、读取每个 Excel、标准化并合并为一个 `CPLot`，通过 `StandardCSVGenerator` 输出 CSV；输出目录名使用首个成功解析文件的真实 `lot_id`，Lion 图表生成器会增加异常值处理和列名标准化步骤。
 
 ### 扬州国宇 FRD
 
-批次目录名作为批量处理时的 `Lot_ID`，每个 JUNO DTS-2000 Excel 文件对应一片 Wafer。输入支持单批次目录，或“产品目录 → 多个批次目录 → 一个或多个 EDS/数据子目录 → Excel”的多层结构。多批次处理合并为同一套标准 CSV，并保留每行原始 `Lot_ID`；输出目录按第一个批次号加时间流水号命名。`GuoyuFRDReader` 解析元数据、规格、工程单位和 Die 明细，经 `GUOYUAdapter` 校验后输出标准 CSV；GUI 和 `guoyu_batch_processor.py` 均可调用该流程。
+批次目录名作为批量处理时的 `Lot_ID`，每个 JUNO DTS-2000 Excel 文件对应一片 Wafer。输入支持单批次目录、产品多批次目录，以及单个/多个 ZIP；ZIP 解压时保留批次与 EDS 层级，并识别常见产品包装目录。多批次处理合并为同一套标准 CSV，并保留每行原始 `Lot_ID`；输出目录按第一个真实批次号加时间流水号命名。`GuoyuFRDReader` 解析元数据、规格、工程单位和 Die 明细，经 `GUOYUAdapter` 校验后输出标准 CSV；GUI 和 `guoyu_batch_processor.py` 均可调用该流程。
 
 ## 5. 扩展原则
 
