@@ -28,7 +28,7 @@
    - 失效 Bin Pareto
    - 参数 BoxPlot
    - 参数 Wafer 散点图
-   - Wafer Map
+   - Wafer Mapping
    - Center / Mid / Edge 区域分析
    - Cpk / 超限统计
    - Wafer Summary
@@ -96,7 +96,7 @@ Parameter,Unit,LimitL,LimitU,LSL,USL,Target
 | 失效 Bin Pareto | 找主要失效类型 | `Bin` 或 yield 动态 Bin 列 |
 | 参数 BoxPlot | 看参数分布、离群值、规格边界 | 参数列、spec |
 | 参数 Wafer 散点图 | 看每个参数在不同 Wafer 上的原始点分布和离散程度 | `Lot_ID`、`Wafer_ID`、参数列、spec |
-| Wafer Map | 看空间分布和局部异常 | `X`, `Y`, `Bin`, 参数列 |
+| Wafer Mapping | 全部圆片同时展示 die 空间分布；可切换综合 Bin 或测试参数，定位 Bin 不良、低于 LSL 和高于 USL 的 die | `Lot_ID`, `Wafer_ID`, `X`, `Y`, `Bin`, 参数列、spec |
 | 区域分析 | 比较 Center / Mid / Edge | `X`, `Y`, 参数列 |
 | 失效叠加 | 看多个失效点位是否聚集 | `X`, `Y`, `Bin` |
 | Wafer Summary | 横向比较 Wafer 的均值、标准差、中位数 | `Wafer_ID`, 参数列 |
@@ -117,12 +117,13 @@ Parameter,Unit,LimitL,LimitU,LSL,USL,Target
 
 当前已知限制：
 
-1. 如果 `X`、`Y` 全为 0，Wafer Map 和区域分析无法体现真实空间分布。
+1. 如果 `X`、`Y` 全为 0，Wafer Mapping 和区域分析无法体现真实空间分布。
 2. 全参数 BoxPlot 和全参数 Wafer 散点图会一次性展示多张图，参数很多时页面加载会更重。
 3. `spec` 中上下限方向必须由清洗程序保证，前端按字段原样展示。
+4. 参数 Mapping 只有在所选参数存在 LSL 或 USL 时才能判定不良；前端不会自动交换方向异常的上下限。
 
 后续建议：
 
 1. 为前端增加标准 CSV 合同测试，防止字段变更导致图表失效。
-2. 针对真实坐标样例补充 Wafer Map 和区域分析验证集。
+2. 针对真实坐标样例补充 Wafer Mapping 和区域分析验证集。
 3. 当参数数量很多时，评估按参数分组或分页加载，避免单页过重。

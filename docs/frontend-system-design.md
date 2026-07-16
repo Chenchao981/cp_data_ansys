@@ -103,7 +103,7 @@ GUI 打开时会：
 - 良率和 Bin
 - 参数 BoxPlot
 - 参数 Wafer 散点图
-- Wafer Map
+- Wafer Mapping（全部 Lot/Wafer 小图矩阵，可选择综合 Bin 或具体测试参数）
 - 区域分析
 - 失效叠加
 - Wafer Summary
@@ -116,8 +116,8 @@ GUI 打开时会：
 | --- | --- | --- |
 | `Lot_ID` | 批次显示和分组 | BoxPlot、良率趋势、追溯 |
 | `Wafer_ID` | Wafer 序列 | BoxPlot X 轴、Wafer 选择、Summary |
-| `X` | Wafer Map 横坐标 | 空间图与区域分析 |
-| `Y` | Wafer Map 纵坐标 | 空间图与区域分析 |
+| `X` | Wafer Mapping 横坐标 | die 方格空间图与区域分析 |
+| `Y` | Wafer Mapping 纵坐标 | die 方格空间图与区域分析 |
 | `Seq` | `Seq` | Die 顺序 |
 | `Bin` | 良率和失效标识 | 良率、失效 Bin |
 | 参数列 | 同名参数 | 统计图和 Cpk |
@@ -130,7 +130,10 @@ GUI 打开时会：
 | --- | --- | --- |
 | 找不到 cleaned CSV | 提示未找到标准数据 | 检查是否先完成清洗，输出目录是否正确 |
 | 找不到 spec CSV | 图表仍可显示，规格/Cpk 不完整 | 检查清洗流程是否提取规格 |
-| `X/Y` 全为 0 | Wafer Map 无真实空间分布 | 回到 Reader / Adapter 检查坐标来源 |
+| `X/Y` 全为 0 | Wafer Mapping 无真实空间分布 | 回到 Reader / Adapter 检查坐标来源 |
+| 参数没有 LSL/USL | 不生成该参数的不良 Mapping | 检查 spec CSV 是否缺规格 |
+| `LSL > USL` | 明确提示规格方向异常，不自动交换 | 回到清洗/spec 生成环节修正规格 |
+| 同一 Lot/Wafer/X/Y 有复测记录 | 该坐标按最高不良优先级展示，悬浮显示记录数 | 确认复测规则与 Seq 数据 |
 | 数据量很大 | 全参数 BoxPlot 或散点页加载变慢 | 降低侧边栏单张散点图最大样本数，或后续增加分页 |
 | Cpk 方向异常 | 前端按 spec 原样计算 | 检查清洗输出的 `LimitL/LimitU` 是否正确 |
 

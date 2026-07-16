@@ -29,6 +29,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from frontend.charts.wafer_mapping import (
+    has_spatial_coordinates,
+    prepare_wafer_mapping,
+    wafer_mapping_grid,
+    wafer_mapping_summary,
+)
+
 
 BASE_COLUMNS = {
     "Lot_ID",
@@ -901,28 +908,6 @@ def parameter_scatter_chart(cleaned: pd.DataFrame, parameter: str, spec_info: Di
     return style_figure(fig, height=560)
 
 
-def wafer_map(cleaned: pd.DataFrame, wafer_id: str, color_by: str) -> go.Figure:
-    fig = go.Figure()
-    needed = {"Wafer_ID", "X", "Y"}
-    if cleaned is None or not needed.issubset(cleaned.columns):
-        return style_figure(fig)
-    df = cleaned[cleaned["Wafer_ID"].astype(str) == str(wafer_id)].copy()
-    if df.empty:
-        return style_figure(fig)
-    df["X"] = pd.to_numeric(df["X"], errors="coerce")
-    df["Y"] = pd.to_numeric(df["Y"], errors="coerce")
-    df = df.dropna(subset=["X", "Y"])
-    if color_by == "Bin" and "Bin" in df.columns:
-        marker = dict(color=pd.to_numeric(df["Bin"], errors="coerce"), colorscale="Turbo", size=8, colorbar=dict(title="Bin"))
-    else:
-        df[color_by] = pd.to_numeric(df[color_by], errors="coerce")
-        marker = dict(color=df[color_by], colorscale="Turbo", size=8, colorbar=dict(title=color_by))
-    fig.add_trace(go.Scatter(x=df["X"], y=df["Y"], mode="markers", marker=marker, text=df.get("Bin", "")))
-    fig.update_layout(title=f"🗺️ Wafer Map：{wafer_id}", xaxis_title="X", yaxis_title="Y")
-    fig.update_yaxes(scaleanchor="x", scaleratio=1)
-    return style_figure(fig, height=620)
-
-
 def zone_yield_chart(cleaned: Optional[pd.DataFrame], pass_bin: int) -> go.Figure:
     zone_df = cleaned_with_zone(cleaned, pass_bin)
     fig = go.Figure()
@@ -1125,7 +1110,7 @@ def main() -> None:
         "📈 良率趋势",
         "📊 参数BoxPlot",
         "🔵 散点相关",
-        "🗺️ Wafer Map",
+        "🗺️ Wafer Mapping",
         "🎯 区域分析",
         "🔍 失效叠加",
         "📊 Wafer Summary",
@@ -1182,13 +1167,51 @@ def main() -> None:
     with tabs[5]:
         cleaned = dataset.cleaned
         if cleaned is None or not {"Wafer_ID", "X", "Y"}.issubset(cleaned.columns):
-            st.info("当前 cleaned CSV 缺少 Wafer_ID/X/Y，无法绘制 Wafer Map。")
+            st.info("当前 cleaned CSV 缺少 Wafer_ID/X/Y，无法绘制 Wafer Mapping。")
+        elif not has_spatial_coordinates(cleaned):
+            st.warning(
+                "当前 cleaned CSV 的 X/Y 没有形成二维坐标（例如全部为 0），无法生成真实 Wafer Mapping。"
+                "请回到 Reader / Adapter 检查晶圆坐标来源。"
+            )
         else:
-            wafers = sorted(cleaned["Wafer_ID"].astype(str).dropna().unique(), key=wafer_sort_key)
-            wafer_id = st.selectbox("选择 Wafer", wafers)
-            color_options = ["Bin"] + params
-            color_by = st.selectbox("着色字段", color_options)
-            render_plotly_chart(wafer_map(cleaned, wafer_id, color_by))
+            st.caption(
+                "晶圆厂常用 Mapping 视图：每个方格代表一个 die，全部 Lot/Wafer 同时展示。"
+                "选择综合 Bin 时高亮 Bin 不良；选择测试参数时按该参数 LSL/USL 高亮超限 die。"
+            )
+            map_col1, map_col2 = st.columns([3, 1])
+            mapping_choice = map_col1.selectbox("选择 Mapping 项目", ["综合 Bin"] + params, key="wafer_mapping_item")
+            mapping_columns = int(map_col2.slider("每行 Wafer 数", 2, 8, 6, key="wafer_mapping_columns"))
+            mapping_parameter = None if mapping_choice == "综合 Bin" else mapping_choice
+            mapping_spec = get_spec_info(dataset.spec, mapping_parameter) if mapping_parameter else None
+            try:
+                mapping_result = prepare_wafer_mapping(
+                    cleaned,
+                    parameter=mapping_parameter,
+                    spec_info=mapping_spec,
+                    pass_bin=pass_bin,
+                )
+            except ValueError as exc:
+                st.error(str(exc))
+            else:
+                mapping_stats = wafer_mapping_summary(mapping_result)
+                stat1, stat2, stat3, stat4 = st.columns(4)
+                stat1.metric("同时展示 Wafer", f"{mapping_stats['wafers']:,}")
+                stat2.metric("有效判定 die", f"{mapping_stats['judged']:,}")
+                stat3.metric("不良 die", f"{mapping_stats['fail']:,}")
+                fail_rate = mapping_stats["fail"] / mapping_stats["judged"] * 100 if mapping_stats["judged"] else 0
+                stat4.metric("不良占比", f"{fail_rate:.2f}%")
+                if mapping_stats["duplicate_coordinates"]:
+                    st.caption(
+                        f"检测到 {mapping_stats['duplicate_coordinates']:,} 条同 Lot/Wafer/X/Y 的复测记录；"
+                        "同一坐标按最高不良优先级展示，悬浮可查看该坐标记录数。"
+                    )
+                mapping_fig = wafer_mapping_grid(mapping_result, columns=mapping_columns)
+                mapping_fig = style_figure(mapping_fig, height=int(mapping_fig.layout.height))
+                mapping_fig.update_layout(
+                    margin=dict(l=36, r=28, t=140, b=36),
+                    legend=dict(orientation="h", yanchor="bottom", y=1.08, xanchor="right", x=1),
+                )
+                render_plotly_chart(mapping_fig)
 
     with tabs[6]:
         cleaned = dataset.cleaned

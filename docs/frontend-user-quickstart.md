@@ -60,7 +60,7 @@ python -m gui.multi_company_main
 
 - 研发工程师想切换不同参数看分布。
 - 质量工程师想查看 Bin、Cpk、超限。
-- 工艺工程师想看 Wafer Map、区域差异。
+- 工艺工程师想看 Wafer Mapping、区域差异。
 
 打开后重点看这些页面：
 
@@ -70,7 +70,7 @@ python -m gui.multi_company_main
 | 良率 / Bin | 哪些 Wafer 良率低，主要失效 Bin 是什么 |
 | 参数 BoxPlot | 参数是否偏移，是否有离群点 |
 | 参数 Wafer 散点图 | 每个参数在各 Wafer 上的原始点分布和离散程度 |
-| Wafer Map | 失效或参数是否有空间分布 |
+| Wafer Mapping | 一次查看全部圆片；选择综合 Bin 或测试参数，看不良 die 是否有空间聚集 |
 | 区域分析 | Center / Mid / Edge 是否有差异 |
 | Wafer Summary | Wafer 间均值、标准差、中位数对比 |
 | Cpk / 超限 | 哪些参数规格风险最大 |
@@ -109,9 +109,15 @@ python -m gui.multi_company_main
 - 是否有明显离群点？
 - Wafer 之间是否差异很大？
 
-### 第四步：看 Wafer Map 和区域
+### 第四步：看 Wafer Mapping 和区域
 
-如果 cleaned CSV 有有效 `X/Y` 坐标，可查看 Wafer Map。
+如果 cleaned CSV 有有效 `X/Y` 坐标，可查看 Wafer Mapping。页面会把当前目录中的全部 Lot/Wafer 一起排列，每个方格代表一个 die：
+
+1. 选择“综合 Bin”，查看 `Bin != Pass Bin` 的不良 die。
+2. 选择具体测试参数，按该参数的 LSL/USL 查看低超限和高超限 die。
+3. 调整“每行 Wafer 数”，在总览密度和单片可读性之间切换。
+
+如果参数没有 LSL/USL，前端无法判断该参数的 die 是否不良，会明确提示补齐 spec；不会自行猜测规格。
 
 判断问题：
 
@@ -134,7 +140,8 @@ python -m gui.multi_company_main
 | 现象 | 可能原因 |
 | --- | --- |
 | 图表提示没有标准 CSV | 还未清洗，或输出目录选错 |
-| Wafer Map 没有空间图 | cleaned CSV 的 `X/Y` 坐标为空或全为 0 |
+| Wafer Mapping 没有空间图 | cleaned CSV 的 `X/Y` 坐标为空或全为 0 |
+| 选择参数后无法生成 Mapping | spec CSV 没有该参数的 LSL/USL，或规格方向异常 |
 | Cpk 没有结果 | spec CSV 缺规格，或参数数据不足 |
 | 页面加载较慢 | BoxPlot 和散点页会展示所有参数，参数很多或数据量很大时图表数量较多 |
 | 某个参数没有图 | 参数列不是数值，或全为空 |
