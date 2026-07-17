@@ -115,7 +115,7 @@ GUI 打开时会：
 | 标准 CSV 字段 | 前端用途 | 用途 |
 | --- | --- | --- |
 | `Lot_ID` | 批次显示和分组 | BoxPlot、良率趋势、追溯 |
-| `Wafer_ID` | Wafer 序列 | BoxPlot X 轴、Wafer 选择、Summary |
+| `Wafer_ID` | Wafer 序列；Wafer 总数按 `Lot_ID + Wafer_ID` 组合计数 | BoxPlot X 轴、Mapping、Summary |
 | `X` | Wafer Mapping 横坐标 | die 方格空间图与区域分析 |
 | `Y` | Wafer Mapping 纵坐标 | die 方格空间图与区域分析 |
 | `Seq` | `Seq` | Die 顺序 |

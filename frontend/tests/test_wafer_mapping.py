@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pandas as pd
 import pytest
 
+from frontend.cp_dashboard_app import StandardDataset, dataset_summary
 from frontend.charts.wafer_mapping import (
     filter_wafer_mapping,
     has_spatial_coordinates,
@@ -43,6 +46,24 @@ def test_bin_mapping_keeps_same_wafer_id_separate_across_lots() -> None:
     assert summary["judged"] == 36
     assert summary["fail"] == 4
     assert set(result.data["_Status_Code"]) == {1, 2}
+
+
+def test_dashboard_summary_counts_physical_wafers_across_lots() -> None:
+    cleaned = sample_cleaned()
+    dataset = StandardDataset(
+        data_dir=Path("."),
+        cleaned_path=None,
+        yield_path=None,
+        spec_path=None,
+        cleaned=cleaned,
+        yield_df=None,
+        spec=None,
+    )
+
+    summary = dataset_summary(dataset, pass_bin=1)
+
+    assert summary["lots"] == 2
+    assert summary["wafers"] == 4
 
 
 def test_parameter_mapping_marks_low_and_high_spec_failures() -> None:
@@ -92,6 +113,7 @@ def test_mapping_grid_renders_every_wafer_in_one_figure() -> None:
     assert len(heatmaps) == 4
     assert len(figure.layout.annotations) == 4
     assert all("NG 1 / 9" in annotation.text for annotation in figure.layout.annotations)
+    assert all("<br>W" in annotation.text for annotation in figure.layout.annotations)
 
 
 def test_mapping_can_filter_exact_lot_and_wafer_for_detail_view() -> None:

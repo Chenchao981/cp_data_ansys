@@ -284,7 +284,10 @@ def wafer_mapping_grid(
         collapsed_by_wafer[(lot, wafer)] = collapsed
         judged = int((collapsed["_Status_Code"] > 0).sum())
         fail = int((collapsed["_Status_Code"] >= 2).sum())
-        titles.append(f"{lot} / W{wafer}<br><span style='font-size:10px'>NG {fail:,} / {judged:,}</span>")
+        titles.append(
+            f"{lot}<br>W{wafer}<br>"
+            f"<span style='font-size:10px'>NG {fail:,} / {judged:,}</span>"
+        )
 
     fig = make_subplots(
         rows=rows,

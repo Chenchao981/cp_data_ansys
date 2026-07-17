@@ -91,7 +91,7 @@ Parameter,Unit,LimitL,LimitU,LSL,USL,Target
 
 | 图表 | 业务用途 | 关键字段 |
 | --- | --- | --- |
-| KPI 总览 | 快速看总测试数、良率、Wafer 数、参数数 | cleaned / yield |
+| KPI 总览 | 快速看总测试数、良率、Wafer 数、参数数；跨批次时 Wafer 数按 `Lot_ID + Wafer_ID` 计数 | cleaned / yield |
 | 良率趋势 | 比较不同 Wafer 或批次良率 | `Wafer_ID`, `Yield` |
 | 失效 Bin Pareto | 找主要失效类型 | `Bin` 或 yield 动态 Bin 列 |
 | 参数 BoxPlot | 看参数分布、离群值、规格边界 | 参数列、spec |

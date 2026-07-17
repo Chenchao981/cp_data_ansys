@@ -530,7 +530,14 @@ def dataset_summary(dataset: StandardDataset, pass_bin: int) -> Dict[str, object
             total_die = int(bin_counts.sum())
 
     lots = cleaned["Lot_ID"].nunique() if cleaned is not None and "Lot_ID" in cleaned.columns else (ydf["Lot_ID"].nunique() if ydf is not None else 0)
-    wafers = cleaned["Wafer_ID"].nunique() if cleaned is not None and "Wafer_ID" in cleaned.columns else (ydf["Wafer_ID"].nunique() if ydf is not None else 0)
+    wafer_source = cleaned if cleaned is not None and "Wafer_ID" in cleaned.columns else ydf
+    if wafer_source is not None and "Wafer_ID" in wafer_source.columns:
+        wafer_key_columns = ["Wafer_ID"]
+        if "Lot_ID" in wafer_source.columns:
+            wafer_key_columns.insert(0, "Lot_ID")
+        wafers = len(wafer_source.dropna(subset=["Wafer_ID"])[wafer_key_columns].drop_duplicates())
+    else:
+        wafers = 0
     avg_yield = float(ydf["Yield_Numeric"].mean()) if ydf is not None and ydf["Yield_Numeric"].notna().any() else (pass_die / total_die * 100 if total_die else np.nan)
 
     return {
