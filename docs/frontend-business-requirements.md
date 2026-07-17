@@ -96,7 +96,7 @@ Parameter,Unit,LimitL,LimitU,LSL,USL,Target
 | 失效 Bin Pareto | 找主要失效类型 | `Bin` 或 yield 动态 Bin 列 |
 | 参数 BoxPlot | 看参数分布、离群值、规格边界 | 参数列、spec |
 | 参数 Wafer 散点图 | 看每个参数在不同 Wafer 上的原始点分布和离散程度 | `Lot_ID`、`Wafer_ID`、参数列、spec |
-| Wafer Mapping | 全部圆片同时展示 die 空间分布；可切换综合 Bin 或测试参数，定位 Bin 不良、低于 LSL 和高于 USL 的 die | `Lot_ID`, `Wafer_ID`, `X`, `Y`, `Bin`, 参数列、spec |
+| Wafer Mapping | 默认一次展示全部圆片的同一着色项目；也可选择 1～25 片查看逐 die 详情。可切换综合 Bin 或测试参数，定位 Bin 不良、低于 LSL 和高于 USL 的 die | `Lot_ID`, `Wafer_ID`, `X`, `Y`, `Bin`, 参数列、spec |
 | 区域分析 | 比较 Center / Mid / Edge | `X`, `Y`, 参数列 |
 | 失效叠加 | 看多个失效点位是否聚集 | `X`, `Y`, `Bin` |
 | Wafer Summary | 横向比较 Wafer 的均值、标准差、中位数 | `Wafer_ID`, 参数列 |
@@ -121,6 +121,7 @@ Parameter,Unit,LimitL,LimitU,LSL,USL,Target
 2. 全参数 BoxPlot 和全参数 Wafer 散点图会一次性展示多张图，参数很多时页面加载会更重。
 3. `spec` 中上下限方向必须由清洗程序保证，前端按字段原样展示。
 4. 参数 Mapping 只有在所选参数存在 LSL 或 USL 时才能判定不良；前端不会自动交换方向异常的上下限。
+5. 全部 Wafer 总览默认关闭逐 die 悬浮文本，以控制 Plotly 页面数据量；着色状态和每片 NG 数仍完整保留。
 
 后续建议：
 

@@ -14,8 +14,8 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass, replace
+from typing import Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -207,6 +207,26 @@ def _wafer_order(data: pd.DataFrame) -> List[Tuple[str, str]]:
     return ordered
 
 
+def wafer_mapping_wafer_keys(result: WaferMappingResult) -> List[Tuple[str, str]]:
+    """返回按 Lot/Wafer 排序的唯一 Wafer 键，供前端范围选择。"""
+    return _wafer_order(result.data) if not result.data.empty else []
+
+
+def filter_wafer_mapping(
+    result: WaferMappingResult,
+    wafer_keys: Iterable[Tuple[str, str]],
+) -> WaferMappingResult:
+    """筛选要展示的 Lot/Wafer，同时保留原 Mapping 判定和规格。"""
+    selected = {(str(lot), str(wafer)) for lot, wafer in wafer_keys}
+    if not selected or result.data.empty:
+        return replace(result, data=result.data.iloc[0:0].copy())
+
+    key_index = pd.MultiIndex.from_arrays(
+        [result.data["_Lot_Text"].astype(str), result.data["_Wafer_Text"].astype(str)]
+    )
+    return replace(result, data=result.data.loc[key_index.isin(selected)].copy())
+
+
 def _discrete_colorscale(status_colors: Dict[int, str]) -> List[Tuple[float, str]]:
     codes = sorted(status_colors)
     count = len(codes)
@@ -235,8 +255,13 @@ def _collapse_coordinate_records(wafer_data: pd.DataFrame) -> pd.DataFrame:
     return selected
 
 
-def wafer_mapping_grid(result: WaferMappingResult, columns: int = 6) -> go.Figure:
-    """把全部 Lot/Wafer 画成同一张 Wafer Mapping 小图矩阵。"""
+def wafer_mapping_grid(
+    result: WaferMappingResult,
+    columns: int = 6,
+    *,
+    include_hover: bool = True,
+) -> go.Figure:
+    """把 Lot/Wafer 画成小图矩阵；轻量模式可关闭逐 die 悬浮数据。"""
     data = result.data
     wafer_order = _wafer_order(data) if not data.empty else []
     if not wafer_order:
@@ -248,9 +273,13 @@ def wafer_mapping_grid(result: WaferMappingResult, columns: int = 6) -> go.Figur
     rows = int(math.ceil(len(wafer_order) / columns))
     titles: List[str] = []
     collapsed_by_wafer: Dict[Tuple[str, str], pd.DataFrame] = {}
+    grouped = {
+        (str(lot), str(wafer)): group
+        for (lot, wafer), group in data.groupby(["_Lot_Text", "_Wafer_Text"], sort=False, dropna=False)
+    }
 
     for lot, wafer in wafer_order:
-        wafer_data = data[(data["_Lot_Text"] == lot) & (data["_Wafer_Text"] == wafer)]
+        wafer_data = grouped[(lot, wafer)]
         collapsed = _collapse_coordinate_records(wafer_data)
         collapsed_by_wafer[(lot, wafer)] = collapsed
         judged = int((collapsed["_Status_Code"] > 0).sum())
@@ -287,42 +316,52 @@ def wafer_mapping_grid(result: WaferMappingResult, columns: int = 6) -> go.Figur
             )
             continue
 
-        x_index = {value: pos for pos, value in enumerate(x_values)}
-        y_index = {value: pos for pos, value in enumerate(y_values)}
-        z = np.full((len(y_values), len(x_values)), np.nan)
-        hover = np.full((len(y_values), len(x_values)), "", dtype=object)
-        column_positions = {name: position for position, name in enumerate(wafer_data.columns)}
-        for record in wafer_data.itertuples(index=False, name=None):
-            x_value = record[column_positions["X"]]
-            y_value = record[column_positions["Y"]]
-            x_pos = x_index[x_value]
-            y_pos = y_index[y_value]
-            status_code = int(record[column_positions["_Status_Code"]])
-            status_label = result.status_labels[status_code]
-            bin_value = record[column_positions["_Bin_Value"]]
-            mapping_value = record[column_positions["_Mapping_Value"]]
-            count = int(record[column_positions["_Coord_Count"]])
-            if result.mode == "parameter":
-                value_text = "N/A" if pd.isna(mapping_value) else f"{float(mapping_value):g}{(' ' + result.unit) if result.unit else ''}"
-                mapping_text = f"{result.mapping_label}: {value_text}<br>"
-            else:
-                mapping_text = ""
-            bin_text = "N/A" if pd.isna(bin_value) else f"{float(bin_value):g}"
-            hover[y_pos, x_pos] = (
-                f"Lot: {lot}<br>Wafer: {wafer}<br>"
-                f"X: {x_value:g}, Y: {y_value:g}<br>"
-                f"Bin: {bin_text}<br>{mapping_text}状态: {status_label}<br>"
-                f"同坐标记录: {count}"
-            )
-            z[y_pos, x_pos] = status_code
+        z = (
+            wafer_data.pivot(index="Y", columns="X", values="_Status_Code")
+            .reindex(index=y_values, columns=x_values)
+            .to_numpy(dtype=float)
+        )
+        heatmap_options: Dict[str, object] = {}
+        if include_hover:
+            x_index = {value: pos for pos, value in enumerate(x_values)}
+            y_index = {value: pos for pos, value in enumerate(y_values)}
+            hover = np.full((len(y_values), len(x_values)), "", dtype=object)
+            column_positions = {name: position for position, name in enumerate(wafer_data.columns)}
+            for record in wafer_data.itertuples(index=False, name=None):
+                x_value = record[column_positions["X"]]
+                y_value = record[column_positions["Y"]]
+                x_pos = x_index[x_value]
+                y_pos = y_index[y_value]
+                status_code = int(record[column_positions["_Status_Code"]])
+                status_label = result.status_labels[status_code]
+                bin_value = record[column_positions["_Bin_Value"]]
+                mapping_value = record[column_positions["_Mapping_Value"]]
+                count = int(record[column_positions["_Coord_Count"]])
+                if result.mode == "parameter":
+                    value_text = (
+                        "N/A"
+                        if pd.isna(mapping_value)
+                        else f"{float(mapping_value):g}{(' ' + result.unit) if result.unit else ''}"
+                    )
+                    mapping_text = f"{result.mapping_label}: {value_text}<br>"
+                else:
+                    mapping_text = ""
+                bin_text = "N/A" if pd.isna(bin_value) else f"{float(bin_value):g}"
+                hover[y_pos, x_pos] = (
+                    f"Lot: {lot}<br>Wafer: {wafer}<br>"
+                    f"X: {x_value:g}, Y: {y_value:g}<br>"
+                    f"Bin: {bin_text}<br>{mapping_text}状态: {status_label}<br>"
+                    f"同坐标记录: {count}"
+                )
+            heatmap_options.update(text=hover, hovertemplate="%{text}<extra></extra>")
+        else:
+            heatmap_options["hoverinfo"] = "skip"
 
         fig.add_trace(
             go.Heatmap(
                 x=x_values,
                 y=y_values,
                 z=z,
-                text=hover,
-                hovertemplate="%{text}<extra></extra>",
                 hoverongaps=False,
                 colorscale=colorscale,
                 zmin=zmin,
@@ -330,6 +369,7 @@ def wafer_mapping_grid(result: WaferMappingResult, columns: int = 6) -> go.Figur
                 showscale=False,
                 xgap=1,
                 ygap=1,
+                **heatmap_options,
             ),
             row=row,
             col=col,

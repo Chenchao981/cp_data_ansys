@@ -103,7 +103,7 @@ GUI 打开时会：
 - 良率和 Bin
 - 参数 BoxPlot
 - 参数 Wafer 散点图
-- Wafer Mapping（全部 Lot/Wafer 小图矩阵，可选择综合 Bin 或具体测试参数）
+- Wafer Mapping（全部 Lot/Wafer 轻量总览，或选择 1～25 片详看；可选择综合 Bin 或具体测试参数）
 - 区域分析
 - 失效叠加
 - Wafer Summary
@@ -134,7 +134,7 @@ GUI 打开时会：
 | 参数没有 LSL/USL | 不生成该参数的不良 Mapping | 检查 spec CSV 是否缺规格 |
 | `LSL > USL` | 明确提示规格方向异常，不自动交换 | 回到清洗/spec 生成环节修正规格 |
 | 同一 Lot/Wafer/X/Y 有复测记录 | 该坐标按最高不良优先级展示，悬浮显示记录数 | 确认复测规则与 Seq 数据 |
-| 数据量很大 | 全参数 BoxPlot 或散点页加载变慢 | 降低侧边栏单张散点图最大样本数，或后续增加分页 |
+| 数据量很大 | 全参数 BoxPlot、散点页或大量 Wafer Mapping 加载变慢 | 降低散点图最大样本数；Wafer Mapping 使用默认轻量总览，需要逐 die 数值时再选择最多 25 片详看 |
 | Cpk 方向异常 | 前端按 spec 原样计算 | 检查清洗输出的 `LimitL/LimitU` 是否正确 |
 
 ## 8. 扩展设计

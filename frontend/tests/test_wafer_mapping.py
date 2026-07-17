@@ -4,9 +4,11 @@ import pandas as pd
 import pytest
 
 from frontend.charts.wafer_mapping import (
+    filter_wafer_mapping,
     has_spatial_coordinates,
     prepare_wafer_mapping,
     wafer_mapping_grid,
+    wafer_mapping_wafer_keys,
     wafer_mapping_summary,
 )
 
@@ -90,6 +92,35 @@ def test_mapping_grid_renders_every_wafer_in_one_figure() -> None:
     assert len(heatmaps) == 4
     assert len(figure.layout.annotations) == 4
     assert all("NG 1 / 9" in annotation.text for annotation in figure.layout.annotations)
+
+
+def test_mapping_can_filter_exact_lot_and_wafer_for_detail_view() -> None:
+    result = prepare_wafer_mapping(sample_cleaned(), pass_bin=1)
+    assert wafer_mapping_wafer_keys(result) == [
+        ("LOT-A", "1"),
+        ("LOT-A", "2"),
+        ("LOT-B", "1"),
+        ("LOT-B", "2"),
+    ]
+
+    selected = filter_wafer_mapping(result, [("LOT-B", "1")])
+
+    assert wafer_mapping_summary(selected)["wafers"] == 1
+    assert set(selected.data["_Lot_Text"]) == {"LOT-B"}
+    assert set(selected.data["_Wafer_Text"]) == {"1"}
+    assert wafer_mapping_summary(result)["wafers"] == 4
+
+
+def test_mapping_compact_mode_omits_per_die_hover_payload() -> None:
+    result = prepare_wafer_mapping(sample_cleaned(), pass_bin=1)
+    compact = wafer_mapping_grid(result, columns=2, include_hover=False)
+    detailed = wafer_mapping_grid(result, columns=2, include_hover=True)
+    compact_heatmap = next(trace for trace in compact.data if trace.type == "heatmap")
+    detailed_heatmap = next(trace for trace in detailed.data if trace.type == "heatmap")
+
+    assert compact_heatmap.hoverinfo == "skip"
+    assert compact_heatmap.text is None
+    assert detailed_heatmap.text is not None
 
 
 def test_coordinate_validation_rejects_non_spatial_xy() -> None:

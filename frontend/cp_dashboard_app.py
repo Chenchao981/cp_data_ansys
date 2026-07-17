@@ -30,9 +30,11 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from frontend.charts.wafer_mapping import (
+    filter_wafer_mapping,
     has_spatial_coordinates,
     prepare_wafer_mapping,
     wafer_mapping_grid,
+    wafer_mapping_wafer_keys,
     wafer_mapping_summary,
 )
 
@@ -1175,12 +1177,17 @@ def main() -> None:
             )
         else:
             st.caption(
-                "晶圆厂常用 Mapping 视图：每个方格代表一个 die，全部 Lot/Wafer 同时展示。"
-                "选择综合 Bin 时高亮 Bin 不良；选择测试参数时按该参数 LSL/USL 高亮超限 die。"
+                "晶圆厂常用 Mapping 视图：每个方格代表一个 die。可一次查看全部 Lot/Wafer 的同一参数，"
+                "也可选择 1～25 片查看逐 die 详情。综合 Bin 高亮 Bin 不良；测试参数按 LSL/USL 高亮超限 die。"
             )
-            map_col1, map_col2 = st.columns([3, 1])
+            map_col1, map_col2 = st.columns([2, 2])
             mapping_choice = map_col1.selectbox("选择 Mapping 项目", ["综合 Bin"] + params, key="wafer_mapping_item")
-            mapping_columns = int(map_col2.slider("每行 Wafer 数", 2, 8, 6, key="wafer_mapping_columns"))
+            display_mode = map_col2.radio(
+                "展示范围",
+                ["全部 Wafer 总览", "选择 Wafer 详看"],
+                horizontal=True,
+                key="wafer_mapping_display_mode",
+            )
             mapping_parameter = None if mapping_choice == "综合 Bin" else mapping_choice
             mapping_spec = get_spec_info(dataset.spec, mapping_parameter) if mapping_parameter else None
             try:
@@ -1193,19 +1200,64 @@ def main() -> None:
             except ValueError as exc:
                 st.error(str(exc))
             else:
-                mapping_stats = wafer_mapping_summary(mapping_result)
+                wafer_keys = wafer_mapping_wafer_keys(mapping_result)
+                selected_result = mapping_result
+                include_hover = False
+                if display_mode == "选择 Wafer 详看":
+                    wafer_labels = [f"{lot} / W{wafer}" for lot, wafer in wafer_keys]
+                    label_to_key = dict(zip(wafer_labels, wafer_keys))
+                    selected_labels = st.multiselect(
+                        "选择 Wafer（最多 25 片）",
+                        wafer_labels,
+                        default=wafer_labels[: min(25, len(wafer_labels))],
+                        key="wafer_mapping_selected_wafers",
+                        max_selections=25,
+                    )
+                    selected_result = filter_wafer_mapping(
+                        mapping_result,
+                        [label_to_key[label] for label in selected_labels],
+                    )
+                    include_hover = True
+                    st.caption("详看模式已启用逐 die 悬浮详情，可查看坐标、Bin、参数值和复测次数。")
+                else:
+                    st.caption(
+                        f"当前共 {len(wafer_keys):,} 片，已启用轻量总览：保留全部 die 着色，关闭逐 die 悬浮详情。"
+                        "如需查看具体数值，请切换到“选择 Wafer 详看”。"
+                    )
+
+                selected_count = wafer_mapping_summary(selected_result)["wafers"]
+                default_columns = 8 if display_mode == "全部 Wafer 总览" and selected_count > 25 else 6
+                mapping_columns = int(
+                    st.slider(
+                        "每行 Wafer 数",
+                        2,
+                        8,
+                        min(default_columns, max(2, selected_count)),
+                        key=f"wafer_mapping_columns_{'all' if display_mode == '全部 Wafer 总览' else 'detail'}",
+                    )
+                )
+                mapping_stats = wafer_mapping_summary(selected_result)
                 stat1, stat2, stat3, stat4 = st.columns(4)
-                stat1.metric("同时展示 Wafer", f"{mapping_stats['wafers']:,}")
+                stat1.metric("当前展示 Wafer", f"{mapping_stats['wafers']:,}")
                 stat2.metric("有效判定 die", f"{mapping_stats['judged']:,}")
                 stat3.metric("不良 die", f"{mapping_stats['fail']:,}")
                 fail_rate = mapping_stats["fail"] / mapping_stats["judged"] * 100 if mapping_stats["judged"] else 0
                 stat4.metric("不良占比", f"{fail_rate:.2f}%")
                 if mapping_stats["duplicate_coordinates"]:
+                    duplicate_hint = (
+                        "同一坐标按最高不良优先级展示，悬浮可查看该坐标记录数。"
+                        if include_hover
+                        else "同一坐标按最高不良优先级展示；切换到详看模式可查看复测记录数。"
+                    )
                     st.caption(
                         f"检测到 {mapping_stats['duplicate_coordinates']:,} 条同 Lot/Wafer/X/Y 的复测记录；"
-                        "同一坐标按最高不良优先级展示，悬浮可查看该坐标记录数。"
+                        f"{duplicate_hint}"
                     )
-                mapping_fig = wafer_mapping_grid(mapping_result, columns=mapping_columns)
+                mapping_fig = wafer_mapping_grid(
+                    selected_result,
+                    columns=mapping_columns,
+                    include_hover=include_hover,
+                )
                 mapping_fig = style_figure(mapping_fig, height=int(mapping_fig.layout.height))
                 mapping_fig.update_layout(
                     margin=dict(l=36, r=28, t=140, b=36),

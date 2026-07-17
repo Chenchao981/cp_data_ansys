@@ -8,7 +8,7 @@
 - `yield_analyzer_app.py`：兼容启动入口，当前转到 `cp_dashboard_app.py`。
 - `charts/yield_chart.py`：良率趋势、批次对比、失效分析。
 - `charts/boxplot_chart.py`：参数箱体图与规格对比。
-- `charts/wafer_mapping.py`：全部 Lot/Wafer 的 die-level Mapping、不良判定与小图矩阵。
+- `charts/wafer_mapping.py`：全部 Lot/Wafer 的 die-level Mapping、不良判定、范围筛选与轻量小图矩阵。
 - `charts/scatter_chart.py`：参数散点图历史模块。
 - `charts/summary_chart/`：汇总报告。
 - `charts/js_embedder.py`：离线 Plotly.js 嵌入。
@@ -35,7 +35,7 @@ streamlit run frontend/yield_analyzer_app.py
 - Bin 总览、失效 Bin Pareto、良率趋势
 - 全参数 BoxPlot：按 Huahong 箱体图轴逻辑展示，X 轴为 Lot/Wafer 顺序，刻度显示 Wafer_ID，Y 轴为参数值；只显示箱线图，不叠加原始散点
 - 全参数散点图：按 Huahong/BoxPlot 轴逻辑展示，X 轴为 Lot/Wafer 顺序，刻度显示 Wafer_ID，Y 轴为参数值
-- Wafer Mapping：全部 Lot/Wafer 同时以 die 方格矩阵展示；可选择综合 Bin 或具体测试参数，参数模式按 LSL/USL 高亮低超限和高超限 die
+- Wafer Mapping：默认以轻量模式同时展示全部 Lot/Wafer，也可选择 1～25 片查看逐 die 悬浮详情；可选择综合 Bin 或具体测试参数，参数模式按 LSL/USL 高亮低超限和高超限 die
 - Center/Mid/Edge 区域分析、失效点位叠加
 - Wafer Summary、Cpk/超限表、CSV 数据预览
 

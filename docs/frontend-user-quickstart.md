@@ -70,7 +70,7 @@ python -m gui.multi_company_main
 | 良率 / Bin | 哪些 Wafer 良率低，主要失效 Bin 是什么 |
 | 参数 BoxPlot | 参数是否偏移，是否有离群点 |
 | 参数 Wafer 散点图 | 每个参数在各 Wafer 上的原始点分布和离散程度 |
-| Wafer Mapping | 一次查看全部圆片；选择综合 Bin 或测试参数，看不良 die 是否有空间聚集 |
+| Wafer Mapping | 一次查看全部圆片的同一参数，或选择 1～25 片详看；观察不良 die 是否有空间聚集 |
 | 区域分析 | Center / Mid / Edge 是否有差异 |
 | Wafer Summary | Wafer 间均值、标准差、中位数对比 |
 | Cpk / 超限 | 哪些参数规格风险最大 |
@@ -111,11 +111,13 @@ python -m gui.multi_company_main
 
 ### 第四步：看 Wafer Mapping 和区域
 
-如果 cleaned CSV 有有效 `X/Y` 坐标，可查看 Wafer Mapping。页面会把当前目录中的全部 Lot/Wafer 一起排列，每个方格代表一个 die：
+如果 cleaned CSV 有有效 `X/Y` 坐标，可查看 Wafer Mapping。每个方格代表一个 die：
 
 1. 选择“综合 Bin”，查看 `Bin != Pass Bin` 的不良 die。
 2. 选择具体测试参数，按该参数的 LSL/USL 查看低超限和高超限 die。
-3. 调整“每行 Wafer 数”，在总览密度和单片可读性之间切换。
+3. 选择“全部 Wafer 总览”，一次看完当前分析目录中的所有片号。该模式保留全部着色和每片 NG 数，但关闭逐 die 悬浮详情，以提高大量 Wafer 时的响应速度。
+4. 选择“选择 Wafer 详看”，可同时选择 1～25 片，并通过悬浮查看坐标、Bin、参数值和复测次数。
+5. 调整“每行 Wafer 数”，在总览密度和单片可读性之间切换。
 
 如果参数没有 LSL/USL，前端无法判断该参数的 die 是否不良，会明确提示补齐 spec；不会自行猜测规格。
 
