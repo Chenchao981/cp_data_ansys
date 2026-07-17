@@ -11,6 +11,7 @@ from pathlib import Path
 from datetime import datetime
 import re
 from typing import Sequence
+from zipfile import BadZipFile, ZipFile
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QLineEdit, QPushButton, QTextEdit, QFileDialog, 
                              QMessageBox, QProgressBar)
@@ -29,6 +30,11 @@ from cp_data_processor.processing.zip_input import (
     discover_zip_archives,
     normalize_input_paths,
     prepare_dcp_input,
+)
+from cp_data_processor.processing.output_naming import (
+    OutputNamingError,
+    build_output_folder_name,
+    create_output_run_dir,
 )
 from frontend.charts.yield_chart import YieldChart
 from frontend.charts.boxplot_chart import BoxplotChart
@@ -95,6 +101,7 @@ def extract_first_lot_id(directory_path):
             dcp_files.extend(list(input_path.rglob("*.dcp")))
             dcp_files.extend(list(input_path.rglob("*.DCP")))
         
+        dcp_files = sorted(set(dcp_files), key=lambda path: str(path).casefold())
         if not dcp_files:
             return None
         
@@ -149,40 +156,98 @@ def extract_first_lot_id(directory_path):
         return None
 
 
-def generate_output_folder_name(input_paths: str | Path | Sequence[str | Path]):
-    """生成输出文件夹名称：批次号_YYYYMMDD_HHMMSS"""
+def _extract_lot_id_from_dcp_text(text: str):
+    """从华虹文件头提取真实批次号。"""
+    lines = text.splitlines()
+    if len(lines) < 2:
+        return None
+
+    parts = re.split(r"\s+", lines[1].strip())
+    if len(parts) < 2:
+        return None
+    lowered = [part.casefold().rstrip(":") for part in parts]
+    if lowered[0] == "lot" and len(parts) >= 3 and lowered[1] == "number":
+        raw_lot_id = parts[2]
+    elif lowered[0] == "lot":
+        raw_lot_id = parts[-1]
+    else:
+        raw_lot_id = parts[1]
+
+    raw_lot_id = raw_lot_id.strip().strip(":=")
+    _product_name, extracted_lot_id = extract_lot_id_from_folder_name(raw_lot_id)
+    return extracted_lot_id.split("@", 1)[0] if extracted_lot_id else None
+
+
+def _extract_first_lot_id_from_archive(archive_path: Path):
+    """按ZIP处理顺序，从目录层级或首个数据文件头识别华虹批次。"""
     try:
-        normalized_paths = normalize_input_paths(input_paths)
-        archives = discover_zip_archives(normalized_paths)
+        with ZipFile(archive_path) as zip_file:
+            members = sorted(
+                (
+                    info
+                    for info in zip_file.infolist()
+                    if not info.is_dir()
+                    and Path(info.filename).suffix.casefold() in (".txt", ".dcp")
+                ),
+                key=lambda info: info.filename.casefold(),
+            )
+            if not members:
+                return None
 
-        if len(archives) == 1:
-            lot_id = extract_first_lot_id(archives[0])
-        elif len(archives) > 1:
-            lot_id = f"HH_MultiLot_{len(archives)}ZIP"
-        elif len(normalized_paths) > 1:
-            lot_id = f"HH_MultiSource_{len(normalized_paths)}"
-        else:
-            lot_id = extract_first_lot_id(normalized_paths[0])
+            first_member = members[0]
+            member_parts = Path(first_member.filename.replace("\\", "/")).parts
+            for component in member_parts[:-1]:
+                _product_name, lot_id = extract_lot_id_from_folder_name(component)
+                if lot_id != component:
+                    return lot_id
 
+            raw_content = zip_file.read(first_member)[:16384]
+            for encoding in ("utf-8-sig", "gb18030", "latin1"):
+                try:
+                    lot_id = _extract_lot_id_from_dcp_text(raw_content.decode(encoding))
+                except UnicodeDecodeError:
+                    continue
+                if lot_id:
+                    return lot_id
+
+            if len(member_parts) >= 2:
+                return member_parts[-2]
+    except (BadZipFile, OSError) as exc:
+        logger.warning("读取华虹ZIP批次号失败 %s: %s", archive_path, exc)
+    return None
+
+
+def extract_first_hh_lot_id(input_paths: str | Path | Sequence[str | Path]):
+    """从实际处理顺序中的第一个华虹数据来源提取真实批次号。"""
+    normalized_paths = normalize_input_paths(input_paths)
+    archives = discover_zip_archives(normalized_paths)
+    if archives:
+        lot_id = _extract_first_lot_id_from_archive(archives[0])
         if not lot_id:
-            lot_id = "CP_Analysis"
-        
-        # 生成时间戳
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        # 组合文件夹名称
-        folder_name = f"{lot_id}_{timestamp}"
-        
-        # 确保文件夹名称是有效的Windows文件名
-        folder_name = re.sub(r'[<>:"/\\|?*]', '_', folder_name)
-        
-        return folder_name
-        
-    except Exception as e:
-        logger.error(f"生成输出文件夹名称失败: {e}")
-        # 备用方案
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        return f"CP_Analysis_{timestamp}"
+            archive_name = archives[0].stem
+            _product_name, extracted_lot_id = extract_lot_id_from_folder_name(
+                archive_name
+            )
+            if extracted_lot_id != archive_name:
+                lot_id = extracted_lot_id
+    else:
+        lot_id = extract_first_lot_id(normalized_paths[0])
+
+    if not lot_id:
+        raise OutputNamingError("无法从华虹输入中识别首个真实批次号")
+    return lot_id
+
+
+def generate_output_folder_name(
+    input_paths: str | Path | Sequence[str | Path],
+    *,
+    serial: str | None = None,
+):
+    """生成统一的“首个真实批次号_流水号”文件夹名称。"""
+    return build_output_folder_name(
+        extract_first_hh_lot_id(input_paths),
+        serial=serial,
+    )
 
 
 class HHDataProcessingThread(QThread):
@@ -524,16 +589,14 @@ class HuaHongWidget(QWidget):
             QMessageBox.warning(self, "输入无效", str(e))
             return
         
-        # 生成输出文件夹名称
+        # 按统一规则创建“首个真实批次号_流水号”输出文件夹
         base_output_dir = self.output_path_edit.text().strip() or get_default_output_path()
-        folder_name = generate_output_folder_name(normalized_sources)
-        self.output_dir = os.path.join(base_output_dir, folder_name)
-        
-        # 确保输出目录存在
         try:
-            os.makedirs(self.output_dir, exist_ok=True)
-            self.log_message(f"📁 华虹输出文件夹已创建/确认: {self.output_dir}")
-        except Exception as e:
+            first_lot_id = extract_first_hh_lot_id(normalized_sources)
+            self.output_dir = str(create_output_run_dir(base_output_dir, first_lot_id))
+            self.log_message(f"📋 首个真实批次号: {first_lot_id}")
+            self.log_message(f"📁 华虹输出文件夹已创建: {self.output_dir}")
+        except (OutputNamingError, OSError) as e:
             self.log_message(f"❌ 创建华虹输出文件夹失败: {self.output_dir} - {e}")
             QMessageBox.critical(self, "错误", f"创建华虹输出文件夹失败: {e}")
             return

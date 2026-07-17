@@ -28,6 +28,10 @@ from cp_data_processor.processing.archive_input import (
     normalize_input_paths,
     prepare_archive_input,
 )
+from cp_data_processor.processing.output_naming import (
+    build_output_folder_name,
+    create_output_run_dir,
+)
 from gui.widgets.input_source_selector import select_input_sources
 
 
@@ -64,34 +68,12 @@ def extract_lion_lot_id_from_folder(input_dir):
         return "Lion_Analysis"
 
 
-def generate_lion_output_folder_name(input_dir):
-    """生成Lion输出文件夹名称：批次号_YYYYMMDD_HHMMSS"""
-    try:
-        from datetime import datetime
-        import re
-        
-        # 提取批次号
-        lot_id = extract_lion_lot_id_from_folder(input_dir)
-        if not lot_id:
-            lot_id = "Lion_Analysis"
-        
-        # 生成时间戳
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        # 组合文件夹名称
-        folder_name = f"{lot_id}_{timestamp}"
-        
-        # 确保文件夹名称是有效的Windows文件名
-        folder_name = re.sub(r'[<>:"/\\|?*]', '_', folder_name)
-        
-        return folder_name
-        
-    except Exception as e:
-        logger.error(f"生成Lion输出文件夹名称失败: {e}")
-        # 备用方案
-        from datetime import datetime
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        return f"Lion_Analysis_{timestamp}"
+def generate_lion_output_folder_name(input_dir, *, serial: str | None = None):
+    """生成统一的“首个真实批次号_流水号”文件夹名称。"""
+    return build_output_folder_name(
+        extract_lion_lot_id_from_folder(input_dir),
+        serial=serial,
+    )
 
 
 class LionDataProcessingThread(QThread):
@@ -203,17 +185,13 @@ class LionDataProcessingThread(QThread):
                         if first_lot_id is None and batch_lots:
                             first_lot_id = batch_lots[0].lot_id
                             
-                            # 生成基于第一个文件lot_id的输出文件夹
-                            from datetime import datetime
-                            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                            folder_name = f"{first_lot_id}_{timestamp}"
-                            output_path = base_output_path / folder_name
+                            # 按公共规则创建首批次号+流水号输出文件夹
+                            output_path = create_output_run_dir(
+                                base_output_path,
+                                first_lot_id,
+                            )
                             self.output_dir = str(output_path)  # 设置实际输出目录
-                            
-                            # 创建输出目录
-                            output_path.mkdir(parents=True, exist_ok=True)
-                            
-                            self.progress_updated.emit(f"📋 使用第一个文件的lot_id: {first_lot_id}")
+                            self.progress_updated.emit(f"📋 首个真实批次号: {first_lot_id}")
                             self.progress_updated.emit(f"📁 创建输出文件夹: {output_path}")
                             
                             # 发送输出目录创建信号

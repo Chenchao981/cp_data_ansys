@@ -4,12 +4,14 @@
 from __future__ import annotations
 
 import argparse
-import re
-from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
 
 from cp_data_processor.processing.standard_csv_generator import StandardCSVGenerator
+from cp_data_processor.processing.output_naming import (
+    build_output_folder_name,
+    create_output_run_dir,
+)
 from cp_data_processor.data_models.cp_data import CPLot
 from cp_data_processor.readers.company_adapters.company_config import get_company_config
 from cp_data_processor.readers.company_adapters.guoyu_adapter import GUOYUAdapter
@@ -73,11 +75,13 @@ def discover_guoyu_batches(input_dir: str) -> Dict[str, List[str]]:
     }
 
 
-def generate_output_folder_name(first_lot_id: str) -> str:
+def generate_output_folder_name(
+    first_lot_id: str,
+    *,
+    serial: str | None = None,
+) -> str:
     """生成“首个批次号_流水号”输出文件夹名称。"""
-    safe_lot_id = re.sub(r'[<>:"/\\|?*]', "_", first_lot_id)
-    serial = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return f"{safe_lot_id}_{serial}"
+    return build_output_folder_name(first_lot_id, serial=serial)
 
 
 def _read_guoyu_batch(lot_id: str, files: List[str], product_name: str) -> CPLot:
@@ -109,8 +113,7 @@ def process_guoyu_directory(input_dir: str, output_parent_dir: str) -> Dict[str,
     batches = discover_guoyu_batches(input_dir)
     product_name = Path(input_dir).name
     first_lot_id = next(iter(batches))
-    output_dir = Path(output_parent_dir) / generate_output_folder_name(first_lot_id)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir = create_output_run_dir(output_parent_dir, first_lot_id)
 
     lots = {
         lot_id: _read_guoyu_batch(lot_id, files, product_name)

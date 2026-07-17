@@ -19,7 +19,6 @@
 1. Lion 的路径识别包含过宽的 `/data/` 规则，可能把其他 Excel 错识别为 Lion。
 2. `reader_factory.create_reader()` 默认把所有 Excel 当作 JT，而另一条路径又把 Excel 当作 MEX，规则不一致。
 3. spec CSV 同时存在逐参数行和 Lion 横向矩阵两种结构，需要显式版本化。
-4. 多批次合并使用第一个批次 ID 命名输出，容易让使用者误解文件范围。
 
 ## P2：工程质量
 

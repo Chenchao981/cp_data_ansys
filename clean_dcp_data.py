@@ -203,7 +203,7 @@ def detect_directory_structure(directory_path):
     subdirs_with_dcp = []
     
     # 检查当前目录中的直接文件
-    for file in os.listdir(directory_path):
+    for file in sorted(os.listdir(directory_path), key=str.casefold):
         file_path = os.path.join(directory_path, file)
         if os.path.isfile(file_path) and file.lower().endswith('.txt'):
             # 简单检查是否为DCP格式文件
@@ -218,13 +218,13 @@ def detect_directory_structure(directory_path):
     
     # 如果当前目录没有DCP文件，检查子目录
     if not has_dcp_files_in_current:
-        for item in os.listdir(directory_path):
+        for item in sorted(os.listdir(directory_path), key=str.casefold):
             item_path = os.path.join(directory_path, item)
             if os.path.isdir(item_path):
                 # 检查子目录中是否有DCP文件
                 subdir_has_dcp = False
                 try:
-                    for file in os.listdir(item_path):
+                    for file in sorted(os.listdir(item_path), key=str.casefold):
                         if file.lower().endswith('.txt'):
                             file_path = os.path.join(item_path, file)
                             try:
@@ -280,7 +280,7 @@ def find_dcp_files_in_directory(directory_path, recursive=False):
     else:
         # 只查找当前目录
         try:
-            for file in os.listdir(directory_path):
+            for file in sorted(os.listdir(directory_path), key=str.casefold):
                 if file.lower().endswith('.txt'):
                     file_path = os.path.join(directory_path, file)
                     if os.path.isfile(file_path):

@@ -30,6 +30,11 @@ from cp_data_processor.processing.archive_input import (
     normalize_input_paths,
     prepare_archive_input,
 )
+from cp_data_processor.processing.output_naming import (
+    OutputNamingError,
+    build_output_folder_name,
+    create_output_run_dir,
+)
 from gui.widgets.input_source_selector import select_input_sources
 
 
@@ -78,6 +83,10 @@ def extract_jt_lot_id_from_folder(input_dir):
         if excel_files:
             # 从第一个Excel文件名提取
             first_file = excel_files[0]
+            parent_lot_id = extract_jt_lot_id_from_name(first_file.parent.name)
+            if parent_lot_id:
+                logger.info(f"从JT批次文件夹提取批次号: {parent_lot_id}")
+                return parent_lot_id
             file_name = first_file.stem  # 去掉扩展名
             
             # 模式: FA444149-03, FA123456-01 等
@@ -141,34 +150,14 @@ def extract_jt_lot_id_from_sources(
 
 def generate_jt_output_folder_name(
     input_paths: str | Path | Sequence[str | Path],
+    *,
+    serial: str | None = None,
 ):
-    """生成JT输出文件夹名称：批次号_YYYYMMDD_HHMMSS"""
-    try:
-        from datetime import datetime
-        import re
-        
-        # 提取批次号
-        lot_id = extract_jt_lot_id_from_sources(input_paths)
-        if not lot_id:
-            lot_id = "JT_Analysis"
-        
-        # 生成时间戳
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        # 组合文件夹名称
-        folder_name = f"{lot_id}_{timestamp}"
-        
-        # 确保文件夹名称是有效的Windows文件名
-        folder_name = re.sub(r'[<>:"/\\|?*]', '_', folder_name)
-        
-        return folder_name
-        
-    except Exception as e:
-        logger.error(f"生成JT输出文件夹名称失败: {e}")
-        # 备用方案
-        from datetime import datetime
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        return f"JT_Analysis_{timestamp}"
+    """生成统一的“首个真实批次号_流水号”文件夹名称。"""
+    return build_output_folder_name(
+        extract_jt_lot_id_from_sources(input_paths),
+        serial=serial,
+    )
 
 
 
@@ -638,16 +627,14 @@ class JeTechWidget(QWidget):
             QMessageBox.warning(self, "输入无效", str(exc))
             return
         
-        # 生成输出文件夹名称
+        # 按统一规则创建“首个真实批次号_流水号”输出文件夹
         base_output_dir = self.output_path_edit.text().strip() or get_default_output_path()
-        folder_name = generate_jt_output_folder_name(normalized_sources)
-        self.output_dir = os.path.join(base_output_dir, folder_name)
-        
-        # 确保输出目录存在
         try:
-            os.makedirs(self.output_dir, exist_ok=True)
-            self.log_message(f"📁 JT输出文件夹已创建/确认: {self.output_dir}")
-        except Exception as e:
+            first_lot_id = extract_jt_lot_id_from_sources(normalized_sources)
+            self.output_dir = str(create_output_run_dir(base_output_dir, first_lot_id))
+            self.log_message(f"📋 首个真实批次号: {first_lot_id}")
+            self.log_message(f"📁 JT输出文件夹已创建: {self.output_dir}")
+        except (OutputNamingError, OSError) as e:
             self.log_message(f"❌ 创建JT输出文件夹失败: {self.output_dir} - {e}")
             QMessageBox.critical(self, "错误", f"创建JT输出文件夹失败: {e}")
             return

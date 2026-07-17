@@ -25,6 +25,12 @@ from clean_dcp_data import process_directory as clean_dcp_process_directory
 from dcp_spec_extractor import generate_spec_file as extract_spec_main
 from frontend.charts.yield_chart import YieldChart
 from frontend.charts.boxplot_chart import BoxplotChart
+from cp_data_processor.processing.output_naming import (
+    OutputNamingError,
+    build_output_folder_name,
+    create_output_run_dir,
+)
+from gui.widgets.huahong_widget import extract_first_hh_lot_id
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -184,30 +190,12 @@ def extract_first_lot_id(directory_path):
         return None
 
 
-def generate_output_folder_name(input_dir):
-    """生成输出文件夹名称：批次号_YYYYMMDD_HHMMSS"""
-    try:
-        # 提取第一个批次号
-        lot_id = extract_first_lot_id(input_dir)
-        if not lot_id:
-            lot_id = "CP_Analysis"
-        
-        # 生成时间戳
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        # 组合文件夹名称
-        folder_name = f"{lot_id}_{timestamp}"
-        
-        # 确保文件夹名称是有效的Windows文件名
-        folder_name = re.sub(r'[<>:"/\\|?*]', '_', folder_name)
-        
-        return folder_name
-        
-    except Exception as e:
-        logger.error(f"生成输出文件夹名称失败: {e}")
-        # 备用方案
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        return f"CP_Analysis_{timestamp}"
+def generate_output_folder_name(input_dir, *, serial=None):
+    """兼容入口：使用公共“首批次号_流水号”命名规则。"""
+    return build_output_folder_name(
+        extract_first_hh_lot_id(input_dir),
+        serial=serial,
+    )
 
 
 class DataProcessingThread(QThread):
@@ -517,18 +505,16 @@ class CPDataGUI(QMainWindow):
             QMessageBox.warning(self, "警告", "请先选择数据文件夹！")
             return
         
-        # 生成输出文件夹名称
+        # 按公共规则创建“首个真实批次号_流水号”目录
         base_output_dir = self.output_path_edit.text().strip() or get_desktop_path()
-        folder_name = generate_output_folder_name(self.input_dir)
-        self.output_dir = os.path.join(base_output_dir, folder_name)
-        
-        # 确保输出目录存在
         try:
-            os.makedirs(self.output_dir, exist_ok=True)
-            self.log_message(f"📁 输出文件夹已创建/确认: {self.output_dir}")
+            first_lot_id = extract_first_hh_lot_id(self.input_dir)
+            self.output_dir = str(create_output_run_dir(base_output_dir, first_lot_id))
+            self.log_message(f"📋 首个真实批次号: {first_lot_id}")
+            self.log_message(f"📁 输出文件夹已创建: {self.output_dir}")
             # Setup file logging to the new output directory
             setup_file_logging(self.output_dir)
-        except Exception as e:
+        except (OutputNamingError, OSError) as e:
             self.log_message(f"❌ 创建输出文件夹失败: {self.output_dir} - {e}")
             QMessageBox.critical(self, "错误", f"创建输出文件夹失败: {e}")
             return
@@ -646,4 +632,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()
