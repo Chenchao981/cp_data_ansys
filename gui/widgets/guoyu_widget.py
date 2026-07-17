@@ -27,6 +27,7 @@ from cp_data_processor.processing.archive_input import (
     normalize_input_paths,
     prepare_archive_input,
 )
+from gui.widgets.input_source_selector import select_input_sources
 
 
 GUOYU_EXCEL_SUFFIXES = (".xls", ".xlsx")
@@ -145,20 +146,14 @@ class GuoyuWidget(QWidget):
         )
         self.input_path_edit.setMinimumHeight(35)
         self.input_path_edit.setFont(QFont("", 11))
-        self.input_browse_btn = QPushButton("选择文件夹...")
+        self.input_browse_btn = QPushButton("选择数据源...")
         self.input_browse_btn.setMinimumHeight(35)
-        self.input_browse_btn.setMinimumWidth(120)
+        self.input_browse_btn.setMinimumWidth(125)
         self.input_browse_btn.setFont(QFont("", 11))
-        self.input_browse_btn.clicked.connect(self.browse_input_dir)
-        self.input_zip_browse_btn = QPushButton("选择ZIP...")
-        self.input_zip_browse_btn.setMinimumHeight(35)
-        self.input_zip_browse_btn.setMinimumWidth(120)
-        self.input_zip_browse_btn.setFont(QFont("", 11))
-        self.input_zip_browse_btn.clicked.connect(self.browse_input_zip)
+        self.input_browse_btn.clicked.connect(self.browse_input_sources)
         input_layout.addWidget(input_label)
         input_layout.addWidget(self.input_path_edit)
         input_layout.addWidget(self.input_browse_btn)
-        input_layout.addWidget(self.input_zip_browse_btn)
         main_layout.addLayout(input_layout)
 
         output_layout = QHBoxLayout()
@@ -253,24 +248,16 @@ class GuoyuWidget(QWidget):
 
         self.input_path_edit.textChanged.connect(self.on_input_path_changed)
 
-    def browse_input_dir(self):
-        """浏览国宇单批次或产品级输入目录。"""
-        dir_path = QFileDialog.getExistingDirectory(
-            self, "选择国宇FRD数据文件夹", self.input_dir or get_default_input_path()
-        )
-        if dir_path:
-            self.set_input_sources([dir_path])
-
-    def browse_input_zip(self):
-        """选择一个或多个国宇FRD ZIP压缩包。"""
-        zip_paths, _ = QFileDialog.getOpenFileNames(
+    def browse_input_sources(self):
+        """在同一窗口选择一个数据目录或一个/多个国宇ZIP文件。"""
+        current_sources = self.get_input_sources()
+        selected_paths = select_input_sources(
             self,
-            "选择国宇FRD ZIP文件（可多选）",
-            self.input_dir or get_default_input_path(),
-            "ZIP压缩包 (*.zip *.ZIP)",
+            title="选择国宇FRD数据来源",
+            start_path=current_sources[0] if current_sources else get_default_input_path(),
         )
-        if zip_paths:
-            self.set_input_sources(zip_paths)
+        if selected_paths:
+            self.set_input_sources(selected_paths)
 
     def set_input_sources(self, paths: Sequence[str | Path]):
         """设置输入来源并显示可编辑的多路径预览。"""
@@ -371,7 +358,6 @@ class GuoyuWidget(QWidget):
         self.clean_btn.setEnabled(not is_processing and bool(self.input_dir))
         self.cockpit_btn.setEnabled(not is_processing)
         self.input_browse_btn.setEnabled(not is_processing)
-        self.input_zip_browse_btn.setEnabled(not is_processing)
         self.output_browse_btn.setEnabled(not is_processing)
         self.input_path_edit.setEnabled(not is_processing)
         self.output_path_edit.setEnabled(not is_processing)

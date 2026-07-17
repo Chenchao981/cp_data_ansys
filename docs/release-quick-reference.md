@@ -24,9 +24,9 @@
 四家公司 GUI 都支持 ZIP 输入。华虹示例：
 
 ```text
-方式一：点击“选择ZIP...”，选择一个或一次多选多个 ZIP
+点击“选择数据源...”，在同一窗口中按 Ctrl / Shift 选择一个或多个 ZIP
 
-方式二：点击“选择文件夹...”，选择只包含 ZIP 的目录
+也可以选择一个只包含 ZIP 的目录
 📂 ZIP目录/
 ├── 📦 PRODUCT_LOT-001@202.zip
 └── 📦 PRODUCT_LOT-002@202.zip
@@ -49,7 +49,7 @@
 
 **支持格式**：`.xls` `.xlsx` `.XLS` `.XLSX` 🔍
 
-JT 可点击“选择ZIP...”选择单个或多个包含 Excel 的 ZIP，也可选择只包含 ZIP 的目录。输出文件夹继续使用从 JT 文件名/批次中识别的 `FAxx-xxxx_YYYYMMDD_HHMMSS`。
+JT 可点击“选择数据源...”选择单个或多个包含 Excel 的 ZIP，也可选择一个原始数据目录或只包含 ZIP 的目录。输出文件夹继续使用从 JT 文件名/批次中识别的 `FAxx-xxxx_YYYYMMDD_HHMMSS`。
 
 #### Lion公司数据格式 🏢
 

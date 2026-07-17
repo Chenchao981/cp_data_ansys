@@ -30,6 +30,7 @@ from cp_data_processor.processing.archive_input import (
     normalize_input_paths,
     prepare_archive_input,
 )
+from gui.widgets.input_source_selector import select_input_sources
 
 
 JT_EXCEL_SUFFIXES = (".xls", ".xlsx")
@@ -499,22 +500,15 @@ class JeTechWidget(QWidget):
         self.input_path_edit.setPlaceholderText("选择JT数据文件夹，或选择一个/多个ZIP文件...")
         self.input_path_edit.setMinimumHeight(35)
         self.input_path_edit.setFont(QFont("", 11))
-        self.input_browse_btn = QPushButton("选择文件夹...")
+        self.input_browse_btn = QPushButton("选择数据源...")
         self.input_browse_btn.setMinimumHeight(35)
-        self.input_browse_btn.setMinimumWidth(105)
+        self.input_browse_btn.setMinimumWidth(125)
         self.input_browse_btn.setFont(QFont("", 11))
-        self.input_browse_btn.clicked.connect(self.browse_input_dir)
-
-        self.input_zip_browse_btn = QPushButton("选择ZIP...")
-        self.input_zip_browse_btn.setMinimumHeight(35)
-        self.input_zip_browse_btn.setMinimumWidth(95)
-        self.input_zip_browse_btn.setFont(QFont("", 11))
-        self.input_zip_browse_btn.clicked.connect(self.browse_input_zips)
+        self.input_browse_btn.clicked.connect(self.browse_input_sources)
         
         input_layout.addWidget(input_label)
         input_layout.addWidget(self.input_path_edit)
         input_layout.addWidget(self.input_browse_btn)
-        input_layout.addWidget(self.input_zip_browse_btn)
         main_layout.addLayout(input_layout)
         
         # 输出文件夹选择
@@ -618,31 +612,16 @@ class JeTechWidget(QWidget):
         # 连接输入路径变化事件
         self.input_path_edit.textChanged.connect(self.on_input_path_changed)
     
-    def browse_input_dir(self):
-        """浏览JT原始目录或只包含ZIP的目录。"""
-        start_dir = self.input_path_edit.text().strip() or get_default_input_path()
-        if ";" in start_dir or not Path(start_dir).is_dir():
-            start_dir = get_default_input_path()
-        dir_path = QFileDialog.getExistingDirectory(self, "选择JT数据文件夹", start_dir)
-        if dir_path:
-            self.set_input_sources([dir_path])
-
-    def browse_input_zips(self):
-        """浏览并选择一个或多个JT ZIP文件。"""
+    def browse_input_sources(self):
+        """在同一窗口选择一个数据目录或一个/多个JT ZIP文件。"""
         current_sources = self.get_input_sources()
-        if current_sources:
-            first_source = Path(current_sources[0])
-            start_dir = str(first_source if first_source.is_dir() else first_source.parent)
-        else:
-            start_dir = get_default_input_path()
-        zip_paths, _ = QFileDialog.getOpenFileNames(
+        selected_paths = select_input_sources(
             self,
-            "选择一个或多个JT ZIP文件",
-            start_dir,
-            "ZIP压缩包 (*.zip *.ZIP)",
+            title="选择JT数据来源",
+            start_path=current_sources[0] if current_sources else get_default_input_path(),
         )
-        if zip_paths:
-            self.set_input_sources(zip_paths)
+        if selected_paths:
+            self.set_input_sources(selected_paths)
 
     def set_input_sources(self, paths):
         """设置输入来源并显示可编辑的多路径预览。"""
@@ -804,7 +783,6 @@ class JeTechWidget(QWidget):
         self.clean_btn.setEnabled(not is_processing and bool(self.input_dir))
         self.cockpit_btn.setEnabled(not is_processing)
         self.input_browse_btn.setEnabled(not is_processing)
-        self.input_zip_browse_btn.setEnabled(not is_processing)
         self.output_browse_btn.setEnabled(not is_processing)
         self.input_path_edit.setEnabled(not is_processing)
         self.output_path_edit.setEnabled(not is_processing)
