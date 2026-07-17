@@ -22,6 +22,8 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from gui.theme import set_widget_property
+
 
 class InputSourceSelectionError(ValueError):
     """Raised when a GUI selection does not match the supported source modes."""
@@ -102,6 +104,7 @@ class InputSourceDialog(QDialog):
         start_path: str | Path | None = None,
     ) -> None:
         super().__init__(parent)
+        self.setObjectName("inputSourceDialog")
         self.selected_sources: tuple[Path, ...] = ()
         self.current_directory = resolve_start_directory(start_path)
 
@@ -121,7 +124,7 @@ class InputSourceDialog(QDialog):
             "程序会自动判断并调用对应处理流程。"
         )
         hint.setWordWrap(True)
-        hint.setStyleSheet("color: #455A64; font-size: 14px;")
+        hint.setProperty("role", "helpText")
         layout.addWidget(hint)
 
         navigation = QHBoxLayout()
@@ -173,7 +176,7 @@ class InputSourceDialog(QDialog):
         layout.addWidget(self.source_view, 1)
 
         self.selection_summary = QLabel("尚未选择数据来源")
-        self.selection_summary.setStyleSheet("color: #607D8B;")
+        self.selection_summary.setProperty("tone", "muted")
         layout.addWidget(self.selection_summary)
 
         self.button_box = QDialogButtonBox(
@@ -219,7 +222,7 @@ class InputSourceDialog(QDialog):
         paths = self._selected_paths()
         if not paths:
             self.selection_summary.setText("尚未选择数据来源")
-            self.selection_summary.setStyleSheet("color: #607D8B;")
+            set_widget_property(self.selection_summary, "tone", "muted")
             self.ok_button.setEnabled(False)
             return
 
@@ -227,7 +230,7 @@ class InputSourceDialog(QDialog):
             validated = validate_input_source_selection(paths)
         except InputSourceSelectionError as exc:
             self.selection_summary.setText(str(exc))
-            self.selection_summary.setStyleSheet("color: #C62828;")
+            set_widget_property(self.selection_summary, "tone", "error")
             self.ok_button.setEnabled(False)
             return
 
@@ -236,7 +239,7 @@ class InputSourceDialog(QDialog):
         else:
             summary = f"已选择 {len(validated)} 个 ZIP 文件"
         self.selection_summary.setText(summary)
-        self.selection_summary.setStyleSheet("color: #2E7D32;")
+        set_widget_property(self.selection_summary, "tone", "success")
         self.ok_button.setEnabled(True)
 
     def _go_desktop(self) -> None:

@@ -21,13 +21,26 @@ from urllib.parse import quote
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLabel, QPushButton, QStackedWidget,
                              QMessageBox, QStatusBar)
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer
-from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtCore import QSettings, Qt, pyqtSignal, QTimer
 
 # 添加项目路径
 sys.path.append(str(Path(__file__).parent.parent))
 
 import logging
+
+from gui.theme import (
+    DEFAULT_THEME,
+    LIGHT_THEME,
+    THEME_SETTINGS_APPLICATION,
+    THEME_SETTINGS_KEY,
+    THEME_SETTINGS_ORGANIZATION,
+    apply_application_theme,
+    normalize_theme,
+    opposite_theme,
+    set_widget_property,
+    theme_button_text,
+    theme_button_tooltip,
+)
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -46,15 +59,28 @@ class MultiCompanyCPDataGUI(QMainWindow):
     
     # 信号定义
     company_changed = pyqtSignal(str)  # 公司切换信号
+    theme_changed = pyqtSignal(str)
     
-    def __init__(self):
+    def __init__(self, initial_theme=None, remember_theme=True):
         super().__init__()
         self.current_company = "huahong"  # 默认选中HuaHong
         self.company_widgets = {}  # 存储公司界面组件
+        self.remember_theme = remember_theme
+        self.theme_settings = QSettings(
+            THEME_SETTINGS_ORGANIZATION,
+            THEME_SETTINGS_APPLICATION,
+        )
+        saved_theme = (
+            self.theme_settings.value(THEME_SETTINGS_KEY, DEFAULT_THEME)
+            if remember_theme
+            else DEFAULT_THEME
+        )
+        self.current_theme = normalize_theme(initial_theme or saved_theme)
         
         # 初始化界面
         self.setup_ui()
         self.setup_connections()
+        self.apply_theme(self.current_theme, remember=False)
         
         # 设置窗口属性
         self.setWindowTitle("CP数据分析工具 - 多公司版")
@@ -67,6 +93,7 @@ class MultiCompanyCPDataGUI(QMainWindow):
         """设置主界面UI"""
         # 创建中央widget
         central_widget = QWidget()
+        central_widget.setObjectName("appRoot")
         self.setCentralWidget(central_widget)
         
         # 创建主布局
@@ -95,14 +122,8 @@ class MultiCompanyCPDataGUI(QMainWindow):
     def create_navigation_widget(self):
         """创建导航栏组件"""
         nav_widget = QWidget()
+        nav_widget.setObjectName("navigationPanel")
         nav_widget.setFixedWidth(220)  # 宽度适应三个公司按钮
-        nav_widget.setStyleSheet("""
-            QWidget {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #fafafa, stop:1 #f0f0f0);
-                border-right: 1px solid #e0e0e0;
-            }
-        """)
         
         layout = QVBoxLayout(nav_widget)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -110,19 +131,7 @@ class MultiCompanyCPDataGUI(QMainWindow):
         
         # 导航标题
         title_label = QLabel("公司选择")
-        title_label.setStyleSheet("""
-            QLabel {
-                font-weight: 600;
-                font-size: 27px;
-                font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
-                color: #2c3e50;
-                padding: 25px 15px;
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #ecf0f1, stop:1 #d5dbdb);
-                border-bottom: 2px solid #bdc3c7;
-                letter-spacing: 0.8px;
-            }
-        """)
+        title_label.setObjectName("navigationHeader")
         title_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(title_label)
         
@@ -142,19 +151,16 @@ class MultiCompanyCPDataGUI(QMainWindow):
 
         # 添加弹性空间
         layout.addStretch()
+
+        self.theme_toggle_button = QPushButton()
+        self.theme_toggle_button.setObjectName("themeToggleButton")
+        self.theme_toggle_button.setMinimumHeight(44)
+        self.theme_toggle_button.clicked.connect(self.toggle_theme)
+        layout.addWidget(self.theme_toggle_button)
         
         # 版本信息
         version_label = QLabel("版本: v2.0")
-        version_label.setStyleSheet("""
-            QLabel {
-                color: #7f8c8d;
-                font-size: 11px;
-                font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
-                padding: 15px;
-                background-color: rgba(189, 195, 199, 0.1);
-                border-top: 1px solid #ecf0f1;
-            }
-        """)
+        version_label.setObjectName("versionLabel")
         version_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(version_label)
         
@@ -163,14 +169,12 @@ class MultiCompanyCPDataGUI(QMainWindow):
     def create_nav_button(self, text, company_id, is_selected=False):
         """创建导航按钮"""
         button = QPushButton(text)
+        button.setObjectName("navButton")
         button.setFixedHeight(65)  # 增加30%：50 * 1.3 = 65
         button.setFixedWidth(200)  # 适应新的导航栏宽度
         button.company_id = company_id
         button.setCheckable(True)
         button.setChecked(is_selected)
-        
-        # 设置按钮样式
-        self.update_button_style(button, is_selected)
         
         # 绑定点击事件
         button.clicked.connect(lambda: self.on_company_selected(company_id))
@@ -178,75 +182,14 @@ class MultiCompanyCPDataGUI(QMainWindow):
         return button
     
     def update_button_style(self, button, is_selected):
-        """更新按钮样式 - 现代商务风格"""
-        if is_selected:
-            button.setStyleSheet("""
-                QPushButton {
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #64B5F6, stop:1 #1976D2);
-                    color: white;
-                    border: none;
-                    border-left: 5px solid #0D47A1;
-                    text-align: left;
-                    font-size: 21px;
-                    font-weight: 600;
-                    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
-                    margin: 8px 10px;
-                    border-radius: 12px;
-                    padding-left: 18px;
-                    padding-right: 12px;
-                    min-height: 60px;
-                }
-                QPushButton:hover {
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #42A5F5, stop:1 #1565C0);
-                    border-left: 5px solid #0D47A1;
-                }
-                QPushButton:pressed {
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #1565C0, stop:1 #0D47A1);
-                }
-            """)
-        else:
-            button.setStyleSheet("""
-                QPushButton {
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #ffffff, stop:1 #f8f9fa);
-                    color: #495057;
-                    border: 1px solid #dee2e6;
-                    text-align: left;
-                    font-size: 21px;
-                    font-weight: 500;
-                    font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
-                    margin: 8px 10px;
-                    border-radius: 12px;
-                    padding-left: 18px;
-                    padding-right: 12px;
-                    min-height: 60px;
-                }
-                QPushButton:hover {
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #ffffff, stop:1 #e9ecef);
-                    color: #212529;
-                    border: 1px solid #adb5bd;
-                    border-left: 4px solid #6c757d;
-                }
-                QPushButton:pressed {
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #f8f9fa, stop:1 #e9ecef);
-                    border: 1px solid #6c757d;
-                }
-            """)
+        """更新导航按钮选中状态；视觉由全局主题统一控制。"""
+        button.setChecked(is_selected)
+        button.update()
     
     def setup_content_area(self):
         """设置右侧内容区"""
         self.content_stack = QStackedWidget()
-        self.content_stack.setStyleSheet("""
-            QStackedWidget {
-                background-color: white;
-                border: none;
-            }
-        """)
+        self.content_stack.setObjectName("contentStack")
         self.main_layout.addWidget(self.content_stack)
         
         # 创建占位界面
@@ -299,13 +242,7 @@ class MultiCompanyCPDataGUI(QMainWindow):
             hh_layout = QVBoxLayout(hh_placeholder)
             hh_label = QLabel("HuaHong界面\n（组件加载失败）")
             hh_label.setAlignment(Qt.AlignCenter)
-            hh_label.setStyleSheet("""
-                QLabel {
-                    font-size: 24px;
-                    color: #666;
-                    padding: 50px;
-                }
-            """)
+            hh_label.setProperty("role", "placeholder")
             hh_layout.addWidget(hh_label)
             
             # JeTech占位界面
@@ -313,13 +250,7 @@ class MultiCompanyCPDataGUI(QMainWindow):
             jt_layout = QVBoxLayout(jt_placeholder)
             jt_label = QLabel("JeTech界面\n（组件加载失败）")
             jt_label.setAlignment(Qt.AlignCenter)
-            jt_label.setStyleSheet("""
-                QLabel {
-                    font-size: 24px;
-                    color: #666;
-                    padding: 50px;
-                }
-            """)
+            jt_label.setProperty("role", "placeholder")
             jt_layout.addWidget(jt_label)
             
             # Lion占位界面
@@ -327,26 +258,14 @@ class MultiCompanyCPDataGUI(QMainWindow):
             lion_layout = QVBoxLayout(lion_placeholder)
             lion_label = QLabel("Lion界面\n（组件加载失败）")
             lion_label.setAlignment(Qt.AlignCenter)
-            lion_label.setStyleSheet("""
-                QLabel {
-                    font-size: 24px;
-                    color: #666;
-                    padding: 50px;
-                }
-            """)
+            lion_label.setProperty("role", "placeholder")
             lion_layout.addWidget(lion_label)
 
             guoyu_placeholder = QWidget()
             guoyu_layout = QVBoxLayout(guoyu_placeholder)
             guoyu_label = QLabel("国宇FRD界面\n（组件加载失败）")
             guoyu_label.setAlignment(Qt.AlignCenter)
-            guoyu_label.setStyleSheet("""
-                QLabel {
-                    font-size: 24px;
-                    color: #666;
-                    padding: 50px;
-                }
-            """)
+            guoyu_label.setProperty("role", "placeholder")
             guoyu_layout.addWidget(guoyu_label)
             
             # 添加到堆栈
@@ -367,12 +286,37 @@ class MultiCompanyCPDataGUI(QMainWindow):
     def setup_status_bar(self):
         """设置状态栏"""
         self.status_bar = QStatusBar()
+        self.status_bar.setObjectName("mainStatusBar")
         self.setStatusBar(self.status_bar)
         self.status_bar.showMessage(f"当前公司: HuaHong", 0)
     
     def setup_connections(self):
         """设置信号连接"""
         self.company_changed.connect(self.on_company_changed)
+
+    def apply_theme(self, theme_name, remember=True):
+        """应用全局主题，并按需记住用户上次选择。"""
+        app = QApplication.instance()
+        self.current_theme = normalize_theme(theme_name)
+        if app is not None:
+            self.current_theme = apply_application_theme(app, self.current_theme)
+
+        set_widget_property(self, "theme", self.current_theme)
+        self.theme_toggle_button.setText(theme_button_text(self.current_theme))
+        self.theme_toggle_button.setToolTip(theme_button_tooltip(self.current_theme))
+
+        if remember and self.remember_theme:
+            self.theme_settings.setValue(THEME_SETTINGS_KEY, self.current_theme)
+            self.theme_settings.sync()
+
+        self.theme_changed.emit(self.current_theme)
+        logger.info("界面主题已切换为: %s", self.current_theme)
+
+    def toggle_theme(self, _checked=False):
+        """在暗黑主题和亮色主题之间切换。"""
+        self.apply_theme(opposite_theme(self.current_theme))
+        display_name = "亮色主题" if self.current_theme == LIGHT_THEME else "暗黑主题"
+        self.status_bar.showMessage(f"已切换到{display_name}", 3000)
     
     def on_company_selected(self, company_id):
         """处理公司选择事件"""

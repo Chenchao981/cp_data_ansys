@@ -404,6 +404,7 @@ class LionWidget(QWidget):
     
     def __init__(self):
         super().__init__()
+        self.setObjectName("companyPage")
         self.input_dir = ""
         self.input_paths = []
         self._updating_input_path = False
@@ -431,7 +432,7 @@ class LionWidget(QWidget):
         title_font.setBold(True)
         title_label.setFont(title_font)
         title_label.setAlignment(Qt.AlignCenter)
-        title_label.setStyleSheet("color: #FF9800; margin-bottom: 10px;")
+        title_label.setProperty("role", "pageTitle")
         main_layout.addWidget(title_label)
         
         # 输入文件夹或ZIP选择
@@ -482,43 +483,13 @@ class LionWidget(QWidget):
         
         self.clean_btn = QPushButton("🧹 开始清洗数据")
         self.clean_btn.setMinimumHeight(60)
-        self.clean_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #FF9800;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-size: 18px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #F57C00;
-            }
-            QPushButton:disabled {
-                background-color: #CCCCCC;
-            }
-        """)
+        self.clean_btn.setProperty("role", "primary")
         self.clean_btn.clicked.connect(self.start_cleaning)
         self.clean_btn.setEnabled(True)
         
         self.cockpit_btn = QPushButton("📊 CP Cockpit")
         self.cockpit_btn.setMinimumHeight(60)
-        self.cockpit_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #9C27B0;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-size: 18px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #7B1FA2;
-            }
-            QPushButton:disabled {
-                background-color: #CCCCCC;
-            }
-        """)
+        self.cockpit_btn.setProperty("role", "success")
         self.cockpit_btn.clicked.connect(
             lambda _checked=False: self.cockpit_requested.emit()
         )
@@ -541,17 +512,9 @@ class LionWidget(QWidget):
         
         self.status_text = QTextEdit()
         self.status_text.setMaximumHeight(250)
+        self.status_text.setReadOnly(True)
         self.status_text.setPlaceholderText("等待用户操作...")
-        self.status_text.setStyleSheet("""
-            QTextEdit {
-                background-color: #F5F5F5;
-                border: 1px solid #CCCCCC;
-                border-radius: 8px;
-                padding: 15px;
-                font-family: 'Consolas', monospace;
-                font-size: 14px;
-            }
-        """)
+        self.status_text.setProperty("role", "log")
         main_layout.addWidget(self.status_text)
         
         # 连接输入路径变化事件
