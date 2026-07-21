@@ -1,0 +1,24 @@
+"""{{COMPANY_NAME}} company adapter scaffold."""
+
+from pathlib import Path
+from typing import Dict
+
+from cp_data_processor.data_models.cp_data import CPLot
+from cp_data_processor.readers.company_adapters.base_company_adapter import BaseCompanyAdapter
+
+
+class {{COMPANY_CODE}}Adapter(BaseCompanyAdapter):
+    def __init__(self, config: Dict):
+        super().__init__("{{COMPANY_CODE}}", config)
+
+    def transform_to_standard_format(self, lot: CPLot) -> CPLot:
+        lot.pass_bin = {{PASS_BIN}}
+        return lot
+
+    def get_field_mapping(self) -> Dict[str, str]:
+        return self.field_mapping
+
+    def can_process_file(self, file_path: str) -> bool:
+        from cp_data_processor.readers.{{MODULE_NAME}}_reader import {{CLASS_STEM}}Reader
+
+        return Path(file_path).is_file() and {{CLASS_STEM}}Reader.can_read(file_path)

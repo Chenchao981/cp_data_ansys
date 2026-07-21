@@ -108,4 +108,10 @@ Lion 当前可能输出横向矩阵式规格文件。图表或后续数据接口
 - 基础字段改名属于破坏性变更，必须同步修改 Reader、Adapter、CSV、图表和 GUI。
 - 新增可选字段应保持旧消费者可用。
 - 良率必须明确 `pass_bin`，不能默认所有厂商永远为 Bin 1。
+- `StandardCSVGenerator` 必须使用 `CPLot.pass_bin` 计算 `Good_die`、Yield 和良品参数统计，不得在公共层写死 Bin 1。
+- 当 `chip_data` 缺少行级 `Lot_ID` 时，生成器使用 `CPWafer.source_lot_id` 回填；只有该值缺失时才回退到 `CPLot.lot_id`。
 - 数据精度、单位转换和异常值处理应可追溯，避免在图表阶段静默修改原始结果。
+
+## 7. 新公司生产入口契约
+
+新公司进入 `CompanyCleaningPipeline` 前必须提供已批准的格式档案。Pipeline 依次执行 Reader、Adapter、`StandardLotValidator` 和标准 CSV 生成；`pass_bin` 与批准值不一致、标准字段缺失、重复 `Lot_ID + Wafer_ID` 或空数据时必须停止。Agent、Skill 和格式档案不属于运行时数据契约。

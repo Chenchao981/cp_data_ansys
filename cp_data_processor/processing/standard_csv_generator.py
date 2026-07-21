@@ -109,7 +109,7 @@ class StandardCSVGenerator:
                 
                 # 添加或验证必需字段
                 if 'Lot_ID' not in chip_data.columns:
-                    chip_data['Lot_ID'] = lot.lot_id
+                    chip_data['Lot_ID'] = wafer.source_lot_id or lot.lot_id
                 if 'Wafer_ID' not in chip_data.columns:
                     chip_data['Wafer_ID'] = wafer.wafer_id
                 
@@ -186,13 +186,17 @@ class StandardCSVGenerator:
         
         for wafer in lot.wafers:
             # 获取晶圆的原始Lot_ID（从chip_data中获取）
-            original_lot_id = lot.lot_id
+            original_lot_id = wafer.source_lot_id or lot.lot_id
             if hasattr(wafer, 'chip_data') and wafer.chip_data is not None and not wafer.chip_data.empty:
                 if 'Lot_ID' in wafer.chip_data.columns:
                     original_lot_id = wafer.chip_data['Lot_ID'].iloc[0]
             
             # 计算晶圆级良率统计
-            wafer_stats = self._calculate_wafer_yield(wafer, original_lot_id)
+            wafer_stats = self._calculate_wafer_yield(
+                wafer,
+                original_lot_id,
+                pass_bin=lot.pass_bin,
+            )
             yield_data.append(wafer_stats)
         
         # 创建DataFrame
@@ -427,7 +431,12 @@ class StandardCSVGenerator:
         
         return file_path
     
-    def _calculate_wafer_yield(self, wafer: CPWafer, lot_id: str) -> Dict[str, Any]:
+    def _calculate_wafer_yield(
+        self,
+        wafer: CPWafer,
+        lot_id: str,
+        pass_bin: int = 1,
+    ) -> Dict[str, Any]:
         """
         计算单个晶圆的良率统计
         
@@ -479,9 +488,9 @@ class StandardCSVGenerator:
                 
                 for param in param_columns:
                     try:
-                        # 只计算好芯片（Bin=1）的参数平均值
+                        # 只计算好芯片的参数平均值；Pass Bin 来自批次契约。
                         if 'Bin' in chip_data.columns:
-                            good_chip_data = chip_data[chip_data['Bin'] == 1]
+                            good_chip_data = chip_data[chip_data['Bin'] == pass_bin]
                         else:
                             good_chip_data = chip_data
                         
@@ -517,9 +526,9 @@ class StandardCSVGenerator:
                 # 计算各个Bin的数量
                 bin_counts = chip_data['Bin'].value_counts()
                 
-                # 如果summary_data中没有good_die，计算good chips (通常Bin=1是良品)
+                # 如果summary_data中没有good_die，按显式 Pass Bin 计算。
                 if stats['Good_die'] == 0:
-                    good_chips = bin_counts.get(1, 0)
+                    good_chips = bin_counts.get(pass_bin, 0)
                     stats['Good_die'] = good_chips
                 
                 # 如果summary_data中没有yield，计算yield并添加百分比符号
@@ -542,9 +551,9 @@ class StandardCSVGenerator:
             for param in param_columns:
                 if param not in stats:  # 如果之前没有设置过这个参数
                     try:
-                        # 只计算好芯片（Bin=1）的参数平均值
+                        # 只计算好芯片的参数平均值；Pass Bin 来自批次契约。
                         if 'Bin' in chip_data.columns:
-                            good_chip_data = chip_data[chip_data['Bin'] == 1]
+                            good_chip_data = chip_data[chip_data['Bin'] == pass_bin]
                         else:
                             good_chip_data = chip_data
                         
@@ -626,7 +635,7 @@ class StandardCSVGenerator:
                     
                     # 确保包含基本字段
                     if 'Lot_ID' not in chip_data.columns:
-                        chip_data['Lot_ID'] = lot.lot_id
+                        chip_data['Lot_ID'] = wafer.source_lot_id or lot.lot_id
                     if 'Wafer_ID' not in chip_data.columns:
                         chip_data['Wafer_ID'] = wafer.wafer_id
                     
@@ -683,7 +692,17 @@ class StandardCSVGenerator:
                 continue
                 
             for wafer in lot.wafers:
-                wafer_stats = self._calculate_wafer_yield(wafer, lot.lot_id)
+                source_lot_id = lot.lot_id
+                if wafer.source_lot_id:
+                    source_lot_id = wafer.source_lot_id
+                if wafer.chip_data is not None and not wafer.chip_data.empty:
+                    if 'Lot_ID' in wafer.chip_data.columns:
+                        source_lot_id = wafer.chip_data['Lot_ID'].iloc[0]
+                wafer_stats = self._calculate_wafer_yield(
+                    wafer,
+                    source_lot_id,
+                    pass_bin=lot.pass_bin,
+                )
                 all_yield_data.append(wafer_stats)
         
         if not all_yield_data:

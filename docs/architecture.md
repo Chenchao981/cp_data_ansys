@@ -40,6 +40,8 @@ flowchart LR
     G --> F
 ```
 
+新晶圆厂的首次接入另有一条不进入用户发布包的研发链路：项目级 Agent 编排格式画像、人工批准、清洗器开发和验收 Skills；通过验收后，产物才进入上述生产架构。详见 [新晶圆厂接入研发架构](new-company-onboarding.md)。
+
 ### 关键判断
 
 - `cp_data_processor/` 是目标核心架构，包含统一模型、Reader、适配器和标准 CSV 生成器。
@@ -60,6 +62,9 @@ HH、JT、Lion、国宇四条 GUI 清洗流程统一通过 `cp_data_processor.pr
 | `cp_data_processor/readers/` | HH Reader、统一 Reader、公司注册 | 核心 |
 | `cp_data_processor/readers/company_adapters/` | 字段映射、单位转换、公司识别 | 核心 |
 | `cp_data_processor/processing/` | ZIP 安全准备、清洗、转换、标准 CSV、性能处理 | 核心 |
+| `cp_data_processor/validation/` | 标准 `CPLot`、必需字段、Pass Bin 和追溯性契约校验 | 核心 |
+| `devtools/cp_onboarding/` | 新格式画像、档案校验、清洗器骨架和 CSV 对账 | 研发专用，不打包 |
+| `.agents/skills/` 与 `.codex/agents/` | 新晶圆厂接入 SOP 与总控 Agent | 研发专用，不打包 |
 | `frontend/charts/` | 标准 CSV 到 Plotly HTML | 核心 |
 | `gui/widgets/` | 多公司 GUI 工作流编排 | 核心 |
 | `jt_data_processor/` | JT 专用成熟处理链 | 兼容且仍在用 |
@@ -93,5 +98,8 @@ GUI 支持 Excel 文件夹、单个/多个 ZIP 和只包含 ZIP 的文件夹。�
 - 跨厂商公共逻辑：`cp_data_processor/`
 - 基于标准 CSV 的图表：`frontend/`
 - GUI 编排：`gui/widgets/`
+- 新晶圆厂研发工具：`devtools/cp_onboarding/`
+
+未来新增公司优先使用 `CompanyCleaningPipeline` 组合 Reader、Adapter、`StandardLotValidator` 和 `StandardCSVGenerator`。现有四家公司保持成熟调用路径，逐条回归后再迁移。
 
 不要继续复制整套公司专用图表代码。新增公司应尽量输出统一 CSV 后复用 `frontend`。

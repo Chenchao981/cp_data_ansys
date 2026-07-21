@@ -6,7 +6,7 @@
 
 - 默认使用中文沟通，标准技术术语可使用英文。
 - 用户是新洁能 CIO，关注功率半导体业务、SAP Business One、运营分析、成本和毛利分析。
-- 本项目处理晶圆 CP（Chip Probing）测试数据，当前支持华虹宏力（HH）、Jetech（JT）和 Lion。
+- 本项目处理晶圆 CP（Chip Probing）测试数据，当前支持华虹宏力（HH）、Jetech（JT）、Lion 和扬州国宇 FRD。
 - 分析结论应区分事实、假设、计算与结论，并明确数据限制。
 
 ## 开始工作前
@@ -35,6 +35,7 @@
 - `cp_data_processor/` 是目标核心架构。
 - GUI 当前直接编排 HH、JT、Lion 三套成熟流程，并非全部通过 `UnifiedReader`。
 - `frontend/` 主要消费标准 CSV。
+- `.codex/agents/`、`.agents/skills/` 和 `devtools/cp_onboarding/` 属于新晶圆厂接入研发平面，不进入用户 GUI 和发布包。
 - `python_cp/`、JT 专用模块和 Lion 专用模块仍被主流程使用，未验证前不得删除。
 - 已删除根目录早期重复包；新增公共能力应放入 `cp_data_processor/`。
 
@@ -52,6 +53,10 @@ python -m gui.multi_company_main
 python clean_dcp_data.py --dir <input_dir> --output <output_dir>
 python -m jt_data_processor.jt_main_processor <input_path> --output <output_dir>
 python lion_batch_processor.py
+python guoyu_batch_processor.py <input_path> --output <output_dir>
+
+# 新晶圆厂研发工具
+python -m devtools.cp_onboarding --help
 
 # 图表
 python chart_generator.py
@@ -71,6 +76,8 @@ git diff --check
 - 原始格式解析：`cp_data_processor/readers/` 或公司专用 Reader
 - 厂商字段映射与单位转换：`cp_data_processor/readers/company_adapters/`
 - 公共清洗和标准输出：`cp_data_processor/processing/`
+- 标准数据契约校验：`cp_data_processor/validation/`
+- 新晶圆厂画像、骨架和验收：`devtools/cp_onboarding/`
 - 数据模型：`cp_data_processor/data_models/cp_data.py`
 - 标准 CSV 图表：`frontend/charts/`
 - GUI 工作流：`gui/widgets/`
@@ -78,6 +85,8 @@ git diff --check
 - Lion 专用流程：`lion/`、`lion_batch_processor.py`
 
 新增公司优先遵循 `docs/company-integration.md`，输出标准 CSV 后复用图表层。
+
+新晶圆厂或新格式版本任务优先使用项目级 `cp-new-company-engineer` Agent，并由 `$cp-onboard-new-company` 按“画像 → 人工批准 → 开发 → 验收 → GUI/图表/发布”编排。Agent 与 Skills 只服务研发，生产 GUI 不得调用 Agent 猜测未知格式。
 
 ## 数据与业务安全
 

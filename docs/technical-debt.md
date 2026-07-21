@@ -13,12 +13,21 @@
 1. 明确 GUI 公司专用流程与 `UnifiedReader` 的关系，逐步让 Reader/Adapter/CSV 契约成为唯一公共主线。
 2. 审计 `python_cp/` 的仍在用能力，迁移后再删除兼容模块。
 3. 合并两套 JT Reader/Adapter，减少规则漂移。
+4. 逐步让未来新公司使用 `CompanyCleaningPipeline`；现有四家公司完成黄金样本回归前保持成熟路径。
 
 ## P1：修正识别与契约风险
 
 1. Lion 的路径识别包含过宽的 `/data/` 规则，可能把其他 Excel 错识别为 Lion。
 2. `reader_factory.create_reader()` 默认把所有 Excel 当作 JT，而另一条路径又把 Excel 当作 MEX，规则不一致。
 3. spec CSV 同时存在逐参数行和 Lion 横向矩阵两种结构，需要显式版本化。
+4. `company_config.py` 仍集中维护所有公司配置，后续应按公司拆分并保留兼容聚合入口。
+
+## 已建立的治理基础
+
+- 项目级 `cp-new-company-engineer` Agent 与四阶段接入 Skills 已建立。
+- `devtools/cp_onboarding/` 已提供脱敏画像、批准档案校验、骨架生成和三类 CSV 对账。
+- `StandardLotValidator` 和 `CompanyCleaningPipeline` 已建立未来新公司的确定性公共入口。
+- 公共 CSV 良率使用显式 `CPLot.pass_bin`，缺少行级批次时优先回填 `CPWafer.source_lot_id`。
 
 ## P2：工程质量
 

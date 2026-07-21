@@ -1,0 +1,4 @@
+interface:
+  display_name: "CP Cleaner Builder"
+  short_description: "Build deterministic cleaners from approved profiles"
+  default_prompt: "Use $cp-build-new-company-cleaner to implement a deterministic cleaner from an approved CP format profile."

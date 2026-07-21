@@ -1,0 +1,28 @@
+"""{{COMPANY_NAME}} CP reader scaffold for format {{FORMAT_VERSION}}."""
+
+from pathlib import Path
+
+from cp_data_processor.data_models.cp_data import CPLot
+from cp_data_processor.readers.base_reader import BaseReader
+
+
+class {{CLASS_STEM}}Reader(BaseReader):
+    """Read only the approved {{COMPANY_NAME}} format."""
+
+    def read(self) -> CPLot:
+        lot = CPLot(pass_bin=self.pass_bin)
+        for file_path in self.file_paths:
+            self._extract_from_file(file_path, lot)
+        lot.update_counts()
+        lot.combine_data_from_wafers()
+        return lot
+
+    def _extract_from_file(self, file_path: str, lot: CPLot) -> None:
+        raise NotImplementedError("Implement only rules from the approved format profile")
+
+    @staticmethod
+    def can_read(file_path: str) -> bool:
+        path = Path(file_path)
+        if not path.is_file():
+            return False
+        raise NotImplementedError("Replace with conservative content-signature detection")

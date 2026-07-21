@@ -1,0 +1,24 @@
+"""Deterministic {{COMPANY_NAME}} cleaning entry point."""
+
+from cp_data_processor.processing.company_cleaning_pipeline import (
+    CompanyCleaningPipeline,
+    CompanyCleaningRequest,
+)
+from cp_data_processor.readers.{{MODULE_NAME}}_reader import {{CLASS_STEM}}Reader
+from cp_data_processor.readers.company_adapters.company_config import get_company_config
+from cp_data_processor.readers.company_adapters.{{MODULE_NAME}}_adapter import {{COMPANY_CODE}}Adapter
+
+
+def process_files(file_paths: list[str], output_dir: str):
+    config = get_company_config("{{COMPANY_CODE}}")
+    if not config:
+        raise ValueError("{{COMPANY_CODE}} configuration is not registered")
+    pipeline = CompanyCleaningPipeline({{CLASS_STEM}}Reader, {{COMPANY_CODE}}Adapter(config))
+    return pipeline.run(
+        CompanyCleaningRequest(
+            company_code="{{COMPANY_CODE}}",
+            file_paths=file_paths,
+            output_dir=output_dir,
+            pass_bin={{PASS_BIN}},
+        )
+    )

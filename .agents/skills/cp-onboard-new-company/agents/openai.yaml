@@ -1,0 +1,4 @@
+interface:
+  display_name: "CP New Fab Orchestrator"
+  short_description: "Orchestrate CP new-fab onboarding end to end"
+  default_prompt: "Use $cp-onboard-new-company to onboard a new wafer fab through profiling, approval, implementation, validation, GUI integration, and release."

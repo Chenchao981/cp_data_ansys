@@ -1,0 +1,15 @@
+category	standard_field	source_field_or_location	transform_or_rule	confidence	status	reviewer_note
+metadata	Product				unresolved	pending
+metadata	Lot_ID				unresolved	pending
+metadata	Wafer_ID				unresolved	pending
+base_field	X				unresolved	pending
+base_field	Y				unresolved	pending
+base_field	Seq				unresolved	pending
+base_field	Bin				unresolved	pending
+business_rule	pass_bin				unresolved	pending
+business_rule	invalid_values				unresolved	pending
+business_rule	duplicate_die_policy				unresolved	pending
+business_rule	retest_policy				unresolved	pending
+specification	unit				unresolved	pending
+specification	lower_limit				unresolved	pending
+specification	upper_limit				unresolved	pending

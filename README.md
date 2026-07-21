@@ -9,6 +9,7 @@
 - 输出 cleaned、yield、spec 三类标准 CSV
 - 生成良率趋势、失效分析、参数箱体图、散点图和汇总 HTML
 - 提供 PyQt5 多公司 GUI、全局暗黑/亮色主题切换、公司专用脚本和 Python API
+- 提供面向开发人员的新晶圆厂接入 Agent、阶段化 Skills 和确定性画像/骨架/验收工具；这些研发能力不进入用户 GUI 和发布包
 
 ## 推荐入口
 
@@ -66,6 +67,7 @@ python guoyu_batch_processor.py data/257375 --output output
 - [CP 前端用户快速上手](docs/frontend-user-quickstart.md)
 - [开发指南](docs/development.md)
 - [新增公司支持](docs/company-integration.md)
+- [新晶圆厂接入研发架构](docs/new-company-onboarding.md)
 - [CP 数据 FTP 接入设计（未来规划）](docs/ftp-integration-design.md)
 - [运行与发布](docs/operations.md)
 - [发布版用户手册](docs/release-user-manual.md)
@@ -85,6 +87,9 @@ guoyu/               扬州国宇 FRD Reader 与批次处理
 python_cp/           华虹流程仍在使用的兼容模块
 packaging/           .pyz 打包与发布文件
 docs/                当前有效文档
+.agents/skills/      项目级新晶圆厂接入 Skills（研发使用）
+.codex/agents/       项目级 CP 新厂商接入 Agent（研发使用）
+devtools/            新格式画像、骨架生成和输出验收工具（不打包）
 ```
 
 ## 当前验证状态

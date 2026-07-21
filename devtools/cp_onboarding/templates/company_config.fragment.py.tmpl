@@ -1,0 +1,20 @@
+"{{COMPANY_CODE}}": {
+    "name": "{{COMPANY_NAME}}",
+    "description": "Approved CP source format {{FORMAT_VERSION}}",
+    "supported_formats": ["{{COMPANY_CODE}}_FORMAT_{{FORMAT_VERSION}}"],
+    "default_format": "{{COMPANY_CODE}}_FORMAT_{{FORMAT_VERSION}}",
+    "version": "{{FORMAT_VERSION}}",
+    "field_mapping": {},
+    "unit_conversion": {},
+    "file_patterns": {
+        "path_patterns": [],
+        "filename_patterns": [],
+        "content_signatures": [],
+        "file_extensions": [],
+    },
+    "data_validation": {
+        "required_fields": ["Lot_ID", "Wafer_ID", "X", "Y", "Seq", "Bin"],
+        "optional_fields": [],
+        "bin_values": {"pass_bins": [{{PASS_BIN}}], "fail_bins": []},
+    },
+},

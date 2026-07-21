@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "company": {
+    "code": "",
+    "display_name": "",
+    "module_name": "",
+    "format_version": "1.0.0"
+  },
+  "samples": {
+    "file_count": 0,
+    "representative_lots": 0,
+    "representative_wafers": 0,
+    "profile_report": "sample-profile.json"
+  },
+  "source_structure": {
+    "file_types": [],
+    "encodings": [],
+    "delimiters": [],
+    "sheet_names": [],
+    "directory_layout": "",
+    "file_scope": "unresolved",
+    "header_rule": "",
+    "data_start_rule": "",
+    "footer_or_summary_rule": ""
+  },
+  "metadata_rules": {
+    "product": {"source": "", "rule": "", "status": "unresolved"},
+    "lot_id": {"source": "", "rule": "", "status": "unresolved"},
+    "wafer_id": {"source": "", "rule": "", "status": "unresolved"}
+  },
+  "standard_fields": {
+    "X": {"source": "", "transform": "", "status": "unresolved"},
+    "Y": {"source": "", "transform": "", "status": "unresolved"},
+    "Seq": {"source": "", "transform": "", "status": "unresolved"},
+    "Bin": {"source": "", "transform": "", "status": "unresolved"}
+  },
+  "parameters": {
+    "discovery_rule": "unresolved",
+    "unit_rule": "unresolved",
+    "excluded_columns": [],
+    "duplicate_name_rule": "unresolved",
+    "expected_count": null
+  },
+  "specifications": {
+    "status": "unresolved",
+    "layout": "unresolved",
+    "parameter_key": "",
+    "lower_limit_rule": "",
+    "upper_limit_rule": "",
+    "test_condition_rule": ""
+  },
+  "cleaning_rules": {
+    "pass_bin": null,
+    "valid_bin_values": [],
+    "invalid_value_markers": [],
+    "invalid_value_policy": "unresolved",
+    "duplicate_die_policy": "unresolved",
+    "retest_policy": "unresolved",
+    "source_row_filter": "unresolved",
+    "unit_conversions": [],
+    "missing_coordinate_policy": "unresolved",
+    "outlier_policy": "none unless explicitly approved"
+  },
+  "detection": {
+    "required_content_signatures": [],
+    "optional_content_signatures": [],
+    "filename_patterns": [],
+    "extensions": [],
+    "ambiguity_behavior": "fail_closed"
+  },
+  "output_contract": {
+    "cleaned": "Lot_ID, Wafer_ID, X, Y, Seq, Bin, then parameters",
+    "yield_grouping": "Lot_ID + Wafer_ID",
+    "spec_layout": "",
+    "preserve_original_lot_id": true
+  },
+  "evidence": {"facts": [], "assumptions": [], "questions": []},
+  "risks": [],
+  "approval": {
+    "status": "draft",
+    "reviewer": "",
+    "reviewed_at": "",
+    "unresolved_critical_items": [],
+    "notes": ""
+  }
+}

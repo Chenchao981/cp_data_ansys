@@ -39,11 +39,16 @@ python -m lion.lion_chart_generator
 5. 更新 `docs/` 中受影响的当前文档。
 6. 小提交、清晰 commit message，避免同时混入发布包和原始数据。
 
+新增晶圆厂或新格式版本必须遵循 `docs/new-company-onboarding.md`，先在研发平面完成画像、人工批准、实现和验收，再接入 GUI。研发工具统一从 `python -m devtools.cp_onboarding --help` 进入。
+
 ## 4. 测试与检查
 
 ```powershell
 # 当前已有的 JT 测试
 python -m pytest jt_data_processor/tests/ -v
+
+# 新晶圆厂研发工具与标准 Pipeline
+python -m pytest devtools/cp_onboarding/tests cp_data_processor/tests -q
 
 # 核心包语法检查
 python -m compileall -q cp_data_processor gui jt_data_processor lion

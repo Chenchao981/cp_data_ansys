@@ -1,0 +1,4 @@
+interface:
+  display_name: "CP Cleaner Validator"
+  short_description: "Reconcile CP outputs before GUI integration"
+  default_prompt: "Use $cp-validate-new-company-cleaner to validate a new CP cleaner before GUI integration."

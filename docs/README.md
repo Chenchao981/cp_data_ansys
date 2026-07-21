@@ -14,6 +14,7 @@
 | [CP 前端用户快速上手](frontend-user-quickstart.md) | 指导用户清洗后快速打开图表并理解常见分析页面 |
 | [开发指南](development.md) | 搭建环境、修改代码、测试和提交 |
 | [新增公司支持](company-integration.md) | 接入新的晶圆厂或测试厂格式 |
+| [新晶圆厂接入研发架构](new-company-onboarding.md) | 理解 Agent、Skills、开发后端、生产后端和 GUI 的职责边界 |
 | [CP 数据 FTP 接入设计](ftp-integration-design.md) | 未来开发多厂家 FTP 查询、下载、防重复和手动清洗功能 |
 | [运行与发布](operations.md) | 日常运行、排障和生成发布包 |
 | [发布版用户手册](release-user-manual.md) | 安装、输入、清洗、图表与常见问题 |

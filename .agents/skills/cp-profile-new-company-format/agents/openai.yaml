@@ -1,0 +1,4 @@
+interface:
+  display_name: "CP Format Profiler"
+  short_description: "Profile unknown CP formats for human approval"
+  default_prompt: "Use $cp-profile-new-company-format to profile desensitized CP samples and prepare an approval dossier."
