@@ -1,7 +1,6 @@
 """国宇 FRD CP 数据清洗界面。"""
 
 import logging
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Sequence
@@ -27,6 +26,10 @@ from cp_data_processor.processing.archive_input import (
     normalize_input_paths,
     prepare_archive_input,
 )
+from gui.path_preferences import (
+    RecentPathPreferences,
+    get_desktop_path as get_windows_desktop_path,
+)
 from gui.widgets.input_source_selector import select_input_sources
 
 
@@ -35,7 +38,7 @@ GUOYU_EXCEL_SUFFIXES = (".xls", ".xlsx")
 
 def get_desktop_path() -> str:
     """获取当前 Windows 用户的桌面路径。"""
-    return os.path.join(os.path.expanduser("~"), "Desktop")
+    return get_windows_desktop_path()
 
 
 def get_default_input_path() -> str:
@@ -106,9 +109,10 @@ class GuoyuWidget(QWidget):
 
     cockpit_requested = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, path_preferences=None):
         super().__init__()
         self.setObjectName("companyPage")
+        self.path_preferences = path_preferences or RecentPathPreferences("guoyu")
         self.input_dir = ""
         self.input_paths = []
         self._updating_input_path = False
@@ -118,9 +122,11 @@ class GuoyuWidget(QWidget):
         self.set_default_paths()
 
     def set_default_paths(self):
-        """设置默认输入、输出路径。"""
-        self.set_input_sources([get_default_input_path()])
-        self.output_path_edit.setText(get_default_output_path())
+        """恢复国宇上次使用的路径，首次启动回退到桌面。"""
+        self.set_input_sources(
+            self.path_preferences.initial_input_sources(), remember=False
+        )
+        self.output_path_edit.setText(self.path_preferences.output_directory())
 
     def init_ui(self):
         """初始化国宇 FRD 清洗界面。"""
@@ -218,12 +224,12 @@ class GuoyuWidget(QWidget):
         selected_paths = select_input_sources(
             self,
             title="选择国宇FRD数据来源",
-            start_path=current_sources[0] if current_sources else get_default_input_path(),
+            start_path=self.path_preferences.input_start_directory(current_sources),
         )
         if selected_paths:
             self.set_input_sources(selected_paths)
 
-    def set_input_sources(self, paths: Sequence[str | Path]):
+    def set_input_sources(self, paths: Sequence[str | Path], *, remember=True):
         """设置输入来源并显示可编辑的多路径预览。"""
         self.input_paths = [str(path) for path in paths if str(path).strip()]
         self.input_dir = self.input_paths[0] if self.input_paths else ""
@@ -233,6 +239,8 @@ class GuoyuWidget(QWidget):
         finally:
             self._updating_input_path = False
         self.clean_btn.setEnabled(bool(self.input_paths))
+        if remember and self.input_paths:
+            self.path_preferences.remember_input_sources(self.input_paths)
 
     def get_input_sources(self):
         """读取输入框中的单路径或分号分隔多路径。"""
@@ -244,11 +252,15 @@ class GuoyuWidget(QWidget):
 
     def browse_output_dir(self):
         """浏览标准 CSV 输出父目录。"""
+        start_dir = self.path_preferences.output_start_directory(
+            self.output_path_edit.text().strip()
+        )
         dir_path = QFileDialog.getExistingDirectory(
-            self, "选择国宇FRD输出父目录", self.output_path_edit.text() or get_default_output_path()
+            self, "选择国宇FRD输出父目录", start_dir
         )
         if dir_path:
             self.output_path_edit.setText(dir_path)
+            self.path_preferences.remember_output_directory(dir_path)
 
     def on_input_path_changed(self):
         """输入路径变化时更新清洗按钮状态。"""
@@ -279,6 +291,8 @@ class GuoyuWidget(QWidget):
                         f"不支持的输入文件类型（仅支持ZIP）: {source.name}"
                     )
             Path(self.output_dir).mkdir(parents=True, exist_ok=True)
+            self.path_preferences.remember_input_sources(normalized_sources)
+            self.path_preferences.remember_output_directory(self.output_dir)
         except ArchiveInputError as exc:
             QMessageBox.warning(self, "输入无效", str(exc))
             return

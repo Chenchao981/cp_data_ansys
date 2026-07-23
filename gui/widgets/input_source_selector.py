@@ -23,6 +23,7 @@ from PyQt5.QtWidgets import (
 )
 
 from gui.theme import set_widget_property
+from gui.path_preferences import get_desktop_path
 
 
 class InputSourceSelectionError(ValueError):
@@ -82,8 +83,7 @@ def validate_input_source_selection(
 def resolve_start_directory(start_path: str | Path | None) -> Path:
     """Resolve an existing directory suitable for opening the selector."""
 
-    desktop = Path.home() / "Desktop"
-    fallback = desktop if desktop.is_dir() else Path.home()
+    fallback = Path(get_desktop_path())
     if not start_path:
         return fallback
 

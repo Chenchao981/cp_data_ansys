@@ -35,6 +35,10 @@ from cp_data_processor.processing.output_naming import (
     build_output_folder_name,
     create_output_run_dir,
 )
+from gui.path_preferences import (
+    RecentPathPreferences,
+    get_desktop_path as get_windows_desktop_path,
+)
 from gui.widgets.input_source_selector import select_input_sources
 
 
@@ -43,7 +47,7 @@ JT_EXCEL_SUFFIXES = (".xls", ".xlsx")
 
 def get_desktop_path():
     """获取当前 Windows 用户的桌面路径。"""
-    return os.path.join(os.path.expanduser("~"), "Desktop")
+    return get_windows_desktop_path()
 
 
 def get_default_input_path():
@@ -447,9 +451,10 @@ class JeTechWidget(QWidget):
 
     cockpit_requested = pyqtSignal()
     
-    def __init__(self):
+    def __init__(self, path_preferences=None):
         super().__init__()
         self.setObjectName("companyPage")
+        self.path_preferences = path_preferences or RecentPathPreferences("jetech")
         self.input_dir = ""
         self.input_paths = []
         self.output_dir = ""
@@ -459,10 +464,11 @@ class JeTechWidget(QWidget):
         self.set_default_paths()
     
     def set_default_paths(self):
-        """设置 JT 业务数据的默认输入、输出路径。"""
-        input_path = get_default_input_path()
-        self.set_input_sources([input_path])
-        self.output_path_edit.setText(get_default_output_path())
+        """恢复 JT 上次使用的路径，首次启动回退到桌面。"""
+        self.set_input_sources(
+            self.path_preferences.initial_input_sources(), remember=False
+        )
+        self.output_path_edit.setText(self.path_preferences.output_directory())
     
     def init_ui(self):
         """初始化JeTech界面"""
@@ -570,12 +576,12 @@ class JeTechWidget(QWidget):
         selected_paths = select_input_sources(
             self,
             title="选择JT数据来源",
-            start_path=current_sources[0] if current_sources else get_default_input_path(),
+            start_path=self.path_preferences.input_start_directory(current_sources),
         )
         if selected_paths:
             self.set_input_sources(selected_paths)
 
-    def set_input_sources(self, paths):
+    def set_input_sources(self, paths, *, remember=True):
         """设置输入来源并显示可编辑的多路径预览。"""
         self.input_paths = [str(path) for path in paths if str(path).strip()]
         self.input_dir = self.input_paths[0] if self.input_paths else ""
@@ -585,6 +591,8 @@ class JeTechWidget(QWidget):
         finally:
             self._updating_input_path = False
         self.clean_btn.setEnabled(bool(self.input_paths))
+        if remember and self.input_paths:
+            self.path_preferences.remember_input_sources(self.input_paths)
 
     def get_input_sources(self):
         """读取输入框中的单路径或分号分隔多路径。"""
@@ -596,10 +604,13 @@ class JeTechWidget(QWidget):
     
     def browse_output_dir(self):
         """浏览输出父目录，开始处理时创建批次号+流水号文件夹。"""
-        start_dir = self.output_path_edit.text().strip() or get_default_output_path()
+        start_dir = self.path_preferences.output_start_directory(
+            self.output_path_edit.text().strip()
+        )
         parent_dir = QFileDialog.getExistingDirectory(self, "选择JT输出文件夹的父目录", start_dir)
         if parent_dir:
             self.output_path_edit.setText(parent_dir)
+            self.path_preferences.remember_output_directory(parent_dir)
     
     def on_input_path_changed(self):
         """输入路径变化时的处理"""
@@ -632,6 +643,8 @@ class JeTechWidget(QWidget):
         try:
             first_lot_id = extract_jt_lot_id_from_sources(normalized_sources)
             self.output_dir = str(create_output_run_dir(base_output_dir, first_lot_id))
+            self.path_preferences.remember_input_sources(normalized_sources)
+            self.path_preferences.remember_output_directory(base_output_dir)
             self.log_message(f"📋 首个真实批次号: {first_lot_id}")
             self.log_message(f"📁 JT输出文件夹已创建: {self.output_dir}")
         except (OutputNamingError, OSError) as e:

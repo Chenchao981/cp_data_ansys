@@ -32,6 +32,10 @@ from cp_data_processor.processing.output_naming import (
     build_output_folder_name,
     create_output_run_dir,
 )
+from gui.path_preferences import (
+    RecentPathPreferences,
+    get_desktop_path as get_windows_desktop_path,
+)
 from gui.widgets.input_source_selector import select_input_sources
 
 
@@ -40,7 +44,7 @@ LION_EXCEL_SUFFIXES = (".xls", ".xlsx")
 
 def get_desktop_path():
     """获取当前 Windows 用户的桌面路径。"""
-    return os.path.join(os.path.expanduser("~"), "Desktop")
+    return get_windows_desktop_path()
 
 
 def get_default_input_path():
@@ -380,9 +384,10 @@ class LionWidget(QWidget):
 
     cockpit_requested = pyqtSignal()
     
-    def __init__(self):
+    def __init__(self, path_preferences=None):
         super().__init__()
         self.setObjectName("companyPage")
+        self.path_preferences = path_preferences or RecentPathPreferences("lion")
         self.input_dir = ""
         self.input_paths = []
         self._updating_input_path = False
@@ -392,9 +397,11 @@ class LionWidget(QWidget):
         self.set_default_paths()
     
     def set_default_paths(self):
-        """设置 Lion 业务数据的默认输入、输出路径。"""
-        self.set_input_sources([get_default_input_path()])
-        self.output_path_edit.setText(get_default_output_path())
+        """恢复 Lion 上次使用的路径，首次启动回退到桌面。"""
+        self.set_input_sources(
+            self.path_preferences.initial_input_sources(), remember=False
+        )
+        self.output_path_edit.setText(self.path_preferences.output_directory())
     
     def init_ui(self):
         """初始化Lion界面"""
@@ -504,12 +511,12 @@ class LionWidget(QWidget):
         selected_paths = select_input_sources(
             self,
             title="选择Lion数据来源",
-            start_path=current_sources[0] if current_sources else get_default_input_path(),
+            start_path=self.path_preferences.input_start_directory(current_sources),
         )
         if selected_paths:
             self.set_input_sources(selected_paths)
 
-    def set_input_sources(self, paths: Sequence[str | Path]):
+    def set_input_sources(self, paths: Sequence[str | Path], *, remember=True):
         """设置输入来源并显示可编辑的多路径预览。"""
         self.input_paths = [str(path) for path in paths if str(path).strip()]
         self.input_dir = self.input_paths[0] if self.input_paths else ""
@@ -519,6 +526,8 @@ class LionWidget(QWidget):
         finally:
             self._updating_input_path = False
         self.clean_btn.setEnabled(bool(self.input_paths))
+        if remember and self.input_paths:
+            self.path_preferences.remember_input_sources(self.input_paths)
 
     def get_input_sources(self):
         """读取输入框中的单路径或分号分隔多路径。"""
@@ -530,10 +539,13 @@ class LionWidget(QWidget):
     
     def browse_output_dir(self):
         """浏览输出父目录；处理时再创建批次号+流水号文件夹。"""
-        start_dir = self.output_path_edit.text().strip() or get_default_output_path()
+        start_dir = self.path_preferences.output_start_directory(
+            self.output_path_edit.text().strip()
+        )
         parent_dir = QFileDialog.getExistingDirectory(self, "选择Lion输出文件夹的父目录", start_dir)
         if parent_dir:
             self.output_path_edit.setText(parent_dir)
+            self.path_preferences.remember_output_directory(parent_dir)
     
     def on_input_path_changed(self):
         """输入路径变化时的处理"""
@@ -564,6 +576,8 @@ class LionWidget(QWidget):
             return
 
         base_output_dir = self.output_path_edit.text().strip() or get_default_output_path()
+        self.path_preferences.remember_input_sources(normalized_sources)
+        self.path_preferences.remember_output_directory(base_output_dir)
 
         self.log_message("🚀 开始Lion数据清洗流程...")
         if len(normalized_sources) == 1:
