@@ -1,4 +1,5 @@
 from zipfile import ZipFile
+from py7zr import SevenZipFile
 
 from guoyu_batch_processor import generate_output_folder_name as generate_guoyu_name
 from gui.widgets.huahong_widget import generate_output_folder_name as generate_hh_name
@@ -21,6 +22,20 @@ def test_huahong_multiple_zips_use_first_real_lot_in_processing_order(tmp_path):
         [later_archive, first_archive],
         serial=SERIAL,
     ) == f"LOT-A_{SERIAL}"
+
+
+def test_huahong_7z_uses_internal_real_lot_when_archive_name_is_generic(tmp_path):
+    archive_path = tmp_path / "10_upload.7z"
+    with SevenZipFile(archive_path, "w") as archive:
+        archive.writestr(
+            "Header\nLot Number HH_LOT-7Z@203\n",
+            "wrapper/wafer01.txt",
+        )
+
+    assert generate_hh_name(
+        archive_path,
+        serial=SERIAL,
+    ) == f"LOT-7Z_{SERIAL}"
 
 
 def test_jetech_multiple_zips_use_first_real_lot_in_processing_order(tmp_path):

@@ -11,7 +11,6 @@ from pathlib import Path
 from datetime import datetime
 import re
 from typing import Sequence
-from zipfile import BadZipFile, ZipFile
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QLineEdit, QPushButton, QTextEdit, QFileDialog, 
                              QMessageBox, QProgressBar)
@@ -26,10 +25,12 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 from clean_dcp_data import process_directory as clean_dcp_process_directory
 from dcp_spec_extractor import generate_spec_file as extract_spec_main
 from cp_data_processor.processing.zip_input import (
+    ARCHIVE_SUFFIXES,
     ZipInputError,
     discover_zip_archives,
     normalize_input_paths,
     prepare_dcp_input,
+    read_first_dcp_member_head,
 )
 from cp_data_processor.processing.output_naming import (
     OutputNamingError,
@@ -183,41 +184,31 @@ def _extract_lot_id_from_dcp_text(text: str):
 
 
 def _extract_first_lot_id_from_archive(archive_path: Path):
-    """按ZIP处理顺序，从目录层级或首个数据文件头识别华虹批次。"""
+    """按压缩包处理顺序，从目录层级或首个数据文件头识别华虹批次。"""
     try:
-        with ZipFile(archive_path) as zip_file:
-            members = sorted(
-                (
-                    info
-                    for info in zip_file.infolist()
-                    if not info.is_dir()
-                    and Path(info.filename).suffix.casefold() in (".txt", ".dcp")
-                ),
-                key=lambda info: info.filename.casefold(),
-            )
-            if not members:
-                return None
+        first_member = read_first_dcp_member_head(archive_path)
+        if not first_member:
+            return None
 
-            first_member = members[0]
-            member_parts = Path(first_member.filename.replace("\\", "/")).parts
-            for component in member_parts[:-1]:
-                _product_name, lot_id = extract_lot_id_from_folder_name(component)
-                if lot_id != component:
-                    return lot_id
+        member_name, raw_content = first_member
+        member_parts = Path(member_name.replace("\\", "/")).parts
+        for component in member_parts[:-1]:
+            _product_name, lot_id = extract_lot_id_from_folder_name(component)
+            if lot_id != component:
+                return lot_id
 
-            raw_content = zip_file.read(first_member)[:16384]
-            for encoding in ("utf-8-sig", "gb18030", "latin1"):
-                try:
-                    lot_id = _extract_lot_id_from_dcp_text(raw_content.decode(encoding))
-                except UnicodeDecodeError:
-                    continue
-                if lot_id:
-                    return lot_id
+        for encoding in ("utf-8-sig", "gb18030", "latin1"):
+            try:
+                lot_id = _extract_lot_id_from_dcp_text(raw_content.decode(encoding))
+            except UnicodeDecodeError:
+                continue
+            if lot_id:
+                return lot_id
 
-            if len(member_parts) >= 2:
-                return member_parts[-2]
-    except (BadZipFile, OSError) as exc:
-        logger.warning("读取华虹ZIP批次号失败 %s: %s", archive_path, exc)
+        if len(member_parts) >= 2:
+            return member_parts[-2]
+    except (ZipInputError, OSError) as exc:
+        logger.warning("读取华虹压缩包批次号失败 %s: %s", archive_path, exc)
     return None
 
 
@@ -301,7 +292,7 @@ class HHDataProcessingThread(QThread):
 
                 if result:
                     archive_note = (
-                        f"，来源为 {len(prepared_input.archives)} 个ZIP"
+                        f"，来源为 {len(prepared_input.archives)} 个压缩文件"
                         if prepared_input.archives
                         else ""
                     )
@@ -449,13 +440,15 @@ class HuaHongWidget(QWidget):
         title_label.setProperty("role", "pageTitle")
         main_layout.addWidget(title_label)
         
-        # 输入文件夹或ZIP选择
+        # 输入文件夹或压缩包选择
         input_layout = QHBoxLayout()
         input_label = QLabel("📁 数据来源:")
         input_label.setMinimumWidth(125)
         input_label.setFont(QFont("", 12))
         self.input_path_edit = QLineEdit()
-        self.input_path_edit.setPlaceholderText("选择数据文件夹，或选择一个/多个ZIP文件...")
+        self.input_path_edit.setPlaceholderText(
+            "选择数据文件夹，或选择一个/多个ZIP/7z文件..."
+        )
         self.input_path_edit.setMinimumHeight(35)
         self.input_path_edit.setFont(QFont("", 11))
         self.input_browse_btn = QPushButton("选择数据源...")
@@ -533,12 +526,13 @@ class HuaHongWidget(QWidget):
         self.input_path_edit.textChanged.connect(self.on_input_path_changed)
     
     def browse_input_sources(self):
-        """在同一窗口选择一个数据目录或一个/多个华虹ZIP文件。"""
+        """在同一窗口选择一个数据目录或一个/多个华虹ZIP/7z文件。"""
         current_sources = self.get_input_sources()
         selected_paths = select_input_sources(
             self,
             title="选择华虹数据来源",
             start_path=self.path_preferences.input_start_directory(current_sources),
+            archive_suffixes=ARCHIVE_SUFFIXES,
         )
         if selected_paths:
             self.set_input_sources(selected_paths)
@@ -586,7 +580,11 @@ class HuaHongWidget(QWidget):
         """开始华虹数据清洗"""
         input_sources = self.get_input_sources()
         if not input_sources:
-            QMessageBox.warning(self, "警告", "请先选择华虹数据文件夹或ZIP文件！")
+            QMessageBox.warning(
+                self,
+                "警告",
+                "请先选择华虹数据文件夹或ZIP/7z文件！",
+            )
             return
 
         try:
@@ -594,8 +592,10 @@ class HuaHongWidget(QWidget):
             for source in normalized_sources:
                 if not source.exists():
                     raise ZipInputError(f"输入路径不存在: {source}")
-                if source.is_file() and source.suffix.casefold() != ".zip":
-                    raise ZipInputError(f"不支持的输入文件类型（仅支持ZIP）: {source.name}")
+                if source.is_file() and source.suffix.casefold() not in ARCHIVE_SUFFIXES:
+                    raise ZipInputError(
+                        f"不支持的输入文件类型（仅支持ZIP/7z）: {source.name}"
+                    )
         except ZipInputError as e:
             QMessageBox.warning(self, "输入无效", str(e))
             return
@@ -618,7 +618,9 @@ class HuaHongWidget(QWidget):
         if len(normalized_sources) == 1:
             self.log_message(f"📁 华虹输入来源: {normalized_sources[0]}")
         else:
-            self.log_message(f"📦 已选择 {len(normalized_sources)} 个华虹ZIP文件")
+            self.log_message(
+                f"📦 已选择 {len(normalized_sources)} 个华虹压缩文件"
+            )
             for source in normalized_sources:
                 self.log_message(f"  - {source}")
         self.log_message(f"📁 华虹输出目录: {self.output_dir}")

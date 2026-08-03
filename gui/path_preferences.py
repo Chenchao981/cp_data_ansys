@@ -11,6 +11,7 @@ from gui.theme import THEME_SETTINGS_APPLICATION, THEME_SETTINGS_ORGANIZATION
 
 
 PATH_SETTINGS_PREFIX = "paths"
+RESTORABLE_ARCHIVE_SUFFIXES = frozenset((".zip", ".7z"))
 
 
 def get_desktop_path() -> str:
@@ -77,12 +78,15 @@ class RecentPathPreferences:
         paths = [Path(source).expanduser() for source in sources]
         if paths and all(path.exists() for path in paths):
             directories = [path for path in paths if path.is_dir()]
-            zip_files = [
+            archive_files = [
                 path
                 for path in paths
-                if path.is_file() and path.suffix.casefold() == ".zip"
+                if path.is_file()
+                and path.suffix.casefold() in RESTORABLE_ARCHIVE_SUFFIXES
             ]
-            if (len(directories) == 1 and len(paths) == 1) or len(zip_files) == len(paths):
+            if (len(directories) == 1 and len(paths) == 1) or len(
+                archive_files
+            ) == len(paths):
                 return tuple(str(path) for path in paths)
         return (str(self.default_directory),)
 

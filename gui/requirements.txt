@@ -13,4 +13,7 @@ plotly>=5.0.0
 openpyxl>=3.0.0
 
 # 日志和路径处理
-pathlib2>=2.3.0  # Python 3.4+兼容性 
+pathlib2>=2.3.0  # Python 3.4+兼容性
+
+# 华虹 7z 压缩包支持
+py7zr>=1.1.3,<2.0.0

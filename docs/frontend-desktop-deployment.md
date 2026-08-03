@@ -63,13 +63,14 @@ D:\CPData\
   - streamlit
   - PyQt5
   - openpyxl
+  - py7zr
 
 安装命令：
 
 ```powershell
 cd F:\cp_data_ansys
 python -m pip install -r requirements.txt
-python -m pip install streamlit PyQt5 openpyxl
+python -m pip install streamlit PyQt5 openpyxl py7zr
 ```
 
 如果使用 Anaconda，可先创建专用环境：
@@ -79,7 +80,7 @@ conda create -n cpdata python=3.12 -y
 conda activate cpdata
 cd F:\cp_data_ansys
 python -m pip install -r requirements.txt
-python -m pip install streamlit PyQt5 openpyxl
+python -m pip install streamlit PyQt5 openpyxl py7zr
 ```
 
 ## 4. 启动 GUI

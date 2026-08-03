@@ -14,6 +14,8 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 from typing import Dict, List, Optional, Tuple
 import logging
+import re
+import sys
 from pathlib import Path
 
 # 导入JavaScript嵌入工具 - 使用兼容的导入方式
@@ -139,9 +141,15 @@ class YieldChart:
         # 保持Lot_Short用于向后兼容，但现在使用True_Lot_ID
         self.wafer_data['Lot_Short'] = self.wafer_data['True_Lot_ID']
         
-        # 计算失效总数
-        failure_columns = ['Bin3', 'Bin4', 'Bin6', 'Bin7', 'Bin8', 'Bin9']
-        self.wafer_data['Total_Failures'] = self.wafer_data[failure_columns].sum(axis=1)
+        # 计算失效总数。标准yield输出只保留实际出现的Bin列，不能假定固定列集合。
+        failure_columns = self._get_failure_bin_columns(self.wafer_data.columns)
+        if failure_columns:
+            failure_values = self.wafer_data[failure_columns].apply(
+                pd.to_numeric, errors='coerce'
+            ).fillna(0)
+            self.wafer_data['Total_Failures'] = failure_values.sum(axis=1)
+        else:
+            self.wafer_data['Total_Failures'] = 0
         
         # 调试信息
         unique_true_lots = self.wafer_data['True_Lot_ID'].unique()
@@ -152,6 +160,18 @@ class YieldChart:
         for lot_id in unique_true_lots:
             lot_wafers = self.wafer_data[self.wafer_data['True_Lot_ID'] == lot_id]['Wafer_ID'].unique()
             logger.info(f"批次 {lot_id}: {len(lot_wafers)} 个Wafer ({min(lot_wafers)}-{max(lot_wafers)})")
+
+    @staticmethod
+    def _get_failure_bin_columns(columns) -> List[str]:
+        """返回标准Bin列，排除通过Bin1，并保留源列顺序。"""
+        failure_columns = []
+        for column in columns:
+            match = re.fullmatch(r"bin\s*([+-]?\d+(?:\.\d+)?)", str(column).strip(), re.IGNORECASE)
+            if match is None:
+                continue
+            if float(match.group(1)) != 1:
+                failure_columns.append(column)
+        return failure_columns
     
     def get_available_chart_types(self) -> List[str]:
         """
@@ -501,17 +521,10 @@ class YieldChart:
         logger.info("🔍 开始创建失效类型分析图...")
         logger.info(f"📊 wafer_data列名: {list(self.wafer_data.columns)}")
         
-        # 动态检测所有Bin列（除了Bin1 = Pass）
-        bin_columns = [col for col in self.wafer_data.columns if col.startswith('Bin') and col != 'Bin1']
+        # 动态检测所有标准Bin列（除了Bin1 = Pass）
+        bin_columns = self._get_failure_bin_columns(self.wafer_data.columns)
         logger.info(f"🎯 检测到的失效Bin列: {bin_columns}")
-        
-        if not bin_columns:
-            logger.warning("⚠️ 未找到失效Bin列，尝试其他格式...")
-            # 尝试检测其他可能的列名格式
-            bin_columns = [col for col in self.wafer_data.columns 
-                          if col.lower().startswith('bin') and col.lower() != 'bin1']
-            logger.info(f"🔄 其他格式的Bin列: {bin_columns}")
-        
+
         if not bin_columns:
             logger.warning("⚠️ 仍未找到失效Bin列，显示无失效数据提示")
             # 如果没有失效数据，显示提示
@@ -730,4 +743,4 @@ class YieldChart:
         
         # 性能优化：只输出摘要信息
         logger.info(f"良率图表保存完成: {success_count}/{len(self.all_charts_cache)} 个成功")
-        return saved_paths 
+        return saved_paths

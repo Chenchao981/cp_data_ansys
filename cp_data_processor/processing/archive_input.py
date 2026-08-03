@@ -1,4 +1,4 @@
-"""Safely prepare vendor data from folders or one or more ZIP archives."""
+"""Safely prepare vendor data from folders or supported archive files."""
 
 from __future__ import annotations
 
@@ -14,10 +14,11 @@ from zipfile import BadZipFile, ZipFile
 
 ProgressCallback = Callable[[str], None]
 CommonRootPredicate = Callable[[str], bool]
+ZIP_ARCHIVE_SUFFIXES = (".zip",)
 
 
 class ArchiveInputError(ValueError):
-    """Raised when a selected ZIP input cannot be prepared safely."""
+    """Raised when a selected archive input cannot be prepared safely."""
 
 
 @dataclass(frozen=True)
@@ -54,34 +55,57 @@ def normalize_input_paths(
             normalized.append(path)
 
     if not normalized:
-        raise ArchiveInputError("未选择数据文件夹或ZIP文件")
+        raise ArchiveInputError("未选择数据文件夹或压缩文件")
 
     return tuple(normalized)
 
 
-def discover_zip_archives(
-    input_paths: str | Path | Sequence[str | Path],
-) -> tuple[Path, ...]:
-    """Return selected ZIP files, including ZIPs directly stored in folders."""
+def _archive_format_label(suffix: str) -> str:
+    normalized = suffix.casefold()
+    if normalized == ".zip":
+        return "ZIP"
+    if normalized == ".7z":
+        return "7z"
+    return normalized.lstrip(".").upper()
 
+
+def _archive_formats_label(suffixes: Sequence[str]) -> str:
+    normalized = normalize_suffixes(suffixes)
+    preferred_order = [".zip", ".7z"]
+    ordered = [suffix for suffix in preferred_order if suffix in normalized]
+    ordered.extend(sorted(normalized.difference(ordered)))
+    return "/".join(_archive_format_label(suffix) for suffix in ordered)
+
+
+def discover_archives(
+    input_paths: str | Path | Sequence[str | Path],
+    archive_suffixes: Sequence[str] = ZIP_ARCHIVE_SUFFIXES,
+) -> tuple[Path, ...]:
+    """Return selected archives, including archives directly stored in folders."""
+
+    supported_suffixes = normalize_suffixes(archive_suffixes)
+    formats_label = _archive_formats_label(archive_suffixes)
     archives: list[Path] = []
     for path in normalize_input_paths(input_paths):
         if not path.exists():
             raise ArchiveInputError(f"输入路径不存在: {path}")
 
         if path.is_file():
-            if path.suffix.casefold() != ".zip":
-                raise ArchiveInputError(f"不支持的输入文件类型（仅支持ZIP）: {path.name}")
+            if path.suffix.casefold() not in supported_suffixes:
+                raise ArchiveInputError(
+                    f"不支持的输入文件类型（仅支持{formats_label}）: {path.name}"
+                )
             archives.append(path)
             continue
 
         if not path.is_dir():
-            raise ArchiveInputError(f"输入路径不是文件夹或ZIP文件: {path}")
+            raise ArchiveInputError(f"输入路径不是文件夹或压缩文件: {path}")
 
         archives.extend(
             candidate
             for candidate in path.iterdir()
-            if candidate.is_file() and candidate.suffix.casefold() == ".zip"
+            if candidate.is_file()
+            and candidate.suffix.casefold() in supported_suffixes
         )
 
     unique_archives: list[Path] = []
@@ -92,6 +116,14 @@ def discover_zip_archives(
             seen.add(key)
             unique_archives.append(archive)
     return tuple(unique_archives)
+
+
+def discover_zip_archives(
+    input_paths: str | Path | Sequence[str | Path],
+) -> tuple[Path, ...]:
+    """Backward-compatible discovery for ZIP-only callers."""
+
+    return discover_archives(input_paths, ZIP_ARCHIVE_SUFFIXES)
 
 
 def normalize_suffixes(allowed_suffixes: Sequence[str]) -> frozenset[str]:
@@ -127,7 +159,7 @@ def discover_source_files(
     )
 
 
-def _member_parts(member_name: str) -> tuple[str, ...]:
+def _member_parts(member_name: str, archive_label: str = "压缩包") -> tuple[str, ...]:
     normalized_name = member_name.replace("\\", "/")
     member_path = PurePosixPath(normalized_name)
     parts = tuple(part for part in member_path.parts if part not in ("", "."))
@@ -138,7 +170,7 @@ def _member_parts(member_name: str) -> tuple[str, ...]:
         or re.match(r"^[A-Za-z]:", normalized_name)
         or ".." in parts
     ):
-        raise ArchiveInputError(f"ZIP包含不安全路径: {member_name}")
+        raise ArchiveInputError(f"{archive_label}包含不安全路径: {member_name}")
     return parts
 
 
@@ -177,7 +209,7 @@ def _select_data_members(zip_file: ZipFile, suffixes: frozenset[str], source_lab
     for info in zip_file.infolist():
         if info.is_dir():
             continue
-        parts = _member_parts(info.filename)
+        parts = _member_parts(info.filename, "ZIP")
         if Path(parts[-1]).suffix.casefold() not in suffixes:
             continue
         if parts[-1].startswith("~$"):
@@ -188,6 +220,70 @@ def _select_data_members(zip_file: ZipFile, suffixes: frozenset[str], source_lab
             raise ArchiveInputError(f"ZIP已加密，无法读取: {zip_file.filename}")
         selected.append((info, parts))
     return selected
+
+
+def _load_py7zr():
+    try:
+        import py7zr
+    except ImportError as exc:
+        raise ArchiveInputError(
+            "读取7z文件需要py7zr，请先安装项目运行依赖"
+        ) from exc
+    return py7zr
+
+
+def _select_7z_data_members(
+    seven_zip_file,
+    suffixes: frozenset[str],
+    source_label: str,
+):
+    if seven_zip_file.needs_password():
+        raise ArchiveInputError(f"7z已加密，无法读取: {seven_zip_file.filename}")
+
+    selected = []
+    for info in seven_zip_file.list():
+        if info.is_directory:
+            continue
+        parts = _member_parts(info.filename, "7z")
+        if Path(parts[-1]).suffix.casefold() not in suffixes:
+            continue
+        if parts[-1].startswith("~$"):
+            continue
+        if getattr(info, "is_symlink", False):
+            raise ArchiveInputError(
+                f"7z中的{source_label}文件不能是符号链接: {info.filename}"
+            )
+        selected.append((info, parts))
+    return selected
+
+
+def _validated_extracted_member_path(
+    extraction_root: Path,
+    parts: tuple[str, ...],
+) -> Path:
+    source = extraction_root.joinpath(*parts)
+    try:
+        source.resolve().relative_to(extraction_root.resolve())
+    except ValueError as exc:
+        raise ArchiveInputError(
+            f"7z成员解压后越出临时目录: {'/'.join(parts)}"
+        ) from exc
+    if source.is_symlink() or not source.is_file():
+        raise ArchiveInputError(f"7z成员解压结果无效: {'/'.join(parts)}")
+    return source
+
+
+def _extract_selected_7z_members(
+    seven_zip_file,
+    parsed_members,
+    extraction_root: Path,
+) -> None:
+    seven_zip_file.extract(
+        path=extraction_root,
+        targets=[info.filename for info, _parts in parsed_members],
+    )
+    for _info, parts in parsed_members:
+        _validated_extracted_member_path(extraction_root, parts)
 
 
 def _group_flat_members(
@@ -287,7 +383,87 @@ def _extract_preserved_archive(
     return [archive_directory], extracted_files
 
 
-def _extract_archive(
+def _extract_flat_7z_archive(
+    seven_zip_file,
+    archive: Path,
+    staging_root: Path,
+    parsed_members,
+    prefer_common_root: CommonRootPredicate | None,
+) -> tuple[list[Path], list[Path]]:
+    batch_directories: list[Path] = []
+    extracted_files: list[Path] = []
+
+    with TemporaryDirectory(prefix="cp_7z_extract_", dir=staging_root) as temporary:
+        extraction_root = Path(temporary)
+        _extract_selected_7z_members(seven_zip_file, parsed_members, extraction_root)
+
+        for group_name, grouped_members in _group_flat_members(
+            archive, parsed_members, prefer_common_root
+        ).items():
+            batch_directory = _unique_directory(
+                staging_root,
+                _safe_component(group_name, "7z_Batch"),
+            )
+            batch_directories.append(batch_directory)
+
+            for _info, parts in grouped_members:
+                source = _validated_extracted_member_path(extraction_root, parts)
+                target = _unique_file(batch_directory, parts[-1])
+                shutil.copyfile(source, target)
+                extracted_files.append(target)
+
+    return batch_directories, extracted_files
+
+
+def _extract_preserved_7z_archive(
+    seven_zip_file,
+    archive: Path,
+    staging_root: Path,
+    parsed_members,
+) -> tuple[list[Path], list[Path]]:
+    archive_directory = _unique_directory(
+        staging_root,
+        _safe_component(archive.stem, "7z_Batch"),
+    )
+    all_nested = all(len(parts) >= 2 for _, parts in parsed_members)
+    top_level_names = {parts[0] for _, parts in parsed_members if len(parts) >= 2}
+    common_root = next(iter(top_level_names)) if len(top_level_names) == 1 else None
+    second_level_names = {
+        parts[1]
+        for _, parts in parsed_members
+        if len(parts) >= 3
+    }
+    common_root_is_product_wrapper = bool(second_level_names) and not all(
+        name.upper().startswith("EDS") for name in second_level_names
+    )
+    strip_common_root = bool(
+        all_nested
+        and common_root
+        and (
+            common_root.casefold() == archive.stem.casefold()
+            or common_root_is_product_wrapper
+        )
+    )
+    extracted_files: list[Path] = []
+
+    with TemporaryDirectory(prefix="cp_7z_extract_", dir=staging_root) as temporary:
+        extraction_root = Path(temporary)
+        _extract_selected_7z_members(seven_zip_file, parsed_members, extraction_root)
+
+        for _info, parts in parsed_members:
+            source = _validated_extracted_member_path(extraction_root, parts)
+            relative_parts = parts[1:] if strip_common_root else parts
+            safe_parts = [_safe_component(part, "data") for part in relative_parts]
+            target_directory = archive_directory.joinpath(*safe_parts[:-1])
+            target_directory.mkdir(parents=True, exist_ok=True)
+            target = _unique_file(target_directory, safe_parts[-1])
+            shutil.copyfile(source, target)
+            extracted_files.append(target)
+
+    return [archive_directory], extracted_files
+
+
+def _extract_zip_archive(
     archive: Path,
     staging_root: Path,
     suffixes: frozenset[str],
@@ -320,30 +496,176 @@ def _extract_archive(
         raise ArchiveInputError(f"读取ZIP失败 {archive.name}: {exc}") from exc
 
 
+def _extract_7z_archive(
+    archive: Path,
+    staging_root: Path,
+    suffixes: frozenset[str],
+    source_label: str,
+    preserve_member_paths: bool,
+    prefer_common_root: CommonRootPredicate | None,
+) -> tuple[list[Path], list[Path]]:
+    py7zr = _load_py7zr()
+    try:
+        with py7zr.SevenZipFile(archive, mode="r") as seven_zip_file:
+            parsed_members = _select_7z_data_members(
+                seven_zip_file, suffixes, source_label
+            )
+            if not parsed_members:
+                raise ArchiveInputError(
+                    f"7z中未找到{source_label}文件: {archive.name}"
+                )
+
+            if preserve_member_paths:
+                return _extract_preserved_7z_archive(
+                    seven_zip_file, archive, staging_root, parsed_members
+                )
+            return _extract_flat_7z_archive(
+                seven_zip_file,
+                archive,
+                staging_root,
+                parsed_members,
+                prefer_common_root,
+            )
+    except ArchiveInputError:
+        raise
+    except py7zr.exceptions.PasswordRequired as exc:
+        raise ArchiveInputError(f"7z已加密，无法读取: {archive.name}") from exc
+    except py7zr.exceptions.Bad7zFile as exc:
+        raise ArchiveInputError(f"7z文件损坏或格式无效: {archive.name}") from exc
+    except (OSError, EOFError, ValueError) as exc:
+        raise ArchiveInputError(f"读取7z失败 {archive.name}: {exc}") from exc
+    except Exception as exc:
+        raise ArchiveInputError(f"解压7z失败 {archive.name}: {exc}") from exc
+
+
+def _extract_archive(
+    archive: Path,
+    staging_root: Path,
+    suffixes: frozenset[str],
+    source_label: str,
+    preserve_member_paths: bool,
+    prefer_common_root: CommonRootPredicate | None,
+) -> tuple[list[Path], list[Path]]:
+    suffix = archive.suffix.casefold()
+    if suffix == ".zip":
+        return _extract_zip_archive(
+            archive,
+            staging_root,
+            suffixes,
+            source_label,
+            preserve_member_paths,
+            prefer_common_root,
+        )
+    if suffix == ".7z":
+        return _extract_7z_archive(
+            archive,
+            staging_root,
+            suffixes,
+            source_label,
+            preserve_member_paths,
+            prefer_common_root,
+        )
+    raise ArchiveInputError(f"不支持的压缩文件类型: {archive.name}")
+
+
+def read_first_archive_data_member_head(
+    archive: str | Path,
+    *,
+    allowed_suffixes: Sequence[str],
+    source_label: str,
+    max_bytes: int = 16384,
+) -> tuple[str, bytes] | None:
+    """Return the first matching archive member name and a bounded content head."""
+
+    archive_path = Path(archive)
+    suffixes = normalize_suffixes(allowed_suffixes)
+    archive_suffix = archive_path.suffix.casefold()
+
+    if archive_suffix == ".zip":
+        try:
+            with ZipFile(archive_path) as zip_file:
+                members = sorted(
+                    _select_data_members(zip_file, suffixes, source_label),
+                    key=lambda item: item[0].filename.casefold(),
+                )
+                if not members:
+                    return None
+                info, _parts = members[0]
+                return info.filename, zip_file.read(info)[:max_bytes]
+        except BadZipFile as exc:
+            raise ArchiveInputError(
+                f"ZIP文件损坏或格式无效: {archive_path.name}"
+            ) from exc
+        except OSError as exc:
+            raise ArchiveInputError(
+                f"读取ZIP失败 {archive_path.name}: {exc}"
+            ) from exc
+
+    if archive_suffix == ".7z":
+        py7zr = _load_py7zr()
+        try:
+            with py7zr.SevenZipFile(archive_path, mode="r") as seven_zip_file:
+                members = sorted(
+                    _select_7z_data_members(seven_zip_file, suffixes, source_label),
+                    key=lambda item: item[0].filename.casefold(),
+                )
+                if not members:
+                    return None
+                info, parts = members[0]
+                with TemporaryDirectory(prefix="cp_7z_head_") as temporary:
+                    extraction_root = Path(temporary)
+                    _extract_selected_7z_members(
+                        seven_zip_file, [(info, parts)], extraction_root
+                    )
+                    source = _validated_extracted_member_path(extraction_root, parts)
+                    with source.open("rb") as source_file:
+                        return info.filename, source_file.read(max_bytes)
+        except ArchiveInputError:
+            raise
+        except py7zr.exceptions.PasswordRequired as exc:
+            raise ArchiveInputError(
+                f"7z已加密，无法读取: {archive_path.name}"
+            ) from exc
+        except py7zr.exceptions.Bad7zFile as exc:
+            raise ArchiveInputError(
+                f"7z文件损坏或格式无效: {archive_path.name}"
+            ) from exc
+        except Exception as exc:
+            raise ArchiveInputError(
+                f"读取7z失败 {archive_path.name}: {exc}"
+            ) from exc
+
+    raise ArchiveInputError(f"不支持的压缩文件类型: {archive_path.name}")
+
+
 @contextmanager
 def prepare_archive_input(
     input_paths: str | Path | Sequence[str | Path],
     *,
     allowed_suffixes: Sequence[str],
     source_label: str,
+    archive_suffixes: Sequence[str] = ZIP_ARCHIVE_SUFFIXES,
     progress: ProgressCallback | None = None,
     preserve_member_paths: bool = False,
     prefer_common_root: CommonRootPredicate | None = None,
     temporary_prefix: str = "cp_vendor_zip_",
 ) -> Iterator[PreparedArchiveInput]:
-    """Prepare direct-folder or ZIP input without changing vendor processors."""
+    """Prepare direct-folder or archive input without changing vendor processors."""
 
     suffixes = normalize_suffixes(allowed_suffixes)
     paths = normalize_input_paths(input_paths)
-    archives = discover_zip_archives(paths)
+    formats_label = _archive_formats_label(archive_suffixes)
+    archives = discover_archives(paths, archive_suffixes)
 
     if not archives:
         if len(paths) != 1 or not paths[0].is_dir():
-            raise ArchiveInputError("请选择一个数据文件夹，或选择一个/多个ZIP文件")
+            raise ArchiveInputError(
+                f"请选择一个数据文件夹，或选择一个/多个{formats_label}文件"
+            )
         data_files = discover_source_files(paths[0], suffixes)
         if not data_files:
             raise ArchiveInputError(
-                f"所选文件夹中未找到{source_label}文件或ZIP文件"
+                f"所选文件夹中未找到{source_label}文件或{formats_label}文件"
             )
         if progress:
             progress(f"使用原始数据文件夹，发现 {len(data_files)} 个{source_label}候选文件")
@@ -360,12 +682,15 @@ def prepare_archive_input(
     )
     if loose_data_files:
         raise ArchiveInputError(
-            f"所选文件夹同时包含已解压的{source_label}文件和ZIP文件。"
-            "为避免重复处理，请选择纯数据文件夹或只包含ZIP的文件夹。"
+            f"所选文件夹同时包含已解压的{source_label}文件和{formats_label}文件。"
+            f"为避免重复处理，请选择纯数据文件夹或只包含{formats_label}的文件夹。"
         )
 
     if progress:
-        progress(f"发现 {len(archives)} 个ZIP文件，正在准备临时解压目录...")
+        progress(
+            f"发现 {len(archives)} 个{formats_label}压缩文件，"
+            "正在准备临时解压目录..."
+        )
 
     with TemporaryDirectory(prefix=temporary_prefix) as temporary_directory:
         staging_root = Path(temporary_directory)
@@ -374,7 +699,10 @@ def prepare_archive_input(
 
         for index, archive in enumerate(archives, start=1):
             if progress:
-                progress(f"正在解压ZIP ({index}/{len(archives)}): {archive.name}")
+                archive_label = _archive_format_label(archive.suffix)
+                progress(
+                    f"正在解压{archive_label} ({index}/{len(archives)}): {archive.name}"
+                )
             archive_batches, archive_files = _extract_archive(
                 archive,
                 staging_root,
@@ -393,7 +721,7 @@ def prepare_archive_input(
         )
         if progress:
             progress(
-                f"ZIP准备完成：{len(batch_directories)} 个输入批次，"
+                f"压缩文件准备完成：{len(batch_directories)} 个输入批次，"
                 f"{len(extracted_files)} 个{source_label}候选文件"
             )
 

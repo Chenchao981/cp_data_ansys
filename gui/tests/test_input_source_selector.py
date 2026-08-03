@@ -23,6 +23,26 @@ def test_accepts_and_deduplicates_multiple_zip_files(tmp_path):
     )
 
 
+def test_accepts_7z_when_enabled_for_huahong(tmp_path):
+    zip_archive = tmp_path / "lot-a.zip"
+    seven_zip_archive = tmp_path / "lot-b.7Z"
+    zip_archive.touch()
+    seven_zip_archive.touch()
+
+    assert validate_input_source_selection(
+        [zip_archive, seven_zip_archive],
+        allowed_archive_suffixes=(".zip", ".7z"),
+    ) == (zip_archive, seven_zip_archive)
+
+
+def test_rejects_7z_for_zip_only_vendor(tmp_path):
+    archive = tmp_path / "lot.7z"
+    archive.touch()
+
+    with pytest.raises(InputSourceSelectionError, match="仅支持ZIP"):
+        validate_input_source_selection([archive])
+
+
 def test_rejects_folder_and_zip_mixed_selection(tmp_path):
     archive = tmp_path / "lot.zip"
     archive.touch()

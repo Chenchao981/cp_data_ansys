@@ -61,6 +61,17 @@ def test_multiple_zip_selection_restores_files_and_opens_their_parent(tmp_path):
     assert preferences.input_start_directory() == str(tmp_path)
 
 
+def test_huahong_7z_selection_is_restored(tmp_path):
+    archive = tmp_path / "lot.7z"
+    archive.touch()
+    preferences = make_preferences(tmp_path)
+
+    preferences.remember_input_sources([archive])
+
+    assert preferences.initial_input_sources() == (str(archive),)
+    assert preferences.input_start_directory() == str(tmp_path)
+
+
 def test_missing_saved_paths_fall_back_to_default_directory(tmp_path):
     preferences = make_preferences(tmp_path)
     preferences.remember_input_sources([tmp_path / "missing.zip"])

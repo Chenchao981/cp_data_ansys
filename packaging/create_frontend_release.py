@@ -95,6 +95,7 @@ seaborn>=0.10.0
 plotly>=5.0.0
 streamlit>=1.28.0
 PyQt5>=5.15.0
+py7zr>=1.1.3,<2.0.0
 """
 
 START_BAT = r"""@echo off
@@ -142,7 +143,7 @@ if exist "D:\ProgramData\anaconda3\python.exe" (
 if not defined PYTHON_EXE (
     for /f "delims=" %%P in ('"%SystemRoot%\System32\where.exe" python 2^>nul') do (
         if not defined PYTHON_EXE (
-            "%%P" -c "import PyQt5, streamlit" >nul 2>&1
+            "%%P" -c "import PyQt5, streamlit, py7zr" >nul 2>&1
             if not errorlevel 1 set "PYTHON_EXE=%%P"
         )
     )
@@ -160,7 +161,7 @@ if not defined PYTHON_EXE (
 )
 
 echo Using Python: %PYTHON_EXE%
-"%PYTHON_EXE%" -c "import PyQt5, pandas, numpy, openpyxl, xlrd, plotly, streamlit" >nul 2>&1
+"%PYTHON_EXE%" -c "import PyQt5, pandas, numpy, openpyxl, xlrd, plotly, streamlit, py7zr" >nul 2>&1
 if errorlevel 1 (
     echo ERROR: Required packages are missing from:
     echo   "%PYTHON_EXE%"
@@ -236,7 +237,7 @@ if [[ -z "$PYTHON_EXE" ]]; then
     exit 1
 fi
 
-if ! "$PYTHON_EXE" -c "import PyQt5, pandas, numpy, openpyxl, xlrd, plotly, streamlit" >/dev/null 2>&1; then
+if ! "$PYTHON_EXE" -c "import PyQt5, pandas, numpy, openpyxl, xlrd, plotly, streamlit, py7zr" >/dev/null 2>&1; then
     echo "ERROR: Required packages are missing."
     echo "Run: $PYTHON_EXE -m pip install -r requirements_anaconda.txt"
     exit 1
@@ -305,7 +306,7 @@ if errorlevel 1 (
 
 echo.
 echo Verifying runtime dependencies...
-"%PYTHON_EXE%" -c "import PyQt5, pandas, numpy, openpyxl, xlrd, plotly, matplotlib, seaborn, streamlit; print('All runtime dependencies are available.')"
+"%PYTHON_EXE%" -c "import PyQt5, pandas, numpy, openpyxl, xlrd, plotly, matplotlib, seaborn, streamlit, py7zr; print('All runtime dependencies are available.')"
 if errorlevel 1 (
     echo ERROR: Dependency verification failed.
     goto :failed
@@ -443,9 +444,10 @@ def copy_release_assets() -> None:
 ## 数据输入
 
 - 华虹、Jetech、Lion、国宇FRD统一使用一个“选择数据源”入口。
-- 同一窗口支持选择一个数据文件夹，或按Ctrl/Shift选择一个或多个ZIP；程序自动判断来源类型。
-- 为避免重复处理，不允许文件夹与ZIP混选，也不允许一次选择多个文件夹。
-- ZIP仅解压到临时目录，处理结束后自动清理。
+- 同一窗口支持选择一个数据文件夹，或按Ctrl/Shift选择一个或多个压缩文件；程序自动判断来源类型。
+- 华虹支持ZIP和7z；Jetech、Lion、国宇FRD支持ZIP。
+- 为避免重复处理，不允许文件夹与压缩文件混选，也不允许一次选择多个文件夹。
+- 压缩文件仅解压到临时目录，处理结束后自动清理。
 
 ## 显示主题
 

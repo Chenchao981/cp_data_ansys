@@ -1,4 +1,4 @@
-"""Shared selector for one data folder or one/more ZIP archives."""
+"""Shared selector for one data folder or one/more supported archives."""
 
 from __future__ import annotations
 
@@ -26,14 +26,36 @@ from gui.theme import set_widget_property
 from gui.path_preferences import get_desktop_path
 
 
+DEFAULT_ARCHIVE_SUFFIXES = (".zip",)
+
+
 class InputSourceSelectionError(ValueError):
     """Raised when a GUI selection does not match the supported source modes."""
 
 
 def validate_input_source_selection(
     paths: Sequence[str | Path],
+    *,
+    allowed_archive_suffixes: Sequence[str] = DEFAULT_ARCHIVE_SUFFIXES,
 ) -> tuple[Path, ...]:
-    """Accept one directory or one/more ZIP files, but never a mixed selection."""
+    """Accept one directory or one/more archives, but never a mixed selection."""
+
+    archive_suffixes = frozenset(
+        suffix.casefold() if suffix.startswith(".") else f".{suffix.casefold()}"
+        for suffix in allowed_archive_suffixes
+    )
+    if not archive_suffixes:
+        raise ValueError("allowed_archive_suffixes 不能为空")
+    format_names = [
+        "ZIP" if suffix == ".zip" else "7z" if suffix == ".7z" else suffix[1:].upper()
+        for suffix in (".zip", ".7z")
+        if suffix in archive_suffixes
+    ]
+    format_names.extend(
+        suffix[1:].upper()
+        for suffix in sorted(archive_suffixes.difference({".zip", ".7z"}))
+    )
+    formats_label = "/".join(format_names)
 
     normalized: list[Path] = []
     seen: set[str] = set()
@@ -48,33 +70,38 @@ def validate_input_source_selection(
             normalized.append(path)
 
     if not normalized:
-        raise InputSourceSelectionError("请选择一个数据文件夹，或选择一个/多个ZIP文件")
+        raise InputSourceSelectionError(
+            f"请选择一个数据文件夹，或选择一个/多个{formats_label}文件"
+        )
 
     missing = [path for path in normalized if not path.exists()]
     if missing:
         raise InputSourceSelectionError(f"输入路径不存在: {missing[0]}")
 
     directories = [path for path in normalized if path.is_dir()]
-    zip_files = [
+    archive_files = [
         path
         for path in normalized
-        if path.is_file() and path.suffix.casefold() == ".zip"
+        if path.is_file() and path.suffix.casefold() in archive_suffixes
     ]
     unsupported = [
-        path for path in normalized if path not in directories and path not in zip_files
+        path
+        for path in normalized
+        if path not in directories and path not in archive_files
     ]
     if unsupported:
         raise InputSourceSelectionError(
-            f"不支持的输入文件类型（仅支持ZIP）: {unsupported[0].name}"
+            f"不支持的输入文件类型（仅支持{formats_label}）: {unsupported[0].name}"
         )
 
-    if directories and zip_files:
+    if directories and archive_files:
         raise InputSourceSelectionError(
-            "不能同时选择文件夹和ZIP文件，请选择一个文件夹，或选择一个/多个ZIP文件"
+            f"不能同时选择文件夹和{formats_label}文件，"
+            f"请选择一个文件夹，或选择一个/多个{formats_label}文件"
         )
     if len(directories) > 1:
         raise InputSourceSelectionError(
-            "一次只能选择一个数据文件夹；如需批量处理，请选择多个ZIP文件"
+            f"一次只能选择一个数据文件夹；如需批量处理，请选择多个{formats_label}文件"
         )
 
     return tuple(normalized)
@@ -94,7 +121,7 @@ def resolve_start_directory(start_path: str | Path | None) -> Path:
 
 
 class InputSourceDialog(QDialog):
-    """One-window browser that selects a folder or multiple ZIP files."""
+    """One-window browser that selects a folder or multiple archives."""
 
     def __init__(
         self,
@@ -102,11 +129,20 @@ class InputSourceDialog(QDialog):
         *,
         title: str = "选择数据来源",
         start_path: str | Path | None = None,
+        archive_suffixes: Sequence[str] = DEFAULT_ARCHIVE_SUFFIXES,
     ) -> None:
         super().__init__(parent)
         self.setObjectName("inputSourceDialog")
         self.selected_sources: tuple[Path, ...] = ()
         self.current_directory = resolve_start_directory(start_path)
+        self.archive_suffixes = tuple(
+            suffix.casefold() if suffix.startswith(".") else f".{suffix.casefold()}"
+            for suffix in archive_suffixes
+        )
+        self.archive_formats_label = "/".join(
+            "ZIP" if suffix == ".zip" else "7z" if suffix == ".7z" else suffix[1:].upper()
+            for suffix in self.archive_suffixes
+        )
 
         self.setWindowTitle(title)
         self.resize(860, 560)
@@ -120,7 +156,7 @@ class InputSourceDialog(QDialog):
         layout.setSpacing(12)
 
         hint = QLabel(
-            "选择 1 个数据文件夹，或按 Ctrl / Shift 多选 ZIP 文件。"
+            f"选择 1 个数据文件夹，或按 Ctrl / Shift 多选 {self.archive_formats_label} 文件。"
             "程序会自动判断并调用对应处理流程。"
         )
         hint.setWordWrap(True)
@@ -156,7 +192,10 @@ class InputSourceDialog(QDialog):
         self.model = QFileSystemModel(self)
         self.model.setReadOnly(True)
         self.model.setFilter(QDir.AllDirs | QDir.Files | QDir.NoDotAndDotDot)
-        self.model.setNameFilters(["*.zip", "*.ZIP"])
+        name_filters = []
+        for suffix in self.archive_suffixes:
+            name_filters.extend((f"*{suffix}", f"*{suffix.upper()}"))
+        self.model.setNameFilters(list(dict.fromkeys(name_filters)))
         self.model.setNameFilterDisables(False)
 
         self.source_view = QTreeView()
@@ -227,7 +266,10 @@ class InputSourceDialog(QDialog):
             return
 
         try:
-            validated = validate_input_source_selection(paths)
+            validated = validate_input_source_selection(
+                paths,
+                allowed_archive_suffixes=self.archive_suffixes,
+            )
         except InputSourceSelectionError as exc:
             self.selection_summary.setText(str(exc))
             set_widget_property(self.selection_summary, "tone", "error")
@@ -237,7 +279,7 @@ class InputSourceDialog(QDialog):
         if validated[0].is_dir():
             summary = f"将使用文件夹：{validated[0]}"
         else:
-            summary = f"已选择 {len(validated)} 个 ZIP 文件"
+            summary = f"已选择 {len(validated)} 个压缩文件"
         self.selection_summary.setText(summary)
         set_widget_property(self.selection_summary, "tone", "success")
         self.ok_button.setEnabled(True)
@@ -266,20 +308,25 @@ class InputSourceDialog(QDialog):
         path = Path(self.model.filePath(index))
         if path.is_dir():
             self._set_current_directory(path)
-        elif path.suffix.casefold() == ".zip":
-            self.selected_sources = validate_input_source_selection([path])
+        elif path.suffix.casefold() in self.archive_suffixes:
+            self.selected_sources = validate_input_source_selection(
+                [path],
+                allowed_archive_suffixes=self.archive_suffixes,
+            )
             super().accept()
 
     def _use_current_folder(self) -> None:
         self.selected_sources = validate_input_source_selection(
-            [self.current_directory]
+            [self.current_directory],
+            allowed_archive_suffixes=self.archive_suffixes,
         )
         super().accept()
 
     def accept(self) -> None:
         try:
             self.selected_sources = validate_input_source_selection(
-                self._selected_paths()
+                self._selected_paths(),
+                allowed_archive_suffixes=self.archive_suffixes,
             )
         except InputSourceSelectionError as exc:
             QMessageBox.warning(self, "选择无效", str(exc))
@@ -292,10 +339,16 @@ def select_input_sources(
     *,
     title: str,
     start_path: str | Path | None = None,
+    archive_suffixes: Sequence[str] = DEFAULT_ARCHIVE_SUFFIXES,
 ) -> tuple[Path, ...]:
     """Open the shared selector and return the accepted data sources."""
 
-    dialog = InputSourceDialog(parent, title=title, start_path=start_path)
+    dialog = InputSourceDialog(
+        parent,
+        title=title,
+        start_path=start_path,
+        archive_suffixes=archive_suffixes,
+    )
     if dialog.exec_() == QDialog.Accepted:
         return dialog.selected_sources
     return ()

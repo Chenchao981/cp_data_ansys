@@ -20,7 +20,7 @@ flowchart LR
     B["JT Excel"] --> J["jt_data_processor"]
     C["Lion Excel"] --> L["lion_batch_processor.py"]
     D["扬州国宇 FRD Excel"] --> Y["guoyu_batch_processor.py"]
-    Z["文件夹 / 单ZIP / 多ZIP"] --> P["archive_input 安全准备层"]
+    Z["文件夹 / ZIP / HH 7z"] --> P["archive_input 安全准备层"]
     P --> H
     P --> J
     P --> L
@@ -61,7 +61,7 @@ HH、JT、Lion、国宇四条 GUI 清洗流程统一通过 `cp_data_processor.pr
 | `cp_data_processor/data_models/` | 定义 `CPLot`、`CPWafer`、`CPParameter` | 核心 |
 | `cp_data_processor/readers/` | HH Reader、统一 Reader、公司注册 | 核心 |
 | `cp_data_processor/readers/company_adapters/` | 字段映射、单位转换、公司识别 | 核心 |
-| `cp_data_processor/processing/` | ZIP 安全准备、清洗、转换、标准 CSV、性能处理 | 核心 |
+| `cp_data_processor/processing/` | ZIP/7z 安全准备、清洗、转换、标准 CSV、性能处理 | 核心 |
 | `cp_data_processor/validation/` | 标准 `CPLot`、必需字段、Pass Bin 和追溯性契约校验 | 核心 |
 | `devtools/cp_onboarding/` | 新格式画像、档案校验、清洗器骨架和 CSV 对账 | 研发专用，不打包 |
 | `.agents/skills/` 与 `.codex/agents/` | 新晶圆厂接入 SOP 与总控 Agent | 研发专用，不打包 |
@@ -76,7 +76,7 @@ HH、JT、Lion、国宇四条 GUI 清洗流程统一通过 `cp_data_processor.pr
 
 ### HH / 华虹宏力
 
-GUI 支持原始 DCP/TXT 文件夹、单个 ZIP、多个 ZIP，以及只包含 ZIP 的输入文件夹。ZIP 输入通过 `cp_data_processor.processing.zip_input` 兼容入口调用公共 `archive_input` 安全准备层，规整为原处理器可识别的一层/两层临时目录，再调用 `clean_dcp_data.process_directory()`；临时文件在处理结束后自动删除。后续流程仍包含 DCP 读取、IQR 清洗、cleaned CSV、yield CSV、spec 提取和可选单位转换，图表直接使用共用 `frontend` 组件。
+GUI 支持原始 DCP/TXT 文件夹、单个或多个 ZIP/7z，以及只包含 ZIP/7z 的输入文件夹。压缩输入通过 `cp_data_processor.processing.zip_input` 兼容入口调用公共 `archive_input` 安全准备层，验证路径、加密状态和数据文件类型后，规整为原处理器可识别的一层/两层临时目录，再调用 `clean_dcp_data.process_directory()`；临时文件在处理结束后自动删除。后续流程仍包含 DCP 读取、IQR 清洗、cleaned CSV、yield CSV、spec 提取和可选单位转换，图表直接使用共用 `frontend` 组件。
 
 ### JT / Jetech
 
