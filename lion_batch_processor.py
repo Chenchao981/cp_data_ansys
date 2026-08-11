@@ -30,6 +30,8 @@ sys.path.insert(0, str(project_root))
 
 # 直接导入Lion专用模块，无需通用识别
 from lion.lion_reader import LionExcelReader
+from lion.lion_v2_adapter import LionV2Adapter
+from lion.lion_v2_reader import LION_V2_FORMAT, LionV2Reader
 from cp_data_processor.readers.company_adapters.company_config import get_company_config
 from cp_data_processor.readers.company_adapters.lion_adapter import LIONAdapter
 from cp_data_processor.processing.standard_csv_generator import StandardCSVGenerator
@@ -38,6 +40,8 @@ from cp_data_processor.data_models.cp_data import CPLot
 # 设置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+LION_V1_FORMAT = "LION_V1"
 
 
 def discover_batch_files(data_dir: Path) -> Dict[str, List[str]]:
@@ -107,6 +111,28 @@ def discover_batch_files(data_dir: Path) -> Dict[str, List[str]]:
     return dict(batch_files)
 
 
+def detect_lion_format(file_path: str) -> str:
+    """Detect one approved Lion format, failing closed on unknown/ambiguity."""
+
+    v1_match = LionExcelReader().can_read(file_path)
+    v2_match = LionV2Reader.can_read(file_path)
+    matches = [
+        format_name
+        for format_name, matched in (
+            (LION_V1_FORMAT, v1_match),
+            (LION_V2_FORMAT, v2_match),
+        )
+        if matched
+    ]
+    if len(matches) != 1:
+        if not matches:
+            raise ValueError(
+                f"未知或不受支持的 Lion 文件格式: {Path(file_path).name}"
+            )
+        raise ValueError(f"Lion 文件格式识别歧义: {Path(file_path).name}")
+    return matches[0]
+
+
 def process_lion_batch_files(file_paths: List[str]) -> Dict[str, CPLot]:
     """
     直接使用Lion读取器处理文件列表，无需通用识别
@@ -117,36 +143,60 @@ def process_lion_batch_files(file_paths: List[str]) -> Dict[str, CPLot]:
     Returns:
         Dict[str, CPLot]: 文件路径到CPLot对象的映射
     """
-    # 获取Lion配置和适配器
-    lion_config = get_company_config('LION')
-    adapter = LIONAdapter(lion_config)
-    
+    if not file_paths:
+        raise ValueError("没有提供 Lion 文件")
+
+    detected_formats = {detect_lion_format(file_path) for file_path in file_paths}
+    if len(detected_formats) != 1:
+        raise ValueError(
+            "同一 Lion 批次包含不同格式版本，已按 fail-closed 规则停止"
+        )
+    source_format = next(iter(detected_formats))
+
+    if source_format == LION_V2_FORMAT:
+        adapter = LionV2Adapter()
+    else:
+        lion_config = get_company_config('LION')
+        adapter = LIONAdapter(lion_config)
+
     results = {}
-    failed_files = []
-    
     for file_path in file_paths:
         try:
             print(f"    📄 处理: {Path(file_path).name}")
-            
-            # 使用Lion专用读取器
-            reader = LionExcelReader([file_path])
-            raw_lot = reader.read_file(file_path)
-            
+
+            if source_format == LION_V2_FORMAT:
+                raw_lot = LionV2Reader([file_path]).read()
+            else:
+                reader = LionExcelReader([file_path])
+                raw_lot = reader.read_file(file_path)
+
             # 使用Lion适配器标准化
             standardized_lot = adapter.transform_to_standard_format(raw_lot)
-            
+            standardized_lot.source_format = source_format
             results[file_path] = standardized_lot
             print(f"    ✓ 成功")
-            
+
         except Exception as e:
-            failed_files.append((file_path, str(e)))
             print(f"    ❌ 失败: {e}")
             logger.error(f"处理文件失败 {file_path}: {e}")
-    
-    if failed_files:
-        print(f"   ⚠️  {len(failed_files)} 个文件处理失败")
-    
+            raise ValueError(
+                f"Lion 批次处理失败，未返回部分结果: {Path(file_path).name}: {e}"
+            ) from e
+
     return results
+
+
+def _lot_spec_signature(lot: CPLot) -> tuple:
+    return tuple(
+        (
+            parameter.id,
+            parameter.unit,
+            parameter.sl,
+            parameter.su,
+            tuple(getattr(parameter, "test_cond", []) or []),
+        )
+        for parameter in lot.params
+    )
 
 
 def create_batch_lot(individual_lots: Dict[str, CPLot]) -> CPLot:
@@ -162,16 +212,29 @@ def create_batch_lot(individual_lots: Dict[str, CPLot]) -> CPLot:
     if not individual_lots:
         raise ValueError("没有提供数据")
     
-    # 获取批次信息（假设所有文件属于同一批次）
+    # 获取批次信息；格式、身份、Pass Bin 和规格必须片内一致。
     first_lot = next(iter(individual_lots.values()))
     lot_id = first_lot.lot_id
+    source_format = getattr(first_lot, "source_format", LION_V1_FORMAT)
+    spec_signature = _lot_spec_signature(first_lot)
+    for lot in individual_lots.values():
+        if getattr(lot, "source_format", LION_V1_FORMAT) != source_format:
+            raise ValueError("同一 Lion 批次包含不同格式版本")
+        if lot.lot_id != lot_id or lot.product != first_lot.product:
+            raise ValueError("同一 Lion 批次的 Lot_ID 或 product 不一致")
+        if lot.pass_bin != first_lot.pass_bin:
+            raise ValueError("同一 Lion 批次的 pass_bin 不一致")
+        if _lot_spec_signature(lot) != spec_signature:
+            raise ValueError(f"Lion 批次 {lot_id} 内部规格不一致")
     
     # 创建合并后的CPLot
     batch_lot = CPLot(
         lot_id=lot_id,
         product=first_lot.product,
-        wafer_count=len(individual_lots)
+        wafer_count=len(individual_lots),
+        pass_bin=first_lot.pass_bin,
     )
+    batch_lot.source_format = source_format
     
     # 收集所有晶圆和参数
     all_wafers = []
@@ -217,13 +280,27 @@ def create_combined_lot(all_batch_lots: List[CPLot]) -> CPLot:
     if not all_batch_lots:
         raise ValueError("没有提供批次数据")
     
+    source_formats = {
+        getattr(lot, "source_format", LION_V1_FORMAT) for lot in all_batch_lots
+    }
+    if len(source_formats) != 1:
+        raise ValueError("同一次 Lion 运行包含不同格式版本，已停止合并")
+    pass_bins = {lot.pass_bin for lot in all_batch_lots}
+    if len(pass_bins) != 1:
+        raise ValueError("同一次 Lion 运行包含不同 pass_bin，已停止合并")
+    products = {lot.product for lot in all_batch_lots}
+    if len(products) != 1:
+        raise ValueError("同一次 Lion 运行包含不同 product，已停止合并")
+
     # 创建合并后的CPLot，使用"COMBINED"作为lot_id（仅用于文件名生成）
     first_lot = all_batch_lots[0]
     combined_lot = CPLot(
         lot_id="COMBINED",
         product=first_lot.product,
-        wafer_count=sum(lot.wafer_count for lot in all_batch_lots)
+        wafer_count=sum(lot.wafer_count for lot in all_batch_lots),
+        pass_bin=first_lot.pass_bin,
     )
+    combined_lot.source_format = next(iter(source_formats))
     
     # 收集所有晶圆和参数（按批次顺序）
     all_wafers = []
@@ -263,6 +340,51 @@ def create_combined_lot(all_batch_lots: List[CPLot]) -> CPLot:
         combined_lot.combined_data = pd.concat(all_chip_data, ignore_index=True)
     
     return combined_lot
+
+
+def generate_lion_run_csvs(
+    all_batch_lots: List[CPLot], output_dir: str
+) -> Dict[str, object]:
+    """Generate the approved outputs for one homogeneous Lion run.
+
+    V1 retains the mature single-spec behavior.  V2 emits one combined cleaned
+    file, one combined yield file, and one existing-format horizontal spec file
+    per Lot so a different Lot specification can never be hidden by first-Lot
+    selection.
+    """
+
+    if not all_batch_lots:
+        raise ValueError("没有提供 Lion 批次数据")
+    os.makedirs(output_dir, exist_ok=True)
+    combined_lot = create_combined_lot(all_batch_lots)
+    source_format = getattr(combined_lot, "source_format", LION_V1_FORMAT)
+    first_lot_id = all_batch_lots[0].lot_id
+    combined_lot.lot_id = first_lot_id
+    generator = StandardCSVGenerator()
+
+    if source_format == LION_V1_FORMAT:
+        return generator.generate_standard_csvs(combined_lot, output_dir)
+    if source_format != LION_V2_FORMAT:
+        raise ValueError(f"未知 Lion 输出格式版本: {source_format}")
+
+    lot_ids = [lot.lot_id for lot in all_batch_lots]
+    if len(lot_ids) != len(set(lot_ids)):
+        raise ValueError("同一次 Lion V2 运行包含重复 Lot_ID")
+
+    timestamp = generator._generate_timestamp()
+    cleaned_path = generator.generate_cleaned_csv(
+        combined_lot, output_dir, timestamp
+    )
+    yield_path = generator.generate_yield_csv(combined_lot, output_dir, timestamp)
+    spec_paths = {
+        lot.lot_id: generator.generate_spec_csv(lot, output_dir, timestamp)
+        for lot in all_batch_lots
+    }
+    return {
+        "cleaned": cleaned_path,
+        "yield": yield_path,
+        "specs": spec_paths,
+    }
 
 
 
@@ -306,6 +428,7 @@ def main():
     all_batch_lots = []
     success_count = 0
     failed_batches = []
+    output_succeeded = False
     
     for batch_id, file_paths in batch_files.items():
         try:
@@ -353,31 +476,32 @@ def main():
             print(f"   ❌ 批次 {batch_id} 处理失败: {e}")
             logger.error(f"处理批次 {batch_id} 失败", exc_info=True)
             failed_batches.append(batch_id)
+            break
+
+    if failed_batches:
+        print("\n❌ 输入中存在失败或未知格式批次，已停止本次运行且不生成部分输出")
     
     # 3. 生成汇总CSV文件
-    if all_batch_lots:
+    if all_batch_lots and not failed_batches:
         print(f"\n🔄 生成汇总CSV文件...")
         
         try:
-            # 合并所有批次数据
-            combined_lot = create_combined_lot(all_batch_lots)
-            
-            # 生成汇总的标准CSV文件
-            generator = StandardCSVGenerator()
-            
-            # 使用第一个批次的lot_id替换"combined"
-            original_lot_id = combined_lot.lot_id
-            first_batch_lot_id = all_batch_lots[0].lot_id
-            combined_lot.lot_id = first_batch_lot_id
-            
-            file_paths_generated = generator.generate_standard_csvs(combined_lot, str(output_dir))
-            
-            # 恢复原始lot_id
-            combined_lot.lot_id = original_lot_id
+            file_paths_generated = generate_lion_run_csvs(
+                all_batch_lots, str(output_dir)
+            )
             
             print(f"   ✅ 汇总CSV文件生成完成!")
+            output_succeeded = True
             print(f"   📁 生成的文件:")
             for csv_type, path in file_paths_generated.items():
+                if csv_type == "specs":
+                    for lot_id, spec_path in path.items():
+                        filename = Path(spec_path).name
+                        file_size = Path(spec_path).stat().st_size / 1024
+                        print(
+                            f"     spec[{lot_id}]: {filename} ({file_size:.1f} KB)"
+                        )
+                    continue
                 filename = Path(path).name
                 file_size = Path(path).stat().st_size / 1024  # KB
                 print(f"     {csv_type:8s}: {filename} ({file_size:.1f} KB)")
@@ -410,7 +534,7 @@ def main():
     
     print("\n🎉 批量汇总处理完成!")
     
-    if success_count > 0:
+    if success_count > 0 and output_succeeded and not failed_batches:
         print("✨ 汇总文件生成成功!")
         return True
     else:

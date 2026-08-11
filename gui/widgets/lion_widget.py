@@ -138,13 +138,13 @@ class LionDataProcessingThread(QThread):
             self.finished.emit(False, f"Lion数据处理失败: {exc}")
 
     def _process_lion_directory(self, input_path: Path):
-        """使用既有Lion处理器处理已准备好的目录。"""
+        """使用已验收的 Lion V1/V2 后端处理已准备好的目录。"""
         from lion_batch_processor import (
-            create_combined_lot,
+            create_batch_lot,
             discover_batch_files,
+            generate_lion_run_csvs,
             process_lion_batch_files,
         )
-        from cp_data_processor.processing.standard_csv_generator import StandardCSVGenerator
 
         base_output_path = Path(self.base_output_dir)
 
@@ -168,90 +168,51 @@ class LionDataProcessingThread(QThread):
             self.progress_updated.emit("🚀 开始批量处理Lion数据...")
             
             all_batch_lots = []
-            success_count = 0
-            failed_batches = []
-            first_lot_id = None  # 记录第一个成功处理的批次的lot_id
-            
+
             for batch_id, file_paths in batch_files.items():
-                try:
-                    self.progress_updated.emit(f"📦 处理批次: {batch_id} ({len(file_paths)} 个文件)")
-                    
-                    # 处理该批次的所有文件
-                    batch_results = process_lion_batch_files(file_paths)
-                    
-                    if batch_results:
-                        # 收集成功处理的CPLot对象
-                        batch_lots = [lot for lot in batch_results.values() if lot is not None]
-                        all_batch_lots.extend(batch_lots)
-                        success_count += 1
-                        
-                        # 记录第一个成功处理的批次的lot_id，并创建输出文件夹
-                        if first_lot_id is None and batch_lots:
-                            first_lot_id = batch_lots[0].lot_id
-                            
-                            # 按公共规则创建首批次号+流水号输出文件夹
-                            output_path = create_output_run_dir(
-                                base_output_path,
-                                first_lot_id,
-                            )
-                            self.output_dir = str(output_path)  # 设置实际输出目录
-                            self.progress_updated.emit(f"📋 首个真实批次号: {first_lot_id}")
-                            self.progress_updated.emit(f"📁 创建输出文件夹: {output_path}")
-                            
-                            # 发送输出目录创建信号
-                            self.output_dir_created.emit(str(output_path))
-                        
-                        # 如果输出目录已确定，但还未设置到类变量
-                        elif first_lot_id and not hasattr(self, 'output_path'):
-                            output_path = Path(self.output_dir)
-                        
-                        self.progress_updated.emit(f"✅ 批次 {batch_id} 处理完成，获得 {len(batch_lots)} 个批次对象")
-                    else:
-                        failed_batches.append(batch_id)
-                        self.progress_updated.emit(f"❌ 批次 {batch_id} 处理失败")
-                        
-                except Exception as e:
-                    failed_batches.append(batch_id)
-                    self.progress_updated.emit(f"❌ 批次 {batch_id} 处理异常: {str(e)}")
+                self.progress_updated.emit(
+                    f"📦 处理批次: {batch_id} ({len(file_paths)} 个文件)"
+                )
+                batch_results = process_lion_batch_files(file_paths)
+                if not batch_results:
+                    raise ValueError(f"批次 {batch_id} 没有返回有效数据")
+                batch_lot = create_batch_lot(batch_results)
+                all_batch_lots.append(batch_lot)
+                self.progress_updated.emit(
+                    f"✅ 批次 {batch_id} 处理完成，获得 {len(batch_lot.wafers)} 片晶圆"
+                )
             
             if not all_batch_lots:
-                self.finished.emit(False, f"所有批次处理失败\n失败批次: {', '.join(failed_batches)}")
-                return
-            
-            # 3. 合并所有批次数据，使用第一个批次的lot_id
-            self.progress_updated.emit("🔄 合并所有批次数据...")
-            merged_lot = create_combined_lot(all_batch_lots)
-            
-            # 如果合并成功，将lot_id改为第一个文件的lot_id以用于文件命名
-            if merged_lot and first_lot_id:
-                merged_lot.lot_id = first_lot_id
-                self.progress_updated.emit(f"📝 设置合并数据lot_id为: {first_lot_id}")
-            
-            if not merged_lot:
-                self.finished.emit(False, "批次数据合并失败")
-                return
-            
-            # 4. 生成标准CSV文件
+                raise ValueError("所有 Lion 批次均未返回有效数据")
+
+            # 全部批次解析成功后才创建运行目录，避免留下部分输出。
+            first_lot_id = all_batch_lots[0].lot_id
+            output_path = create_output_run_dir(base_output_path, first_lot_id)
+            self.output_dir = str(output_path)
+            self.progress_updated.emit(f"📋 首个真实批次号: {first_lot_id}")
+            self.progress_updated.emit(f"📁 创建输出文件夹: {output_path}")
+            self.output_dir_created.emit(str(output_path))
+
+            # 3. 生成 combined cleaned/yield；格式 2 按 Lot 保留规格。
             self.progress_updated.emit("📊 生成标准CSV文件...")
-            csv_generator = StandardCSVGenerator()
-            
-            # 确保使用正确的输出路径
             final_output_path = Path(self.output_dir)
-            csv_result = csv_generator.generate_standard_csvs(merged_lot, str(final_output_path))
+            csv_result = generate_lion_run_csvs(
+                all_batch_lots, str(final_output_path)
+            )
             if csv_result:
-                # 统计生成的文件
                 csv_files = list(final_output_path.glob("*.csv"))
+                spec_count = len(csv_result.get("specs", {})) or int(
+                    "spec" in csv_result
+                )
+                wafer_count = sum(len(lot.wafers) for lot in all_batch_lots)
                 
                 self.progress_updated.emit("✅ Lion数据处理完成！")
                 success_msg = f"Lion数据处理成功：\n" \
-                             f"- 处理批次: {success_count} 个成功, {len(failed_batches)} 个失败\n" \
-                             f"- 合并数据: {len(merged_lot.wafers)} 个晶圆\n" \
+                             f"- 处理批次: {len(all_batch_lots)} 个\n" \
+                             f"- 合并数据: {wafer_count} 个晶圆\n" \
                              f"- 生成文件: {len(csv_files)} 个CSV文件\n" \
+                             f"- 规格文件: {spec_count} 个\n" \
                              f"- 输出目录: {self.output_dir}"
-                
-                if failed_batches:
-                    success_msg += f"\n- 失败批次: {', '.join(failed_batches)}"
-                
                 self.finished.emit(True, success_msg)
             else:
                 self.finished.emit(False, "CSV文件生成失败")

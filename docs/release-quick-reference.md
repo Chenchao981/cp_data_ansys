@@ -57,7 +57,7 @@ JT 可点击“选择数据源...”选择单个或多个包含 Excel 的 ZIP，
 
 #### Lion公司数据格式 🏢
 
-Lion 支持包含 `.xls` / `.xlsx` 的批次目录、单个 ZIP、多个 ZIP 或只包含 ZIP 的目录。程序读取首个成功处理文件中的真实 `lot_id`，输出文件夹命名为 `lot_id_YYYYMMDD_HHMMSS`，不会使用临时解压目录名。
+Lion 支持包含 `.xls` / `.xlsx` 的批次目录、单个 ZIP、多个 ZIP 或只包含 ZIP 的目录。后端按工作簿内容严格区分成熟格式和三 Sheet 格式 2，不按扩展名猜测；未知或混合版本会停止。程序读取首个真实 `lot_id`，输出文件夹命名为 `lot_id_YYYYMMDD_HHMMSS`，不会使用临时解压目录名。格式 2 多 Lot 仍合并 cleaned/yield，但每个 Lot 分别保存横向 spec；CP Cockpit 会要求选择参数分析 Lot，确保规格与数据一致。
 
 #### 国宇FRD数据格式
 

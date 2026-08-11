@@ -14,7 +14,7 @@ from __future__ import annotations
 import math
 import os
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
@@ -48,7 +48,9 @@ BASE_COLUMNS = {
     "Bin",
     "CONT",
     "SITE_NUM",
+    "PART_ID",
     "T_TIME",
+    "TEST_NUM",
     "Gross_die",
     "Good_die",
     "Pass_die",
@@ -97,6 +99,8 @@ class StandardDataset:
     cleaned: Optional[pd.DataFrame]
     yield_df: Optional[pd.DataFrame]
     spec: Optional[pd.DataFrame]
+    spec_paths: Dict[str, Path] = field(default_factory=dict)
+    specs: Dict[str, pd.DataFrame] = field(default_factory=dict)
 
 
 def inject_cockpit_theme() -> None:
@@ -304,7 +308,20 @@ def load_standard_dataset(data_dir_text: str) -> StandardDataset:
     data_dir = Path(data_dir_text).expanduser()
     cleaned_path = latest_file(data_dir, ("*_cleaned_*.csv", "*cleaned*.csv"))
     yield_path = latest_file(data_dir, ("*_yield_*.csv", "*yield*.csv"))
-    spec_path = latest_file(data_dir, ("*_spec_*.csv", "*spec*.csv"))
+    spec_files = sorted(data_dir.glob("*_spec_*.csv"))
+    if not spec_files and data_dir.exists():
+        spec_files = sorted(data_dir.rglob("*_spec_*.csv"))
+    spec_paths = {
+        path.name.split("_spec_", 1)[0]: path
+        for path in spec_files
+        if "_spec_" in path.name
+    }
+    spec_path = max(spec_files, key=lambda p: p.stat().st_mtime) if spec_files else None
+    specs = {
+        lot_id: frame
+        for lot_id, path in spec_paths.items()
+        if (frame := read_csv_safely(path)) is not None
+    }
     return StandardDataset(
         data_dir=data_dir,
         cleaned_path=cleaned_path,
@@ -313,6 +330,32 @@ def load_standard_dataset(data_dir_text: str) -> StandardDataset:
         cleaned=read_csv_safely(cleaned_path),
         yield_df=read_csv_safely(yield_path),
         spec=read_csv_safely(spec_path),
+        spec_paths=spec_paths,
+        specs=specs,
+    )
+
+
+def scope_dataset_to_lot(dataset: StandardDataset, lot_id: str) -> StandardDataset:
+    """Select one Lot and its matching spec when a run has per-Lot specs."""
+
+    if lot_id not in dataset.specs or lot_id not in dataset.spec_paths:
+        raise ValueError(f"未找到 Lot {lot_id} 对应的 spec CSV")
+
+    def filter_lot(frame: Optional[pd.DataFrame]) -> Optional[pd.DataFrame]:
+        if frame is None or "Lot_ID" not in frame.columns:
+            return frame
+        return frame[frame["Lot_ID"].astype(str) == str(lot_id)].copy()
+
+    cleaned = filter_lot(dataset.cleaned)
+    if cleaned is None or cleaned.empty:
+        raise ValueError(f"cleaned CSV 中没有 Lot {lot_id} 的数据")
+    yield_df = filter_lot(dataset.yield_df)
+    return replace(
+        dataset,
+        cleaned=cleaned,
+        yield_df=yield_df,
+        spec_path=dataset.spec_paths[lot_id],
+        spec=dataset.specs[lot_id],
     )
 
 
@@ -1102,6 +1145,29 @@ def main() -> None:
         load_standard_dataset.clear()
 
     dataset = load_standard_dataset(data_dir)
+    if len(dataset.spec_paths) > 1:
+        if dataset.cleaned is None or "Lot_ID" not in dataset.cleaned.columns:
+            st.error("检测到多份 spec CSV，但 cleaned CSV 缺少 Lot_ID，已停止以避免套用错误规格。")
+            st.stop()
+        cleaned_lots = sorted(dataset.cleaned["Lot_ID"].dropna().astype(str).unique())
+        missing_specs = [lot_id for lot_id in cleaned_lots if lot_id not in dataset.specs]
+        if missing_specs:
+            st.error(
+                "以下 Lot 缺少对应 spec CSV，已停止以避免套用其他 Lot 规格："
+                + ", ".join(missing_specs)
+            )
+            st.stop()
+        selected_spec_lot = st.sidebar.selectbox(
+            "参数分析 Lot",
+            cleaned_lots,
+            help="同一次运行存在多套规格时，参数、Mapping、Cpk 和良率均按所选 Lot 分析。",
+        )
+        try:
+            dataset = scope_dataset_to_lot(dataset, selected_spec_lot)
+        except ValueError as exc:
+            st.error(str(exc))
+            st.stop()
+        st.sidebar.caption("已按 Lot 隔离数据和规格，避免跨 Lot 误用限值。")
     render_file_status(dataset)
 
     if dataset.cleaned is None and dataset.yield_df is None:

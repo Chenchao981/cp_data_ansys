@@ -68,7 +68,7 @@ Wafer 级良率汇总。当前实现以 `Gross_die`、`Good_die`、`Yield` 为�
 
 参数规格。HH/JT 通常使用逐参数行结构，例如 `Parameter`、`Unit`、`LimitL`、`LimitU`、`LSL`、`USL`、`Target`。
 
-Lion 当前可能输出横向矩阵式规格文件。图表或后续数据接口必须先确认 spec 布局，不能只按一种结构硬编码。
+Lion 使用横向矩阵式规格文件。成熟格式单次运行保持一份 spec；格式 2 在多 Lot 规格不一致时按 `Lot_ID` 分别输出 `{lot_id}_spec_*.csv`，每份仍保持 `Parameter / UNIT / LIMIT_LOW / LIMIT_HIGH` 四行矩阵。消费方不得任取第一份规格；必须按 cleaned 行的 `Lot_ID` 选择对应 spec。CP Cockpit 会在多规格运行中要求先选择参数分析 Lot，并同步过滤 cleaned/yield。
 
 ### 输出文件夹
 
@@ -82,9 +82,12 @@ Lion 当前可能输出横向矩阵式规格文件。图表或后续数据接口
 | JT `X_COORD` / `Y_COORD` | `X` / `Y` |
 | JT `DUT_NO` | `Seq` |
 | Lion `PART_INDEX` | `Seq` |
+| Lion 格式 2 `DUT_NO` | `Seq` |
 | Lion `SOFT_BIN` | `Bin` |
 | Lion `X_COORD` / `Y_COORD` | `X` / `Y` |
 | Lion `PASSFG` | `CONT` |
+
+Lion 格式 2 明确使用 `pass_bin=1`，保留所有整数 Fail Bin 且不重映射；失败 Die 的后续未测参数保留为空值，不能因此删除整行。`PART_ID`、`SITE_NUM`、`T_TIME`、`TEST_NUM` 属于过程/追溯字段，不作为测量参数。
 | 国宇 `Serial#` | `Seq` |
 | 国宇 `Bin#` | `Bin` |
 | 国宇重复 `IR` 列 | `IR_665V_1[nA]` / `IR_665V_2[nA]` |

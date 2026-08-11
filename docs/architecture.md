@@ -18,7 +18,7 @@
 flowchart LR
     A["HH DCP/TXT"] --> H["clean_dcp_data.py"]
     B["JT Excel"] --> J["jt_data_processor"]
-    C["Lion Excel"] --> L["lion_batch_processor.py"]
+    C["Lion Excel V1 / V2"] --> L["lion_batch_processor.py"]
     D["扬州国宇 FRD Excel"] --> Y["guoyu_batch_processor.py"]
     Z["文件夹 / ZIP / HH 7z"] --> P["archive_input 安全准备层"]
     P --> H
@@ -84,7 +84,7 @@ GUI 支持 Excel 文件夹、单个/多个 ZIP 和只包含 ZIP 的文件夹。Z
 
 ### Lion
 
-GUI 支持 Excel 文件夹、单个/多个 ZIP 和只包含 ZIP 的文件夹。准备完成后仍由 `lion_batch_processor` 发现批次、读取每个 Excel、标准化并合并为一个 `CPLot`，通过 `StandardCSVGenerator` 输出 CSV；输出目录名使用首个成功解析文件的真实 `lot_id`，Lion 图表生成器会增加异常值处理和列名标准化步骤。
+GUI 支持 Excel 文件夹、单个/多个 ZIP 和只包含 ZIP 的文件夹。准备完成后由 `lion_batch_processor` 发现批次，并按工作簿内容严格分派：成熟 V1 继续使用 `LionExcelReader`；格式 2 使用独立 `LionV2Reader` / `LionV2Adapter`，要求 OLE `.xls`、精确的 `Summary information` / `Statistics Information` / `DUT_DATA` Sheet 集和批准字段结构。未知、歧义或同一次运行混合版本会 fail closed。两种格式均合并输出 cleaned/yield，并保留每行原始 `Lot_ID`；格式 2 如多 Lot 规格不同，则在同一运行目录按 Lot 输出原有横向 spec，禁止采用第一片覆盖。CP Cockpit 检测到多份 spec 时按用户选择的 Lot 同步隔离 cleaned、yield 和规格。
 
 ### 扬州国宇 FRD
 
