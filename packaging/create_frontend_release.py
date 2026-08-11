@@ -5,6 +5,8 @@
 from __future__ import annotations
 
 import fnmatch
+import importlib.metadata
+import importlib.util
 import os
 import shutil
 import sys
@@ -43,6 +45,11 @@ ROOT_FILES_TO_INCLUDE = [
     "dcp_spec_extractor.py",
     "cp_unit_converter.py",
 ]
+
+# Lion format 2 uses the legacy binary .xls container.  Vendor xlrd so an
+# existing deployment can be upgraded by replacing app.pyz alone instead of
+# relying on the target machine to have gained a new optional dependency.
+VENDORED_DISTRIBUTIONS = ("xlrd",)
 
 EXCLUDE_PATTERNS = [
     "*.md",
@@ -161,7 +168,7 @@ if not defined PYTHON_EXE (
 )
 
 echo Using Python: %PYTHON_EXE%
-"%PYTHON_EXE%" -c "import PyQt5, pandas, numpy, openpyxl, xlrd, plotly, streamlit, py7zr" >nul 2>&1
+"%PYTHON_EXE%" -c "import sys; sys.path.insert(0, 'app.pyz'); import PyQt5, pandas, numpy, openpyxl, xlrd, plotly, streamlit, py7zr" >nul 2>&1
 if errorlevel 1 (
     echo ERROR: Required packages are missing from:
     echo   "%PYTHON_EXE%"
@@ -237,7 +244,7 @@ if [[ -z "$PYTHON_EXE" ]]; then
     exit 1
 fi
 
-if ! "$PYTHON_EXE" -c "import PyQt5, pandas, numpy, openpyxl, xlrd, plotly, streamlit, py7zr" >/dev/null 2>&1; then
+if ! "$PYTHON_EXE" -c "import sys; sys.path.insert(0, 'app.pyz'); import PyQt5, pandas, numpy, openpyxl, xlrd, plotly, streamlit, py7zr" >/dev/null 2>&1; then
     echo "ERROR: Required packages are missing."
     echo "Run: $PYTHON_EXE -m pip install -r requirements_anaconda.txt"
     exit 1
@@ -362,6 +369,56 @@ def copy_directory_filtered(src: Path, dst: Path) -> tuple[int, int]:
     return included, excluded
 
 
+def vendor_runtime_distributions() -> tuple[int, int]:
+    """Copy approved pure-Python runtime dependencies into the application."""
+
+    total_included = 0
+    total_excluded = 0
+    for distribution_name in VENDORED_DISTRIBUTIONS:
+        package_spec = importlib.util.find_spec(distribution_name)
+        if package_spec is None or not package_spec.submodule_search_locations:
+            raise RuntimeError(
+                f"Required vendored distribution is unavailable: {distribution_name}"
+            )
+        package_locations = list(package_spec.submodule_search_locations)
+        if len(package_locations) != 1:
+            raise RuntimeError(
+                f"Ambiguous package locations for {distribution_name}: "
+                f"{package_locations}"
+            )
+        package_src = Path(package_locations[0])
+        included, excluded = copy_directory_filtered(
+            package_src, TEMP_BUILD_DIR / distribution_name
+        )
+        total_included += included
+        total_excluded += excluded
+
+        distribution = importlib.metadata.distribution(distribution_name)
+        dist_info_names = {
+            file.parts[0]
+            for file in (distribution.files or [])
+            if file.parts and str(file.parts[0]).endswith(".dist-info")
+        }
+        if len(dist_info_names) != 1:
+            raise RuntimeError(
+                f"Cannot identify one dist-info directory for {distribution_name}: "
+                f"{sorted(str(name) for name in dist_info_names)}"
+            )
+        dist_info_name = next(iter(dist_info_names))
+        dist_info_src = Path(distribution.locate_file(dist_info_name))
+        metadata_included, metadata_excluded = copy_directory_filtered(
+            dist_info_src, TEMP_BUILD_DIR / str(dist_info_name)
+        )
+        total_included += metadata_included
+        total_excluded += metadata_excluded
+        print(
+            f"Vendored {distribution_name} {distribution.version}: "
+            f"included={included + metadata_included}, "
+            f"excluded={excluded + metadata_excluded}"
+        )
+    return total_included, total_excluded
+
+
 def prepare_clean_dirs() -> None:
     if not str(RELEASE_DIR.resolve()).startswith(str(PACKAGING_DIR.resolve())):
         raise RuntimeError(f"Unsafe release directory: {RELEASE_DIR}")
@@ -396,6 +453,10 @@ def build_pyz() -> tuple[int, int]:
             continue
         shutil.copy2(src, TEMP_BUILD_DIR / file_name)
         total_included += 1
+
+    vendored_included, vendored_excluded = vendor_runtime_distributions()
+    total_included += vendored_included
+    total_excluded += vendored_excluded
 
     zipapp.create_archive(
         source=TEMP_BUILD_DIR,

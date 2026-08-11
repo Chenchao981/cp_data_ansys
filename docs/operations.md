@@ -82,6 +82,8 @@ python packaging\create_frontend_release.py
 
 `packaging/release` 是唯一主要发布目录。入口为 `gui.multi_company_main:main`，产物写入 `packaging/release/app.pyz`，并同时包含 CP Cockpit 启动文件、发布文档和依赖安装脚本。打包脚本会排除原始数据、输出结果、日志、测试、缓存和 Git 文件。
 
+Lion 格式 2 使用旧版二进制 `.xls`。发布脚本会把纯 Python 的 `xlrd` 及其许可证元数据内置到 `app.pyz`，因此已有部署可只替换 `app.pyz` 完成该格式升级；完整新部署仍建议交付整个 `packaging/release` 目录，以同步启动脚本和依赖说明。
+
 发布前应在干净环境验证：
 
 - `app.pyz` 可启动
