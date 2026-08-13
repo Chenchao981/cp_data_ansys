@@ -46,7 +46,41 @@ REQUIRED_SOURCE_COLUMNS = (
     "Y_COORD",
     "TEST_NUM",
 )
-EXPECTED_PARAMETER_COUNT = 15
+APPROVED_PARAMETER_SCHEMAS = {
+    "DATA2_15": (
+        "CABLE_CHECK1",
+        "CABLE_CHECK2",
+        "KELVIN_CHECK",
+        "OS",
+        "IR_35V",
+        "IR_700V",
+        "IR_750V",
+        "IR_800V",
+        "VBR_0P25mA",
+        "VBR_1mA",
+        "VF_10A",
+        "VF_15A",
+        "VF_30A",
+        "IR_750V_Retest",
+        "OS_END",
+    ),
+    "F0122A1_14": (
+        "CABLE_CHECK1",
+        "CABLE_CHECK2",
+        "KELVIN_CHECK",
+        "OS",
+        "IR_35V",
+        "IR_900V",
+        "IR_1000V",
+        "IR_1100V",
+        "VBR_0P25mA",
+        "VBR_1mA",
+        "VF_30A",
+        "VF_60A",
+        "IR_1000V_Retest",
+        "OS_END",
+    ),
+}
 
 
 class LionV2FormatError(ValueError):
@@ -95,7 +129,8 @@ class LionV2Reader(BaseReader):
             return False
         if tuple(headers[: len(SOURCE_PREFIX_COLUMNS)]) != SOURCE_PREFIX_COLUMNS:
             return False
-        if len(headers) - len(SOURCE_PREFIX_COLUMNS) != EXPECTED_PARAMETER_COUNT:
+        parameter_schema = tuple(headers[len(SOURCE_PREFIX_COLUMNS) :])
+        if parameter_schema not in APPROVED_PARAMETER_SCHEMAS.values():
             return False
         if not all(column in headers for column in REQUIRED_SOURCE_COLUMNS):
             return False
@@ -453,6 +488,7 @@ class LionV2Reader(BaseReader):
 
 
 __all__ = [
+    "APPROVED_PARAMETER_SCHEMAS",
     "LION_V2_FORMAT",
     "LION_V2_PASS_BIN",
     "LionV2FormatError",

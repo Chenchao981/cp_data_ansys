@@ -87,7 +87,7 @@ Lion 使用横向矩阵式规格文件。成熟格式单次运行保持一份 sp
 | Lion `X_COORD` / `Y_COORD` | `X` / `Y` |
 | Lion `PASSFG` | `CONT` |
 
-Lion 格式 2 明确使用 `pass_bin=1`，保留所有整数 Fail Bin 且不重映射；失败 Die 的后续未测参数保留为空值，不能因此删除整行。`PART_ID`、`SITE_NUM`、`T_TIME`、`TEST_NUM` 属于过程/追溯字段，不作为测量参数。
+Lion 格式 2 明确使用 `pass_bin=1`，保留所有整数 Fail Bin 且不重映射；失败 Die 的后续未测参数保留为空值，不能因此删除整行。`PART_ID`、`SITE_NUM`、`T_TIME`、`TEST_NUM` 属于过程/追溯字段，不作为测量参数。测量参数必须匹配已批准的完整有序 schema：原格式 2 为 15 参数，F0122A1 为 14 参数；不能仅凭“参数位于 TEST_NUM 右侧”接受未知产品结构。
 | 国宇 `Serial#` | `Seq` |
 | 国宇 `Bin#` | `Bin` |
 | 国宇重复 `IR` 列 | `IR_665V_1[nA]` / `IR_665V_2[nA]` |

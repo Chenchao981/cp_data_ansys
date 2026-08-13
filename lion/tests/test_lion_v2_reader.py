@@ -9,6 +9,7 @@ from cp_data_processor.processing.standard_csv_generator import StandardCSVGener
 from cp_data_processor.validation.standard_lot import StandardLotValidator
 from lion.lion_v2_adapter import LionV2Adapter
 from lion.lion_v2_reader import (
+    APPROVED_PARAMETER_SCHEMAS,
     LION_V2_FORMAT,
     LionV2FormatError,
     LionV2Reader,
@@ -37,6 +38,22 @@ PARAMETERS = [
     "VF_15A",
     "VF_30A",
     "IR_750V_Retest",
+    "OS_END",
+]
+F0122A1_PARAMETERS = [
+    "CABLE_CHECK1",
+    "CABLE_CHECK2",
+    "KELVIN_CHECK",
+    "OS",
+    "IR_35V",
+    "IR_900V",
+    "IR_1000V",
+    "IR_1100V",
+    "VBR_0P25mA",
+    "VBR_1mA",
+    "VF_30A",
+    "VF_60A",
+    "IR_1000V_Retest",
     "OS_END",
 ]
 SOURCE_COLUMNS = [
@@ -280,6 +297,48 @@ def test_detection_is_structural_and_unknown_files_fail_closed(tmp_path):
     assert not LionV2Reader.can_read(str(unknown))
     with pytest.raises(ValueError, match="未知或不受支持"):
         detect_lion_format(str(unknown))
+
+
+def _structure_preview(parameters):
+    columns = list(APPROVED_PARAMETER_SCHEMAS["DATA2_15"])
+    _, _, dut = _source_frames("F10001", "1")
+    prefix_width = len(SOURCE_COLUMNS) - len(columns)
+    rows = dut.iloc[:5, :prefix_width].values.tolist()
+    parameter_rows = [
+        list(parameters),
+        ["V"] * len(parameters),
+        [0.0] * len(parameters),
+        [10.0] * len(parameters),
+        [None] * len(parameters),
+    ]
+    return pd.DataFrame(
+        [prefix + suffix for prefix, suffix in zip(rows, parameter_rows)]
+    )
+
+
+def test_detection_accepts_only_exact_ordered_approved_parameter_schemas():
+    assert tuple(PARAMETERS) == APPROVED_PARAMETER_SCHEMAS["DATA2_15"]
+    assert tuple(F0122A1_PARAMETERS) == APPROVED_PARAMETER_SCHEMAS["F0122A1_14"]
+    assert LionV2Reader.matches_approved_structure(_structure_preview(PARAMETERS))
+    assert LionV2Reader.matches_approved_structure(
+        _structure_preview(F0122A1_PARAMETERS)
+    )
+
+    unknown_count = F0122A1_PARAMETERS + ["UNAPPROVED_EXTRA"]
+    unknown_name = F0122A1_PARAMETERS.copy()
+    unknown_name[5] = "IR_950V"
+    unknown_order = F0122A1_PARAMETERS.copy()
+    unknown_order[5], unknown_order[6] = unknown_order[6], unknown_order[5]
+
+    assert not LionV2Reader.matches_approved_structure(
+        _structure_preview(unknown_count)
+    )
+    assert not LionV2Reader.matches_approved_structure(
+        _structure_preview(unknown_name)
+    )
+    assert not LionV2Reader.matches_approved_structure(
+        _structure_preview(unknown_order)
+    )
 
 
 def test_same_lot_spec_conflict_fails_closed(tmp_path):
