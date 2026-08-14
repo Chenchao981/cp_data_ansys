@@ -74,11 +74,19 @@ def test_main_window_switches_theme_without_losing_form_state():
     original_input = window.company_widgets["huahong"].input_path_edit.text()
 
     assert window.current_theme == DARK_THEME
-    assert set(window.company_widgets) == {"huahong", "jetech", "lion", "guoyu"}
+    assert set(window.company_widgets) == {
+        "huahong",
+        "jetech",
+        "lion",
+        "lion_die_count",
+        "guoyu",
+    }
     for widget in window.company_widgets.values():
         assert widget.objectName() == "companyPage"
         assert widget.clean_btn.property("role") == "primary"
-        assert widget.cockpit_btn.property("role") == "success"
+        cockpit_btn = getattr(widget, "cockpit_btn", None)
+        if cockpit_btn is not None:
+            assert cockpit_btn.property("role") == "success"
         assert widget.status_text.property("role") == "log"
         assert widget.status_text.isReadOnly()
 

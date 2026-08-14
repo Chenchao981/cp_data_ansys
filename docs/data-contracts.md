@@ -106,7 +106,20 @@ Lion 格式 2 明确使用 `pass_bin=1`，保留所有整数 Fail Bin 且不重�
 
 国宇输入目录采用递归发现，支持“产品目录 → 批次目录 → 一个或多个 EDS/数据子目录 → Excel”等多层结构。业务批次号取产品目录下的第一层批次文件夹名称；同一批次内源文件 `LotName` 可能带有 `-D70` 等工艺后缀，不应因此拆分批次。合并输出必须保留每行原始 `Lot_ID`；输出文件夹遵循四家公司共用的首批次号加时间流水号契约。Reader 仅保留 `Serial#` 符合 `P数字`（Pass）或 `F数字`（Fail）的有效 Die 行，排除 `Unit` 行，并校验 Devices、Pass、Fail 与 Bin 统计一致。
 
-## 6. 契约变更规则
+## 6. Lion 管芯数汇总契约
+
+`lion-管芯数` 不是 Die 级 CP 标准 CSV，而是 Wafer 级 Excel 业务汇总：
+
+| 输出列 | 源数据 | 规则 |
+| --- | --- | --- |
+| `NCE品名` | 第 2 行 `DEVICE=` | 取等号后的非空字符串 |
+| `LOT` | 第 2 行 `LOT#=` | 取等号后的非空字符串，并要求与文件名一致 |
+| `Wafer` | `WAFER#` | 大于 0 的整数 |
+| `Good Die` | `PASS` | 非负整数 |
+
+处理器递归读取 `.xlsx`，忽略 Excel `~$` 临时锁文件，未知 Sheet/缺字段/重复“NCE品名+LOT+Wafer”均 fail closed。每个文件的 Wafer 行数和 `PASS` 合计必须与 `SUMMARY` 一致。输出文件为 `Lion_管芯数.xlsx`，置于“首个真实 Lot_YYYYMMDD_HHMMSS”运行目录。
+
+## 7. 契约变更规则
 
 - 基础字段改名属于破坏性变更，必须同步修改 Reader、Adapter、CSV、图表和 GUI。
 - 新增可选字段应保持旧消费者可用。
@@ -115,6 +128,6 @@ Lion 格式 2 明确使用 `pass_bin=1`，保留所有整数 Fail Bin 且不重�
 - 当 `chip_data` 缺少行级 `Lot_ID` 时，生成器使用 `CPWafer.source_lot_id` 回填；只有该值缺失时才回退到 `CPLot.lot_id`。
 - 数据精度、单位转换和异常值处理应可追溯，避免在图表阶段静默修改原始结果。
 
-## 7. 新公司生产入口契约
+## 8. 新公司生产入口契约
 
 新公司进入 `CompanyCleaningPipeline` 前必须提供已批准的格式档案。Pipeline 依次执行 Reader、Adapter、`StandardLotValidator` 和标准 CSV 生成；`pass_bin` 与批准值不一致、标准字段缺失、重复 `Lot_ID + Wafer_ID` 或空数据时必须停止。Agent、Skill 和格式档案不属于运行时数据契约。

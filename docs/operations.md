@@ -28,7 +28,7 @@ packaging/release/start.sh --check
 1. 选择公司。
 2. 如需改变显示风格，点击侧边栏底部的“亮色主题”或“暗黑主题”按钮；程序会记住上次选择。
 3. 每家公司首次使用时，输入和输出路径显示当前 Windows 用户的真实桌面位置；桌面重定向到其他磁盘时会跟随 Windows 设置。之后会分别恢复该公司最后一次使用的输入源、输入浏览目录和输出父目录。原路径已删除或磁盘不可用时自动回退到桌面。
-4. 每家公司页面统一使用一个“选择数据源”入口；在同一窗口中选择一个数据文件夹，或按 `Ctrl` / `Shift` 多选压缩文件。华虹支持 ZIP/7z，Jetech、Lion 和国宇 FRD 支持 ZIP。输出路径始终选择输出父目录。
+4. 华虹、Jetech、Lion CP 和国宇 FRD 页面统一使用一个“选择数据源”入口；在同一窗口中选择一个数据文件夹，或按 `Ctrl` / `Shift` 多选压缩文件。华虹支持 ZIP/7z，Jetech、Lion CP 和国宇 FRD 支持 ZIP。`lion-管芯数` 页面选择一个月度目录并递归扫描 `.xlsx`。输出路径始终选择输出父目录。
 5. 先清洗数据，再点击当前公司页面中的 `CP Cockpit` 进行交互分析。
 6. 检查输出目录中的 CSV、HTML 和日志。
 
@@ -43,6 +43,7 @@ packaging/release/start.sh --check
 - yield 的 Good die、Gross die 和 Yield 合理
 - spec 的单位和上下限完整
 - HTML 可离线打开，图表参数数量合理
+- `lion-管芯数` 输出列为 `NCE品名 / LOT / Wafer / Good Die`，行数与源报表 Wafer 数一致
 
 ## 3. 常见问题
 
@@ -88,6 +89,6 @@ Lion 格式 2 使用旧版二进制 `.xls`。发布脚本会把纯 Python 的 `x
 
 - `app.pyz` 可启动
 - `start.bat --check` 可同时导入多公司 GUI 与 CP Cockpit
-- HH、JT、Lion、国宇FRD Widget 均可加载
+- HH、JT、Lion CP、lion-管芯数、国宇FRD Widget 均可加载
 - 至少一套脱敏样例可完成清洗和图表生成
 - 发布目录不包含原始 CP 数据、日志或内部文档

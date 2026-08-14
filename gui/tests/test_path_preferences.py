@@ -12,6 +12,7 @@ from gui.widgets.guoyu_widget import GuoyuWidget
 from gui.widgets.huahong_widget import HuaHongWidget
 from gui.widgets.jetech_widget import JeTechWidget
 from gui.widgets.lion_widget import LionWidget
+from gui.widgets.lion_die_count_widget import LionDieCountWidget
 
 
 def make_preferences(tmp_path, company_id="huahong"):
@@ -129,6 +130,7 @@ def test_company_paths_are_kept_separate(tmp_path):
         (HuaHongWidget, "huahong"),
         (JeTechWidget, "jetech"),
         (LionWidget, "lion"),
+        (LionDieCountWidget, "lion_die_count"),
         (GuoyuWidget, "guoyu"),
     ],
 )

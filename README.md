@@ -4,7 +4,7 @@
 
 ## 当前能力
 
-- 读取并清洗多种 CP 原始数据：HH DCP/TXT、JT Excel、Lion 两种已验收 Excel 格式、扬州国宇 FRD Excel；华虹 GUI 支持文件夹、ZIP 和 7z，其他三家支持文件夹和 ZIP
+- 读取并清洗多种 CP 原始数据：HH DCP/TXT、JT Excel、Lion 两种已验收 CP Excel 格式、Lion 管芯数月度 Excel 汇总、扬州国宇 FRD Excel；华虹 GUI 支持文件夹、ZIP 和 7z，JT/Lion CP/国宇支持文件夹和 ZIP
 - 将不同来源转换为统一的 `CPLot` / `CPWafer` / `CPParameter` 数据模型
 - 输出 cleaned、yield、spec 三类标准 CSV
 - 生成良率趋势、失效分析、参数箱体图、散点图和汇总 HTML
@@ -41,7 +41,9 @@ python guoyu_batch_processor.py data/257375 --output output
 
 四家公司 GUI 统一使用一个“选择数据源”入口：在同一窗口中可选择一个原始数据目录，或按 `Ctrl` / `Shift` 多选压缩文件。华虹可选 ZIP/7z，Jetech、Lion 和国宇 FRD 可选 ZIP。GUI 只负责返回路径，后端自动判断目录或压缩格式并调用原有独立处理流程；Lion 进一步按工作簿内容严格区分成熟格式与三 Sheet 格式 2，格式 2 只接受已批准的精确参数 schema（当前包含 15 参数和 F0122A1 14 参数两套），未知 schema 或混合格式会停止。压缩文件仅在后台临时目录中安全解压，处理完成后自动清理。输出路径选择父目录，四家公司统一创建“首个真实批次号_YYYYMMDD_HHMMSS”文件夹；包含多个批次时按稳定的识别/处理顺序取第一个批次号，CSV 明细仍保留每行原始 `Lot_ID`。
 
-桌面 GUI 默认使用暗黑主题，侧边栏底部可一键切换亮色主题或暗黑主题；主题应用于公司菜单、路径表单、操作按钮、日志、状态栏、数据源选择窗口和应用内弹窗，并自动记住上次选择。四家公司页面还会分别记住当前 Windows 用户最后一次使用的输入源、输入浏览目录和输出父目录；首次启动或原路径失效时回退到 Windows 的真实桌面位置，包括重定向到其他磁盘的桌面。
+`lion-管芯数` 是独立的业务汇总页面：递归扫描月度目录下的 `.xlsx`，从第 2 行 `DEVICE=` / `LOT#=` 和报表中 `WAFER#` / `PASS` 生成 `Lion_管芯数.xlsx`，固定列为 `NCE品名 / LOT / Wafer / Good Die`。该页面不改动现有 Lion CP V1/V2 流程，也不生成 cleaned/yield/spec CSV。
+
+桌面 GUI 默认使用暗黑主题，侧边栏底部可一键切换亮色主题或暗黑主题；主题应用于公司菜单、路径表单、操作按钮、日志、状态栏、数据源选择窗口和应用内弹窗，并自动记住上次选择。各业务页面会分别记住当前 Windows 用户最后一次使用的输入源、输入浏览目录和输出父目录；首次启动或原路径失效时回退到 Windows 的真实桌面位置，包括重定向到其他磁盘的桌面。
 
 ## 处理主线
 
@@ -82,7 +84,7 @@ cp_data_processor/   核心数据模型、Reader、适配器、处理与分析�
 frontend/            基于标准 CSV 的 Plotly 图表模块
 gui/                 PyQt5 多公司桌面 GUI
 jt_data_processor/   JT 成熟专用处理流程
-lion/                Lion Reader、适配器与图表生成
+lion/                Lion Reader、适配器、图表与管芯数汇总
 guoyu/               扬州国宇 FRD Reader 与批次处理
 python_cp/           华虹流程仍在使用的兼容模块
 packaging/           .pyz 打包与发布文件

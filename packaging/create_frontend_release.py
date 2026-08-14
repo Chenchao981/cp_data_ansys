@@ -139,7 +139,7 @@ if exist "%SystemRoot%\System32\chcp.com" (
 )
 
 echo Starting CP Data Analysis Tool - GUI + CP Cockpit Frontend Release...
-echo Supporting HuaHong(HH), JeTech(JT), Lion, Guoyu FRD, and CP Cockpit.
+echo Supporting HuaHong(HH), JeTech(JT), Lion, Lion Die Count, Guoyu FRD, and CP Cockpit.
 echo.
 
 set "PYTHON_EXE="
@@ -227,7 +227,7 @@ export CP_LOG_DIR="${CP_LOG_DIR:-$CP_DATA_ROOT/logs}"
 export CP_CONFIG_DIR="${CP_CONFIG_DIR:-$CP_DATA_ROOT/config}"
 
 echo "Starting CP Data Analysis Tool - GUI + CP Cockpit Frontend Release..."
-echo "Supporting HuaHong(HH), JeTech(JT), Lion, Guoyu FRD, and CP Cockpit."
+echo "Supporting HuaHong(HH), JeTech(JT), Lion, Lion Die Count, Guoyu FRD, and CP Cockpit."
 echo
 
 PYTHON_EXE=""
@@ -504,7 +504,8 @@ def copy_release_assets() -> None:
 
 ## 数据输入
 
-- 华虹、Jetech、Lion、国宇FRD统一使用一个“选择数据源”入口。
+- 华虹、Jetech、Lion CP、国宇FRD统一使用一个“选择数据源”入口。
+- `lion-管芯数` 选择一个月度数据目录，递归生成四列 `Lion_管芯数.xlsx`。
 - 同一窗口支持选择一个数据文件夹，或按Ctrl/Shift选择一个或多个压缩文件；程序自动判断来源类型。
 - 华虹支持ZIP和7z；Jetech、Lion、国宇FRD支持ZIP。
 - 为避免重复处理，不允许文件夹与压缩文件混选，也不允许一次选择多个文件夹。

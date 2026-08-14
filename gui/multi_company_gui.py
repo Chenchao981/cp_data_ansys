@@ -142,11 +142,15 @@ class MultiCompanyCPDataGUI(QMainWindow):
         self.hh_button = self.create_nav_button("🏢 HuaHong", "huahong", True)
         self.jt_button = self.create_nav_button("🏭 JeTech", "jetech", False)
         self.lion_button = self.create_nav_button("🦁 Lion", "lion", False)
+        self.lion_die_count_button = self.create_nav_button(
+            "lion-管芯数", "lion_die_count", False
+        )
         self.guoyu_button = self.create_nav_button("国宇FRD", "guoyu", False)
         
         layout.addWidget(self.hh_button)
         layout.addWidget(self.jt_button)
         layout.addWidget(self.lion_button)
+        layout.addWidget(self.lion_die_count_button)
         layout.addWidget(self.guoyu_button)
 
         # 添加弹性空间
@@ -210,6 +214,9 @@ class MultiCompanyCPDataGUI(QMainWindow):
             from gui.widgets.lion_widget import LionWidget
             lion_widget = LionWidget()
 
+            from gui.widgets.lion_die_count_widget import LionDieCountWidget
+            lion_die_count_widget = LionDieCountWidget()
+
             from gui.widgets.guoyu_widget import GuoyuWidget
             guoyu_widget = GuoyuWidget()
 
@@ -220,12 +227,14 @@ class MultiCompanyCPDataGUI(QMainWindow):
             self.content_stack.addWidget(hh_widget)
             self.content_stack.addWidget(jt_widget)
             self.content_stack.addWidget(lion_widget)
+            self.content_stack.addWidget(lion_die_count_widget)
             self.content_stack.addWidget(guoyu_widget)
             
             # 存储组件引用
             self.company_widgets["huahong"] = hh_widget
             self.company_widgets["jetech"] = jt_widget
             self.company_widgets["lion"] = lion_widget
+            self.company_widgets["lion_die_count"] = lion_die_count_widget
             self.company_widgets["guoyu"] = guoyu_widget
             
             # 默认显示HuaHong界面
@@ -261,6 +270,13 @@ class MultiCompanyCPDataGUI(QMainWindow):
             lion_label.setProperty("role", "placeholder")
             lion_layout.addWidget(lion_label)
 
+            lion_die_count_placeholder = QWidget()
+            lion_die_count_layout = QVBoxLayout(lion_die_count_placeholder)
+            lion_die_count_label = QLabel("lion-管芯数界面\n（组件加载失败）")
+            lion_die_count_label.setAlignment(Qt.AlignCenter)
+            lion_die_count_label.setProperty("role", "placeholder")
+            lion_die_count_layout.addWidget(lion_die_count_label)
+
             guoyu_placeholder = QWidget()
             guoyu_layout = QVBoxLayout(guoyu_placeholder)
             guoyu_label = QLabel("国宇FRD界面\n（组件加载失败）")
@@ -272,12 +288,14 @@ class MultiCompanyCPDataGUI(QMainWindow):
             self.content_stack.addWidget(hh_placeholder)
             self.content_stack.addWidget(jt_placeholder)
             self.content_stack.addWidget(lion_placeholder)
+            self.content_stack.addWidget(lion_die_count_placeholder)
             self.content_stack.addWidget(guoyu_placeholder)
             
             # 存储组件引用
             self.company_widgets["huahong"] = hh_placeholder
             self.company_widgets["jetech"] = jt_placeholder
             self.company_widgets["lion"] = lion_placeholder
+            self.company_widgets["lion_die_count"] = lion_die_count_placeholder
             self.company_widgets["guoyu"] = guoyu_placeholder
             
             # 默认显示HuaHong界面
@@ -340,6 +358,7 @@ class MultiCompanyCPDataGUI(QMainWindow):
             "huahong": "HuaHong",
             "jetech": "JeTech", 
             "lion": "Lion",
+            "lion_die_count": "lion-管芯数",
             "guoyu": "国宇FRD"
         }
         company_name = company_name_map.get(company_id, company_id)
@@ -366,6 +385,12 @@ class MultiCompanyCPDataGUI(QMainWindow):
         is_lion_selected = self.current_company == "lion"
         self.lion_button.setChecked(is_lion_selected)
         self.update_button_style(self.lion_button, is_lion_selected)
+
+        is_lion_die_count_selected = self.current_company == "lion_die_count"
+        self.lion_die_count_button.setChecked(is_lion_die_count_selected)
+        self.update_button_style(
+            self.lion_die_count_button, is_lion_die_count_selected
+        )
 
         is_guoyu_selected = self.current_company == "guoyu"
         self.guoyu_button.setChecked(is_guoyu_selected)
