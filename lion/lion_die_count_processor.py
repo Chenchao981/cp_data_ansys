@@ -1,10 +1,10 @@
 """Lion wafer-level Good Die report cleaner.
 
-This module handles the small ``WAFER PROBE FAIL COUNTER REPORT`` workbooks
-used for monthly die-count consolidation.  It is intentionally separate from
-the existing Lion CP die-level V1/V2 pipelines because its output is a
-five-column business summary rather than the standard cleaned/yield/spec CSV
-contract.
+This module handles the approved ``WAFER PROBE FAIL COUNTER REPORT`` and
+LCD235 workbooks used for monthly die-count consolidation.  It is
+intentionally separate from the existing Lion CP die-level V1/V2 pipelines
+because its output is a five-column business summary rather than the standard
+cleaned/yield/spec CSV contract.
 """
 
 from __future__ import annotations
@@ -21,6 +21,49 @@ from cp_data_processor.processing.output_naming import create_output_run_dir
 
 OUTPUT_COLUMNS = ("NCE品名", "LOT", "Wafer", "PASS", "Good Die")
 REPORT_MARKER = "WAFER PROBE FAIL COUNTER REPORT"
+LCD235_TITLE_MARKER = "杭州立昂微电子MOSFET出货报告单"
+LCD235_APPROVED_HEADERS = (
+    "",
+    "型号",
+    "批号",
+    "片号",
+    "测试良率",
+    "CP合格管芯数",
+    "QAD补点数",
+    "QAD良率",
+    "IGSSF_5",
+    "IGSSF_20",
+    "IGSSR_20",
+    "IGSSF_30",
+    "IGSSR_30",
+    "IGSSF_40",
+    "IGSSR_40",
+    "VTH1",
+    "IDSS_1500",
+    "HBVDSS1-100uA",
+    "HBVDSS2-250uA",
+    "HBVDSS3-1mA",
+    "HBVDSS4-50uA",
+    "HBVDSS5-250uA",
+    "VTH2",
+    "DVR_BVDSS2",
+    "DVR_BVDSS3",
+    "DVR_BVDSS4",
+    "DVR_BVDSS5",
+    "RDSON",
+    "VFSD",
+    "IDSS_1200",
+    "IDSS_50",
+    "IDSS_1500_Retest",
+    "IGSSF_20_Retest",
+    "IGSSR_20_Retest",
+)
+LCD235_SUMMARY_HEADERS = (
+    "总片数",
+    "CP合格管芯总数",
+    "合格管芯总数",
+    "QAD平均良率",
+)
 
 
 class LionDieCountError(ValueError):
@@ -39,6 +82,10 @@ class LionDieCountRecord:
 
 def _text(value: object) -> str:
     return "" if value is None else str(value).strip()
+
+
+def _normalized_text(value: object) -> str:
+    return "".join(_text(value).split())
 
 
 def discover_workbooks(input_dir: str | Path) -> tuple[list[Path], list[Path]]:
@@ -98,24 +145,10 @@ def _as_non_negative_integer(value: object, field: str, source_file: Path, row_n
     return integer
 
 
-def read_workbook(source_file: str | Path) -> list[LionDieCountRecord]:
-    """Read one approved Lion die-count workbook and reconcile its summary."""
-
-    source = Path(source_file)
-    try:
-        workbook = load_workbook(source, read_only=True, data_only=True)
-    except Exception as exc:
-        raise LionDieCountError(f"无法读取 {source.name}: {exc}") from exc
-
-    try:
-        if workbook.sheetnames != ["Sheet"]:
-            raise LionDieCountError(
-                f"{source.name}: Sheet 结构不受支持: {workbook.sheetnames}"
-            )
-        worksheet = workbook["Sheet"]
-        rows = list(worksheet.iter_rows(values_only=True))
-    finally:
-        workbook.close()
+def _read_probe_counter_rows(
+    source: Path, rows: list[tuple[object, ...]]
+) -> list[LionDieCountRecord]:
+    """Read the approved ``WAFER PROBE FAIL COUNTER REPORT`` format."""
 
     if len(rows) < 4:
         raise LionDieCountError(f"{source.name}: 文件行数不足")
@@ -212,6 +245,178 @@ def read_workbook(source_file: str | Path) -> list[LionDieCountRecord]:
     if len(wafer_ids) != len(set(wafer_ids)):
         raise LionDieCountError(f"{source.name}: 存在重复 WAFER#")
     return records
+
+
+def _read_lcd235_rows(
+    source: Path, rows: list[tuple[object, ...]]
+) -> list[LionDieCountRecord]:
+    """Read the approved LCD235 report format and reconcile its summary."""
+
+    if len(rows) < 10:
+        raise LionDieCountError(f"{source.name}: LCD235 文件行数不足")
+    if not any(
+        LCD235_TITLE_MARKER in _normalized_text(value)
+        for row in rows[:5]
+        for value in row
+    ):
+        raise LionDieCountError(f"{source.name}: 未找到 LCD235 报告标识")
+
+    header_matches: list[int] = []
+    for index, row in enumerate(rows):
+        normalized = tuple(_normalized_text(value) for value in row)
+        if normalized == LCD235_APPROVED_HEADERS:
+            header_matches.append(index)
+    if len(header_matches) != 1:
+        raise LionDieCountError(
+            f"{source.name}: LCD235 34列表头应唯一匹配已批准顺序，实际 {len(header_matches)} 个"
+        )
+
+    header_index = header_matches[0]
+    header = LCD235_APPROVED_HEADERS
+    product_index = header.index("型号")
+    lot_index = header.index("批号")
+    wafer_index = header.index("片号")
+    pass_index = header.index("CP合格管芯数")
+    qad_index = header.index("QAD补点数")
+
+    summary_matches = [
+        index
+        for index, row in enumerate(rows[header_index + 1 :], start=header_index + 1)
+        if _normalized_text(row[product_index] if product_index < len(row) else None)
+        == "摘要"
+    ]
+    if len(summary_matches) != 1:
+        raise LionDieCountError(
+            f"{source.name}: LCD235 应唯一找到摘要行，实际 {len(summary_matches)} 个"
+        )
+    summary_index = summary_matches[0]
+    if summary_index + 2 >= len(rows):
+        raise LionDieCountError(f"{source.name}: LCD235 摘要后缺少汇总数据")
+
+    summary_header = rows[summary_index + 1]
+    normalized_summary = tuple(
+        _normalized_text(value) for value in summary_header[4:8]
+    )
+    if normalized_summary != LCD235_SUMMARY_HEADERS:
+        raise LionDieCountError(
+            f"{source.name}: LCD235 汇总表头与已批准格式不一致"
+        )
+
+    records: list[LionDieCountRecord] = []
+    expected_product: str | None = None
+    expected_lot: str | None = None
+    data_start_index = header_index + 3
+    for zero_based_index, row in enumerate(
+        rows[data_start_index:summary_index], start=data_start_index
+    ):
+        row_no = zero_based_index + 1
+        if not any(_text(value) for value in row):
+            continue
+        product = _text(row[product_index] if product_index < len(row) else None)
+        lot_id = _text(row[lot_index] if lot_index < len(row) else None)
+        if not product or not lot_id:
+            raise LionDieCountError(
+                f"{source.name}: 第{row_no}行缺少型号或批号"
+            )
+        if source.stem != lot_id:
+            raise LionDieCountError(
+                f"{source.name}: 第{row_no}行批号={lot_id} 与文件名不一致"
+            )
+        if expected_product is None:
+            expected_product = product
+            expected_lot = lot_id
+        if product != expected_product or lot_id != expected_lot:
+            raise LionDieCountError(
+                f"{source.name}: 第{row_no}行型号/批号与本文件其他 Wafer 不一致"
+            )
+
+        wafer_id = _as_non_negative_integer(
+            row[wafer_index] if wafer_index < len(row) else None,
+            "片号",
+            source,
+            row_no,
+        )
+        pass_count = _as_non_negative_integer(
+            row[pass_index] if pass_index < len(row) else None,
+            "CP合格管芯数",
+            source,
+            row_no,
+        )
+        qad_count = _as_non_negative_integer(
+            row[qad_index] if qad_index < len(row) else None,
+            "QAD补点数",
+            source,
+            row_no,
+        )
+        if wafer_id <= 0:
+            raise LionDieCountError(f"{source.name}: 第{row_no}行片号必须大于0")
+        good_die = pass_count - qad_count
+        if good_die < 0:
+            raise LionDieCountError(
+                f"{source.name}: 第{row_no}行 QAD补点数={qad_count} 大于 CP合格管芯数={pass_count}"
+            )
+        records.append(
+            LionDieCountRecord(
+                product, lot_id, wafer_id, pass_count, good_die, source
+            )
+        )
+
+    if not records:
+        raise LionDieCountError(f"{source.name}: LCD235 未找到 Wafer 数据行")
+    wafer_ids = [record.wafer_id for record in records]
+    if len(wafer_ids) != len(set(wafer_ids)):
+        raise LionDieCountError(f"{source.name}: LCD235 存在重复片号")
+
+    summary_row_no = summary_index + 3
+    summary_row = rows[summary_index + 2]
+    summary_wafer_count = _as_non_negative_integer(
+        summary_row[4], "汇总总片数", source, summary_row_no
+    )
+    summary_pass = _as_non_negative_integer(
+        summary_row[5], "汇总CP合格管芯总数", source, summary_row_no
+    )
+    summary_good_die = _as_non_negative_integer(
+        summary_row[6], "汇总合格管芯总数", source, summary_row_no
+    )
+    actual_pass = sum(record.pass_count for record in records)
+    actual_good_die = sum(record.good_die for record in records)
+    if summary_wafer_count != len(records):
+        raise LionDieCountError(
+            f"{source.name}: 汇总总片数={summary_wafer_count}，明细行数={len(records)}"
+        )
+    if summary_pass != actual_pass:
+        raise LionDieCountError(
+            f"{source.name}: 汇总CP合格管芯总数={summary_pass}，明细合计={actual_pass}"
+        )
+    if summary_good_die != actual_good_die:
+        raise LionDieCountError(
+            f"{source.name}: 汇总合格管芯总数={summary_good_die}，明细计算={actual_good_die}"
+        )
+    return records
+
+
+def read_workbook(source_file: str | Path) -> list[LionDieCountRecord]:
+    """Read one approved Lion die-count workbook and dispatch by exact format."""
+
+    source = Path(source_file)
+    try:
+        workbook = load_workbook(source, read_only=True, data_only=True)
+    except Exception as exc:
+        raise LionDieCountError(f"无法读取 {source.name}: {exc}") from exc
+
+    try:
+        sheet_names = workbook.sheetnames
+        if sheet_names == ["Sheet"]:
+            rows = list(workbook["Sheet"].iter_rows(values_only=True))
+            return _read_probe_counter_rows(source, rows)
+        if sheet_names == ["Sheet1"]:
+            rows = list(workbook["Sheet1"].iter_rows(values_only=True))
+            return _read_lcd235_rows(source, rows)
+        raise LionDieCountError(
+            f"{source.name}: Sheet 结构不受支持: {sheet_names}"
+        )
+    finally:
+        workbook.close()
 
 
 def write_output(records: list[LionDieCountRecord], output_file: str | Path) -> Path:

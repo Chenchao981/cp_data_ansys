@@ -111,7 +111,7 @@ class LionDieCountWidget(QWidget):
         main_layout.addWidget(title_label)
 
         description = QLabel(
-            "递归读取目录内 Lion .xlsx 报表，汇总为 NCE品名、LOT、Wafer、PASS、Good Die（源 DIE）。"
+            "递归识别两种已验收 Lion .xlsx 报表，统一汇总 NCE品名、LOT、Wafer、PASS、Good Die。"
         )
         description.setAlignment(Qt.AlignCenter)
         description.setWordWrap(True)

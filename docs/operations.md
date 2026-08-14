@@ -43,7 +43,7 @@ packaging/release/start.sh --check
 - yield 的 Good die、Gross die 和 Yield 合理
 - spec 的单位和上下限完整
 - HTML 可离线打开，图表参数数量合理
-- `lion-管芯数` 输出列为 `NCE品名 / LOT / Wafer / PASS / Good Die`，其中 `Good Die` 来自源报表 `DIE`，行数与源报表 Wafer 数一致
+- `lion-管芯数` 输出列为 `NCE品名 / LOT / Wafer / PASS / Good Die`；格式 1 的 `Good Die` 来自 `DIE`，LCD235 的 `Good Die = CP合格管芯数 - QAD补点数`，行数与源报表 Wafer 数一致
 
 ## 3. 常见问题
 

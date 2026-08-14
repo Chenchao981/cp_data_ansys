@@ -63,6 +63,8 @@ Lion 支持包含 `.xls` / `.xlsx` 的批次目录、单个 ZIP、多个 ZIP 或
 
 选择一个月度目录，目录下可包含多个产品子目录和 `.xlsx` 文件。程序从第 2 行 `DEVICE=` / `LOT#=` 及报表 `WAFER#` / `PASS` / `DIE` 生成 `Lion_管芯数.xlsx`，固定五列为 `NCE品名`、`LOT`、`Wafer`、`PASS`、`Good Die`，其中 `Good Die` 取源文件 `DIE`。每个源文件的 Wafer 数、PASS 合计和 DIE 合计必须与 `SUMMARY` 对上，否则整次处理停止并显示错误。
 
+LCD235 第二种格式使用同一页面和输出列：`型号 → NCE品名`、`批号 → LOT`、`片号 → Wafer`、`CP合格管芯数 → PASS`、`CP合格管芯数 - QAD补点数 → Good Die`。程序只接受已验收的 34 列有序表头，并对账摘要中的三个汇总值。
+
 #### 国宇FRD数据格式
 
 支持单批次和包含 EDS 子目录的多层多批次目录：
