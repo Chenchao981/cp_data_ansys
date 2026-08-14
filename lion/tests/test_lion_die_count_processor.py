@@ -16,8 +16,9 @@ def make_source(
     *,
     product="NCELFR140EB20BA",
     lot_id="F26240105",
-    rows=((9, 883), (10, 977)),
+    rows=((9, 900, 883), (10, 990, 977)),
     summary_pass=None,
+    summary_die=None,
 ):
     path.parent.mkdir(parents=True, exist_ok=True)
     workbook = Workbook()
@@ -26,14 +27,31 @@ def make_source(
     worksheet.append(["2026-06-01", None, None, None, f"{lot_id}.{product}"])
     worksheet.append([f"LOT#={lot_id}", None, None, None, "TESTFILE=F.pgs", None, None, None, f"DEVICE={product}"])
     worksheet.append(["WAFER PROBE FAIL COUNTER REPORT"])
-    worksheet.append(["WAFER#", "#2", "PASS", "PASS%", "TOTAL"])
+    worksheet.append(["WAFER#", "#2", "PASS", "PASS%", "TOTAL", "DIE"])
     worksheet.append(["---------------", "------", "------"])
-    for wafer_id, good_die in rows:
-        worksheet.append([str(wafer_id), "0", str(good_die), "99%", str(good_die)])
-    worksheet.append(["SUMMARY", "#2", "PASS", "PASS%", "TOTAL"])
+    for wafer_id, pass_count, good_die in rows:
+        worksheet.append(
+            [str(wafer_id), "0", str(pass_count), "99%", str(pass_count), str(good_die)]
+        )
+    worksheet.append(["SUMMARY", "#2", "PASS", "PASS%", "TOTAL", "DIE"])
     worksheet.append(["---------------", "------", "------"])
     worksheet.append(
-        [str(len(rows)), "0", str(sum(value for _, value in rows) if summary_pass is None else summary_pass)]
+        [
+            str(len(rows)),
+            "0",
+            str(
+                sum(pass_count for _, pass_count, _ in rows)
+                if summary_pass is None
+                else summary_pass
+            ),
+            None,
+            None,
+            str(
+                sum(good_die for _, _, good_die in rows)
+                if summary_die is None
+                else summary_die
+            ),
+        ]
     )
     workbook.save(path)
     workbook.close()
@@ -46,7 +64,7 @@ def test_recursive_monthly_cleaning_writes_exact_contract(tmp_path):
         input_dir / "F0200A1" / "F26240106.xlsx",
         product="NCELFR75EV40AA",
         lot_id="F26240106",
-        rows=((1, 1000),),
+        rows=((1, 1010, 1000),),
     )
     (input_dir / "F0100A1" / "~$F26240105.xlsx").touch()
 
@@ -66,9 +84,9 @@ def test_recursive_monthly_cleaning_writes_exact_contract(tmp_path):
     workbook.close()
     assert rows[0] == OUTPUT_COLUMNS
     assert rows[1:] == [
-        ("NCELFR140EB20BA", "F26240105", 9, 883),
-        ("NCELFR140EB20BA", "F26240105", 10, 977),
-        ("NCELFR75EV40AA", "F26240106", 1, 1000),
+        ("NCELFR140EB20BA", "F26240105", 9, 900, 883),
+        ("NCELFR140EB20BA", "F26240105", 10, 990, 977),
+        ("NCELFR75EV40AA", "F26240106", 1, 1010, 1000),
     ]
     assert any("已忽略 1 个 Excel 临时锁文件" in message for message in messages)
 
@@ -78,6 +96,14 @@ def test_summary_pass_mismatch_fails_closed(tmp_path):
     make_source(source, summary_pass=1)
 
     with pytest.raises(LionDieCountError, match="SUMMARY PASS"):
+        read_workbook(source)
+
+
+def test_summary_die_mismatch_fails_closed(tmp_path):
+    source = tmp_path / "F26240105.xlsx"
+    make_source(source, summary_die=1)
+
+    with pytest.raises(LionDieCountError, match="SUMMARY DIE"):
         read_workbook(source)
 
 

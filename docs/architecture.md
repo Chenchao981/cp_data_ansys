@@ -88,7 +88,7 @@ GUI 支持 Excel 文件夹、单个/多个 ZIP 和只包含 ZIP 的文件夹。Z
 
 GUI 支持 Excel 文件夹、单个/多个 ZIP 和只包含 ZIP 的文件夹。准备完成后由 `lion_batch_processor` 发现批次，并按工作簿内容严格分派：成熟 V1 继续使用 `LionExcelReader`；格式 2 使用独立 `LionV2Reader` / `LionV2Adapter`，要求 OLE `.xls`、精确的 `Summary information` / `Statistics Information` / `DUT_DATA` Sheet 集和已批准的有序参数 schema。当前格式 2 注册了原 15 参数 schema 与产品 F0122A1 的 14 参数 schema；并未放宽为任意参数数量。未知、歧义或同一次运行混合版本会 fail closed。两种格式均合并输出 cleaned/yield，并保留每行原始 `Lot_ID`；格式 2 如多 Lot 规格不同，则在同一运行目录按 Lot 输出原有横向 spec，禁止采用第一片覆盖。CP Cockpit 检测到多份 spec 时按用户选择的 Lot 同步隔离 cleaned、yield 和规格。
 
-`lion-管芯数` 为独立的 Wafer 级汇总流程，由 `lion/lion_die_count_processor.py` 递归发现 `.xlsx`，校验单 Sheet 格式、`WAFER PROBE FAIL COUNTER REPORT` 标识、第 2 行唯一 `DEVICE=` / `LOT#=`、文件名与 Lot 一致、`WAFER#` / `PASS` 整数以及 `SUMMARY` 对账。它输出四列 Excel 业务表，不经过 `CPLot` 和标准 CSV/图表层，因此不会影响 Lion CP V1/V2 数据契约。
+`lion-管芯数` 为独立的 Wafer 级汇总流程，由 `lion/lion_die_count_processor.py` 递归发现 `.xlsx`，校验单 Sheet 格式、`WAFER PROBE FAIL COUNTER REPORT` 标识、第 2 行唯一 `DEVICE=` / `LOT#=`、文件名与 Lot 一致、`WAFER#` / `PASS` / `DIE` 整数以及 `SUMMARY` 对账。它输出五列 Excel 业务表，`PASS` 保留 CP Pass 数，`Good Die` 严格取源文件 `DIE`；不经过 `CPLot` 和标准 CSV/图表层，因此不会影响 Lion CP V1/V2 数据契约。
 
 ### 扬州国宇 FRD
 

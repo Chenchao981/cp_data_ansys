@@ -115,9 +115,10 @@ Lion 格式 2 明确使用 `pass_bin=1`，保留所有整数 Fail Bin 且不重�
 | `NCE品名` | 第 2 行 `DEVICE=` | 取等号后的非空字符串 |
 | `LOT` | 第 2 行 `LOT#=` | 取等号后的非空字符串，并要求与文件名一致 |
 | `Wafer` | `WAFER#` | 大于 0 的整数 |
-| `Good Die` | `PASS` | 非负整数 |
+| `PASS` | `PASS` | CP Pass 数，非负整数 |
+| `Good Die` | `DIE` | 管芯数，非负整数；不用 `PASS` 代替 |
 
-处理器递归读取 `.xlsx`，忽略 Excel `~$` 临时锁文件，未知 Sheet/缺字段/重复“NCE品名+LOT+Wafer”均 fail closed。每个文件的 Wafer 行数和 `PASS` 合计必须与 `SUMMARY` 一致。输出文件为 `Lion_管芯数.xlsx`，置于“首个真实 Lot_YYYYMMDD_HHMMSS”运行目录。
+处理器递归读取 `.xlsx`，忽略 Excel `~$` 临时锁文件，未知 Sheet/缺字段/重复“NCE品名+LOT+Wafer”均 fail closed。每个文件的 Wafer 行数、`PASS` 合计和 `DIE` 合计必须同时与 `SUMMARY` 一致。输出文件为 `Lion_管芯数.xlsx`，置于“首个真实 Lot_YYYYMMDD_HHMMSS”运行目录。
 
 ## 7. 契约变更规则
 

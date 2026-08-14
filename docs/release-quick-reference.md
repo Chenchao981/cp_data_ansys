@@ -61,7 +61,7 @@ Lion 支持包含 `.xls` / `.xlsx` 的批次目录、单个 ZIP、多个 ZIP 或
 
 #### lion-管芯数格式
 
-选择一个月度目录，目录下可包含多个产品子目录和 `.xlsx` 文件。程序从第 2 行 `DEVICE=` / `LOT#=` 及报表 `WAFER#` / `PASS` 生成 `Lion_管芯数.xlsx`，固定四列为 `NCE品名`、`LOT`、`Wafer`、`Good Die`。每个源文件的 Wafer 数和 PASS 合计必须与 `SUMMARY` 对上，否则整次处理停止并显示错误。
+选择一个月度目录，目录下可包含多个产品子目录和 `.xlsx` 文件。程序从第 2 行 `DEVICE=` / `LOT#=` 及报表 `WAFER#` / `PASS` / `DIE` 生成 `Lion_管芯数.xlsx`，固定五列为 `NCE品名`、`LOT`、`Wafer`、`PASS`、`Good Die`，其中 `Good Die` 取源文件 `DIE`。每个源文件的 Wafer 数、PASS 合计和 DIE 合计必须与 `SUMMARY` 对上，否则整次处理停止并显示错误。
 
 #### 国宇FRD数据格式
 

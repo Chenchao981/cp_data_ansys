@@ -3,7 +3,7 @@
 This module handles the small ``WAFER PROBE FAIL COUNTER REPORT`` workbooks
 used for monthly die-count consolidation.  It is intentionally separate from
 the existing Lion CP die-level V1/V2 pipelines because its output is a
-four-column business summary rather than the standard cleaned/yield/spec CSV
+five-column business summary rather than the standard cleaned/yield/spec CSV
 contract.
 """
 
@@ -19,7 +19,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from cp_data_processor.processing.output_naming import create_output_run_dir
 
 
-OUTPUT_COLUMNS = ("NCE品名", "LOT", "Wafer", "Good Die")
+OUTPUT_COLUMNS = ("NCE品名", "LOT", "Wafer", "PASS", "Good Die")
 REPORT_MARKER = "WAFER PROBE FAIL COUNTER REPORT"
 
 
@@ -32,6 +32,7 @@ class LionDieCountRecord:
     product: str
     lot_id: str
     wafer_id: int
+    pass_count: int
     good_die: int
     source_file: Path
 
@@ -130,16 +131,17 @@ def read_workbook(source_file: str | Path) -> list[LionDieCountRecord]:
     header_matches: list[tuple[int, list[str]]] = []
     for index, row in enumerate(rows):
         normalized = [_text(value).upper() for value in row]
-        if "WAFER#" in normalized and "PASS" in normalized:
+        if "WAFER#" in normalized and "PASS" in normalized and "DIE" in normalized:
             header_matches.append((index, normalized))
     if len(header_matches) != 1:
         raise LionDieCountError(
-            f"{source.name}: 应唯一找到包含 WAFER# 和 PASS 的表头，实际 {len(header_matches)} 个"
+            f"{source.name}: 应唯一找到包含 WAFER#、PASS 和 DIE 的表头，实际 {len(header_matches)} 个"
         )
 
     header_index, header = header_matches[0]
     wafer_index = header.index("WAFER#")
     pass_index = header.index("PASS")
+    die_index = header.index("DIE")
     records: list[LionDieCountRecord] = []
     summary_index: int | None = None
 
@@ -152,13 +154,19 @@ def read_workbook(source_file: str | Path) -> list[LionDieCountRecord]:
         if not wafer_text or set(wafer_text) <= {"-"}:
             continue
         pass_value = row[pass_index] if pass_index < len(row) else None
+        die_value = row[die_index] if die_index < len(row) else None
         wafer_id = _as_non_negative_integer(wafer_value, "WAFER#", source, row_index)
-        good_die = _as_non_negative_integer(pass_value, "PASS", source, row_index)
+        pass_count = _as_non_negative_integer(pass_value, "PASS", source, row_index)
+        good_die = _as_non_negative_integer(die_value, "DIE", source, row_index)
         if wafer_id <= 0:
             raise LionDieCountError(
                 f"{source.name}: 第{row_index}行 WAFER# 必须大于0"
             )
-        records.append(LionDieCountRecord(product, lot_id, wafer_id, good_die, source))
+        records.append(
+            LionDieCountRecord(
+                product, lot_id, wafer_id, pass_count, good_die, source
+            )
+        )
 
     if not records:
         raise LionDieCountError(f"{source.name}: 未找到 Wafer 数据行")
@@ -179,17 +187,25 @@ def read_workbook(source_file: str | Path) -> list[LionDieCountRecord]:
     summary_wafer_count = _as_non_negative_integer(
         summary_row[wafer_index], "SUMMARY WAFER#", source, summary_row_no
     )
-    summary_good_die = _as_non_negative_integer(
+    summary_pass = _as_non_negative_integer(
         summary_row[pass_index], "SUMMARY PASS", source, summary_row_no
+    )
+    summary_good_die = _as_non_negative_integer(
+        summary_row[die_index], "SUMMARY DIE", source, summary_row_no
     )
     if summary_wafer_count != len(records):
         raise LionDieCountError(
             f"{source.name}: SUMMARY Wafer数={summary_wafer_count}，明细行数={len(records)}"
         )
+    actual_pass = sum(record.pass_count for record in records)
+    if summary_pass != actual_pass:
+        raise LionDieCountError(
+            f"{source.name}: SUMMARY PASS={summary_pass}，明细合计={actual_pass}"
+        )
     actual_good_die = sum(record.good_die for record in records)
     if summary_good_die != actual_good_die:
         raise LionDieCountError(
-            f"{source.name}: SUMMARY PASS={summary_good_die}，明细合计={actual_good_die}"
+            f"{source.name}: SUMMARY DIE={summary_good_die}，明细合计={actual_good_die}"
         )
 
     wafer_ids = [record.wafer_id for record in records]
@@ -199,7 +215,7 @@ def read_workbook(source_file: str | Path) -> list[LionDieCountRecord]:
 
 
 def write_output(records: list[LionDieCountRecord], output_file: str | Path) -> Path:
-    """Write the exact four-column business workbook shown in the requirement."""
+    """Write the exact five-column business workbook shown in the requirement."""
 
     target = Path(output_file)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -209,7 +225,13 @@ def write_output(records: list[LionDieCountRecord], output_file: str | Path) -> 
     worksheet.append(OUTPUT_COLUMNS)
     for record in records:
         worksheet.append(
-            (record.product, record.lot_id, record.wafer_id, record.good_die)
+            (
+                record.product,
+                record.lot_id,
+                record.wafer_id,
+                record.pass_count,
+                record.good_die,
+            )
         )
 
     header_fill = PatternFill("solid", fgColor="D9EAF7")
@@ -230,6 +252,7 @@ def write_output(records: list[LionDieCountRecord], output_file: str | Path) -> 
     worksheet.column_dimensions["B"].width = 18
     worksheet.column_dimensions["C"].width = 12
     worksheet.column_dimensions["D"].width = 14
+    worksheet.column_dimensions["E"].width = 14
     workbook.save(target)
     workbook.close()
     return target

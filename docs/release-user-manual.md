@@ -93,7 +93,7 @@
    - 不同公司支持不同的数据格式：
      - **华虹(HH)**: 支持 `.txt`、`.dcp`
      - **捷泰(JT)**、**Lion**、**国宇FRD**: 支持 `.xls`、`.xlsx`
-     - **lion-管芯数**: 选择月度目录，递归处理 `.xlsx`，输出 `NCE品名 / LOT / Wafer / Good Die`
+     - **lion-管芯数**: 选择月度目录，递归处理 `.xlsx`，输出 `NCE品名 / LOT / Wafer / PASS / Good Die`，`Good Die` 取源文件 `DIE`
    - 华虹支持原始文件夹、单个或多个 ZIP/7z；其他三家支持文件夹和 ZIP
 
 2. **选择数据来源** 📁

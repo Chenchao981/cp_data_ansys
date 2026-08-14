@@ -111,7 +111,7 @@ class LionDieCountWidget(QWidget):
         main_layout.addWidget(title_label)
 
         description = QLabel(
-            "递归读取目录内 Lion .xlsx 报表，汇总为 NCE品名、LOT、Wafer、Good Die。"
+            "递归读取目录内 Lion .xlsx 报表，汇总为 NCE品名、LOT、Wafer、PASS、Good Die（源 DIE）。"
         )
         description.setAlignment(Qt.AlignCenter)
         description.setWordWrap(True)
@@ -266,4 +266,3 @@ class LionDieCountWidget(QWidget):
         scrollbar = self.status_text.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
         logger.info("Lion管芯数界面: %s", message)
-
