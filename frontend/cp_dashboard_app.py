@@ -14,6 +14,7 @@ from __future__ import annotations
 import math
 import os
 import sys
+from io import BytesIO
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
@@ -36,6 +37,12 @@ from frontend.charts.wafer_mapping import (
     wafer_mapping_grid,
     wafer_mapping_wafer_keys,
     wafer_mapping_summary,
+)
+from frontend.cockpit_artifact import (
+    CockpitArtifactError,
+    build_cockpit_artifact,
+    read_cockpit_artifact,
+    sources_from_paths,
 )
 
 
@@ -303,6 +310,17 @@ def read_csv_safely(path: Optional[Path]) -> Optional[pd.DataFrame]:
     return pd.read_csv(path)
 
 
+def read_csv_bytes_safely(content: bytes) -> pd.DataFrame:
+    """Read an artifact CSV using the same encoding policy as directory data."""
+
+    for encoding in ("utf-8-sig", "utf-8", "gbk"):
+        try:
+            return pd.read_csv(BytesIO(content), encoding=encoding)
+        except UnicodeDecodeError:
+            continue
+    return pd.read_csv(BytesIO(content))
+
+
 @st.cache_data(show_spinner=False)
 def load_standard_dataset(data_dir_text: str) -> StandardDataset:
     data_dir = Path(data_dir_text).expanduser()
@@ -333,6 +351,69 @@ def load_standard_dataset(data_dir_text: str) -> StandardDataset:
         spec_paths=spec_paths,
         specs=specs,
     )
+
+
+@st.cache_data(show_spinner=False)
+def load_cockpit_dataset(content: bytes, artifact_name: str) -> StandardDataset:
+    """Load a validated portable Cockpit file without extracting it to disk."""
+
+    artifact = read_cockpit_artifact(content)
+    cleaned_files = artifact.files_for_role("cleaned")
+    yield_files = artifact.files_for_role("yield")
+    spec_files = artifact.files_for_role("spec")
+    cleaned_file = cleaned_files[0] if cleaned_files else None
+    yield_file = yield_files[0] if yield_files else None
+    spec_entries = {
+        item.original_name.split("_spec_", 1)[0]: item
+        for item in spec_files
+        if "_spec_" in item.original_name
+    }
+    specs = {
+        lot_id: read_csv_bytes_safely(item.content)
+        for lot_id, item in spec_entries.items()
+    }
+    latest_spec = spec_files[-1] if spec_files else None
+    return StandardDataset(
+        data_dir=Path(artifact_name).name,
+        cleaned_path=Path(cleaned_file.original_name) if cleaned_file else None,
+        yield_path=Path(yield_file.original_name) if yield_file else None,
+        spec_path=Path(latest_spec.original_name) if latest_spec else None,
+        cleaned=read_csv_bytes_safely(cleaned_file.content) if cleaned_file else None,
+        yield_df=read_csv_bytes_safely(yield_file.content) if yield_file else None,
+        spec=read_csv_bytes_safely(latest_spec.content) if latest_spec else None,
+        spec_paths={lot_id: Path(item.original_name) for lot_id, item in spec_entries.items()},
+        specs=specs,
+    )
+
+
+@st.cache_data(show_spinner=False)
+def build_dataset_artifact(
+    cleaned_path_text: str,
+    yield_path_text: str,
+    spec_path_texts: tuple[str, ...],
+) -> bytes:
+    """Package the exact CSV files selected from an output directory."""
+
+    sources = sources_from_paths(
+        Path(cleaned_path_text) if cleaned_path_text else None,
+        Path(yield_path_text) if yield_path_text else None,
+        [Path(path) for path in spec_path_texts],
+    )
+    return build_cockpit_artifact(sources)
+
+
+def cockpit_artifact_filename(dataset: StandardDataset) -> str:
+    """Create a readable download name from the selected cleaned/yield file."""
+
+    anchor = dataset.cleaned_path or dataset.yield_path
+    base = anchor.stem if anchor else "cp_analysis"
+    for marker in ("_cleaned_", "_yield_"):
+        if marker in base:
+            prefix, suffix = base.split(marker, 1)
+            base = f"{prefix}_{suffix}"
+            break
+    safe = "".join(char if char.isalnum() or char in "-_." else "_" for char in base)
+    return f"{safe or 'cp_analysis'}.cpcockpit"
 
 
 def scope_dataset_to_lot(dataset: StandardDataset, lot_id: str) -> StandardDataset:
@@ -1129,22 +1210,73 @@ def main() -> None:
     render_hero()
 
     st.sidebar.markdown("### ⚙️ 分析表单")
+    source_mode = st.sidebar.radio(
+        "数据来源",
+        ("输出目录", "已保存的 Cockpit 文件"),
+        horizontal=True,
+        help="载入 .cpcockpit 后可直接查看，无需重新清洗。",
+    )
     default_data_dir = get_default_data_dir()
     if st.session_state.get("_default_data_dir") != default_data_dir:
         st.session_state["_default_data_dir"] = default_data_dir
         st.session_state["cp_data_dir"] = default_data_dir
-    data_dir = st.sidebar.text_input(
-        "标准 CSV 输出目录",
-        key="cp_data_dir",
-        help="目录内应包含 *_cleaned_*.csv、*_yield_*.csv、*_spec_*.csv",
-    )
+    uploaded_artifact = None
+    if source_mode == "输出目录":
+        data_dir = st.sidebar.text_input(
+            "标准 CSV 输出目录",
+            key="cp_data_dir",
+            help="目录内应包含 *_cleaned_*.csv、*_yield_*.csv、*_spec_*.csv",
+        )
+    else:
+        data_dir = ""
+        uploaded_artifact = st.sidebar.file_uploader(
+            "载入 Cockpit 文件",
+            type=["cpcockpit"],
+            help="选择此前保存的 .cpcockpit 单文件分析包。",
+        )
     pass_bin = int(st.sidebar.number_input("Pass Bin", min_value=0, max_value=999, value=1, step=1))
     max_points = int(st.sidebar.slider("单张散点图最大样本数", 1000, 50000, 8000, step=1000))
-    reload_clicked = st.sidebar.button("🔄 重新加载数据", type="primary")
-    if reload_clicked:
-        load_standard_dataset.clear()
+    if source_mode == "输出目录":
+        reload_clicked = st.sidebar.button("🔄 重新加载数据", type="primary")
+        if reload_clicked:
+            load_standard_dataset.clear()
+            build_dataset_artifact.clear()
+        dataset = load_standard_dataset(data_dir)
+        artifact_bytes = None
+        if dataset.cleaned_path is not None or dataset.yield_path is not None:
+            try:
+                artifact_bytes = build_dataset_artifact(
+                    str(dataset.cleaned_path or ""),
+                    str(dataset.yield_path or ""),
+                    tuple(str(path) for path in dataset.spec_paths.values()),
+                )
+            except (OSError, CockpitArtifactError) as exc:
+                st.sidebar.warning(f"当前数据暂时无法保存为 Cockpit 文件：{exc}")
+    else:
+        if uploaded_artifact is None:
+            st.info("请在左侧载入一个已保存的 .cpcockpit 文件。")
+            st.stop()
+        artifact_bytes = uploaded_artifact.getvalue()
+        try:
+            dataset = load_cockpit_dataset(artifact_bytes, uploaded_artifact.name)
+        except (CockpitArtifactError, OSError, UnicodeError, pd.errors.ParserError) as exc:
+            st.error(f"Cockpit 文件载入失败：{exc}")
+            st.stop()
+        st.sidebar.success(f"已载入：{uploaded_artifact.name}")
 
-    dataset = load_standard_dataset(data_dir)
+    if artifact_bytes is not None:
+        st.sidebar.download_button(
+            "💾 保存 Cockpit 文件",
+            data=artifact_bytes,
+            file_name=(
+                uploaded_artifact.name
+                if uploaded_artifact is not None
+                else cockpit_artifact_filename(dataset)
+            ),
+            mime="application/zip",
+            help="保存为单个便携文件；下次选择“已保存的 Cockpit 文件”即可直接查看。",
+            use_container_width=True,
+        )
     if len(dataset.spec_paths) > 1:
         if dataset.cleaned is None or "Lot_ID" not in dataset.cleaned.columns:
             st.error("检测到多份 spec CSV，但 cleaned CSV 缺少 Lot_ID，已停止以避免套用错误规格。")

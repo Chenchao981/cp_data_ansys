@@ -58,6 +58,19 @@ python -m gui.multi_company_main
 
 点击当前公司页面中原“生成图表”位置的 `CP Cockpit` 按钮。左侧边栏只用于切换公司。
 
+### 保存本次 Cockpit
+
+1. 确认 Cockpit 已正确载入本次输出目录。
+2. 在 Cockpit 左侧点击 `保存 Cockpit 文件`。
+3. 浏览器会下载一个 `.cpcockpit` 文件，其中包含本次 cleaned、yield 和 spec 标准数据及完整性校验清单。
+
+### 下次直接载入
+
+1. 打开任一公司页面的 `CP Cockpit`。
+2. 在左侧将“数据来源”切换为 `已保存的 Cockpit 文件`。
+3. 选择此前保存的 `.cpcockpit` 文件。
+4. 载入后可直接查看全部交互图表，不需要再次清洗原始数据。多 Lot 文件仍会要求选择参数分析 Lot，避免误用其他 Lot 的规格。
+
 适合场景：
 
 - 研发工程师想切换不同参数看分布。

@@ -526,6 +526,7 @@ def copy_release_assets() -> None:
 ## CP Cockpit
 
 清洗完成后点击公司页面中的 `CP Cockpit`，打开当前输出目录的交互分析页面。
+在 Cockpit 左侧点击 `保存 Cockpit 文件` 可下载单个 `.cpcockpit` 文件；下次把“数据来源”切换为“已保存的 Cockpit 文件”并载入，即可直接查看全部交互图表，无需重新清洗。
 
 ## 数据安全
 

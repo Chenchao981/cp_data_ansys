@@ -84,6 +84,8 @@ spec:    *_spec_*.csv    或 *spec*.csv
 
 CP Cockpit 是交互式分析界面，适合工程师边看边切换参数。
 
+Cockpit 还支持 `.cpcockpit` 便携分析文件。该文件是带版本清单的 ZIP 容器，只封装前端已经使用的标准 cleaned/yield/spec CSV，不包含厂商原始文件，也不改变测试值。清单记录每个文件的角色、原始文件名、大小和 SHA-256；载入时在内存中验证路径、版本、文件数量与完整性，不向磁盘解压。多 Lot 独立 spec 文件全部保留，载入后继续使用现有按 Lot 隔离逻辑。
+
 入口：
 
 ```powershell
