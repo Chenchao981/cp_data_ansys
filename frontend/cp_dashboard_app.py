@@ -413,7 +413,7 @@ def cockpit_artifact_filename(dataset: StandardDataset) -> str:
             base = f"{prefix}_{suffix}"
             break
     safe = "".join(char if char.isalnum() or char in "-_." else "_" for char in base)
-    return f"{safe or 'cp_analysis'}.cpcockpit"
+    return f"{safe or 'cp_analysis'}_Cockpit.zip"
 
 
 def scope_dataset_to_lot(dataset: StandardDataset, lot_id: str) -> StandardDataset:
@@ -1212,9 +1212,9 @@ def main() -> None:
     st.sidebar.markdown("### ⚙️ 分析表单")
     source_mode = st.sidebar.radio(
         "数据来源",
-        ("输出目录", "已保存的 Cockpit 文件"),
+        ("输出目录", "手动加载已保存文件"),
         horizontal=True,
-        help="载入 .cpcockpit 后可直接查看，无需重新清洗。",
+        help="手动选择此前保存的 Cockpit ZIP 压缩包，无需重新清洗。",
     )
     default_data_dir = get_default_data_dir()
     if st.session_state.get("_default_data_dir") != default_data_dir:
@@ -1230,9 +1230,9 @@ def main() -> None:
     else:
         data_dir = ""
         uploaded_artifact = st.sidebar.file_uploader(
-            "载入 Cockpit 文件",
-            type=["cpcockpit"],
-            help="选择此前保存的 .cpcockpit 单文件分析包。",
+            "手动选择图表数据压缩包",
+            type=["zip", "cpcockpit"],
+            help="选择此前保存的 Cockpit ZIP；旧版 .cpcockpit 文件也可继续载入。",
         )
     pass_bin = int(st.sidebar.number_input("Pass Bin", min_value=0, max_value=999, value=1, step=1))
     max_points = int(st.sidebar.slider("单张散点图最大样本数", 1000, 50000, 8000, step=1000))
@@ -1254,7 +1254,7 @@ def main() -> None:
                 st.sidebar.warning(f"当前数据暂时无法保存为 Cockpit 文件：{exc}")
     else:
         if uploaded_artifact is None:
-            st.info("请在左侧载入一个已保存的 .cpcockpit 文件。")
+            st.info("请在左侧点击浏览，手动选择此前保存的 Cockpit ZIP 压缩包。")
             st.stop()
         artifact_bytes = uploaded_artifact.getvalue()
         try:
@@ -1266,7 +1266,7 @@ def main() -> None:
 
     if artifact_bytes is not None:
         st.sidebar.download_button(
-            "💾 保存 Cockpit 文件",
+            "💾 保存图表数据压缩包",
             data=artifact_bytes,
             file_name=(
                 uploaded_artifact.name
@@ -1274,7 +1274,7 @@ def main() -> None:
                 else cockpit_artifact_filename(dataset)
             ),
             mime="application/zip",
-            help="保存为单个便携文件；下次选择“已保存的 Cockpit 文件”即可直接查看。",
+            help="保存为 ZIP 压缩包；下次选择“手动加载已保存文件”并浏览该 ZIP 即可直接查看。",
             use_container_width=True,
         )
     if len(dataset.spec_paths) > 1:

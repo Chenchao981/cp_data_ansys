@@ -4,8 +4,8 @@
 
 ## 当前组件
 
-- `cp_dashboard_app.py`：Streamlit 数据分析 Cockpit，读取标准 cleaned/yield/spec CSV，也可保存和载入 `.cpcockpit` 单文件分析包，适合研发、质量和工艺部门交互查看。
-- `cockpit_artifact.py`：`.cpcockpit` 便携文件的生成、完整性校验和安全载入。
+- `cp_dashboard_app.py`：Streamlit 数据分析 Cockpit，读取标准 cleaned/yield/spec CSV，也可保存 ZIP 分析压缩包并手动选择文件载入，适合研发、质量和工艺部门交互查看。
+- `cockpit_artifact.py`：Cockpit ZIP 压缩包的生成、完整性校验和安全载入。
 - `yield_analyzer_app.py`：兼容启动入口，当前转到 `cp_dashboard_app.py`。
 - `charts/yield_chart.py`：良率趋势、批次对比、失效分析。
 - `charts/boxplot_chart.py`：参数箱体图与规格对比。
@@ -31,7 +31,7 @@ streamlit run frontend/yield_analyzer_app.py
 
 多公司 PyQt GUI 在各公司页面操作区提供 `CP Cockpit` 按钮，会把当前页面的输出目录传给前端；左侧边栏只用于切换公司。
 
-进入 Cockpit 后，可在侧边栏点击 `保存 Cockpit 文件`，把本次使用的 cleaned、yield 和全部 spec CSV 保存为一个 `.cpcockpit` 文件。下次选择数据来源 `已保存的 Cockpit 文件` 并载入即可直接查看，无需重新清洗。文件内保存版本清单、原始文件名、大小和 SHA-256 校验值；多 Lot 的独立规格会一起保存并继续按 Lot 隔离。
+进入 Cockpit 后，可在侧边栏点击 `保存图表数据压缩包`，把本次使用的 cleaned、yield 和全部 spec CSV 保存为一个 ZIP 文件。下次选择数据来源 `手动加载已保存文件`，点击浏览并选择该 ZIP 即可直接查看，无需重新清洗。压缩包内保存版本清单、原始文件名、大小和 SHA-256 校验值；多 Lot 的独立规格会一起保存并继续按 Lot 隔离。旧版 `.cpcockpit` 文件仍可载入。
 
 ## Cockpit 当前包含
 

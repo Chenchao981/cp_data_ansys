@@ -15,6 +15,7 @@ from frontend.cockpit_artifact import (
     sources_from_paths,
 )
 from frontend.cp_dashboard_app import (
+    cockpit_artifact_filename,
     get_spec_info,
     load_cockpit_dataset,
     scope_dataset_to_lot,
@@ -58,11 +59,12 @@ def test_round_trip_preserves_standard_csv_and_multi_lot_specs(tmp_path) -> None
     ]
     assert artifact.files[0].content == cleaned_path.read_bytes()
 
-    dataset = load_cockpit_dataset(artifact_bytes, "saved.cpcockpit")
+    dataset = load_cockpit_dataset(artifact_bytes, "saved.zip")
     assert set(dataset.specs) == {"F10001", "F20002"}
     scoped = scope_dataset_to_lot(dataset, "F20002")
     assert scoped.cleaned["Lot_ID"].unique().tolist() == ["F20002"]
     assert get_spec_info(scoped.spec, "PARAM_A")["limit_upper"] == 2.5
+    assert cockpit_artifact_filename(dataset) == "F10001_20260817_1000_Cockpit.zip"
 
 
 def test_rejects_tampered_data() -> None:

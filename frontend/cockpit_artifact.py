@@ -1,6 +1,6 @@
 """Portable, validated CP Cockpit artifact files.
 
-The artifact is a ZIP container with a ``.cpcockpit`` extension. It stores
+The artifact is a standard ZIP container. It stores
 the standard cleaned/yield/spec CSV inputs used by the dashboard; it never
 stores or reparses vendor raw data.
 """
@@ -153,7 +153,7 @@ def read_cockpit_artifact(content: bytes) -> CockpitArtifact:
     try:
         archive = zipfile.ZipFile(io.BytesIO(content), "r")
     except (zipfile.BadZipFile, TypeError) as exc:
-        raise CockpitArtifactError("不是有效的 .cpcockpit 文件") from exc
+        raise CockpitArtifactError("不是有效的 Cockpit ZIP 压缩包") from exc
 
     with archive:
         names = archive.namelist()
