@@ -14,7 +14,6 @@ from __future__ import annotations
 import math
 import os
 import sys
-import hashlib
 from io import BytesIO
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -483,53 +482,24 @@ def render_cockpit_zip_preview(
         st.dataframe(dataset.cleaned.head(5), use_container_width=True)
 
 
-DIRECTORY_SOURCE = "输出目录"
-SAVED_FILE_SOURCE = "手动加载已保存文件"
-
-
 def open_saved_data_loader() -> None:
-    """Switch the sidebar to a fresh saved-file chooser."""
+    """Open a fresh saved-file chooser without replacing the current charts."""
 
-    st.session_state["cp_data_source_mode"] = SAVED_FILE_SOURCE
     st.session_state["_cockpit_upload_generation"] = (
         int(st.session_state.get("_cockpit_upload_generation", 0)) + 1
     )
-    st.session_state.pop("_loaded_cockpit_artifact_key", None)
+    st.session_state["_cockpit_show_load_panel"] = True
     st.session_state.pop("_cockpit_reset_notice", None)
 
 
 def reset_cockpit_state() -> None:
-    """Clear loaded data and chart-view controls like the reference reset action."""
+    """Reset only the pending ZIP selection and reopen its chooser in place."""
 
-    persistent_keys = {"_default_data_dir", "cp_data_dir"}
-    chart_keys = {
-        "cp_data_source_mode",
-        "cp_pass_bin",
-        "cp_max_points",
-        "_loaded_cockpit_artifact_key",
-        "wafer_mapping_item",
-        "wafer_mapping_display_mode",
-        "wafer_mapping_selected_wafers",
-        "zone_param",
-        "overlay_wafer",
-        "wsum_params",
-    }
-    chart_prefixes = ("wafer_mapping_columns_", "cockpit_saved_zip_")
-    for key in list(st.session_state.keys()):
-        if key in persistent_keys:
-            continue
-        if key in chart_keys or key.startswith(chart_prefixes):
-            st.session_state.pop(key, None)
-    st.session_state["cp_data_source_mode"] = SAVED_FILE_SOURCE
-    st.session_state["cp_pass_bin"] = 1
-    st.session_state["cp_max_points"] = 8000
     st.session_state["_cockpit_upload_generation"] = (
         int(st.session_state.get("_cockpit_upload_generation", 0)) + 1
     )
+    st.session_state["_cockpit_show_load_panel"] = True
     st.session_state["_cockpit_reset_notice"] = True
-    load_standard_dataset.clear()
-    load_cockpit_dataset.clear()
-    build_dataset_artifact.clear()
 
 
 def render_data_management_actions(
@@ -566,7 +536,7 @@ def render_data_management_actions(
         st.button(
             "🔄 重置",
             on_click=reset_cockpit_state,
-            help="清空当前加载的数据、图表和筛选状态。",
+            help="清空本次待加载 ZIP 的选择，并重新打开文件选择区；当前图表保持不变。",
             use_container_width=True,
         )
 
@@ -1365,32 +1335,15 @@ def main() -> None:
     render_hero()
 
     st.sidebar.markdown("### ⚙️ 分析表单")
-    source_mode = st.sidebar.radio(
-        "数据来源",
-        (DIRECTORY_SOURCE, SAVED_FILE_SOURCE),
-        horizontal=True,
-        help="手动选择此前保存的 Cockpit ZIP 压缩包，无需重新清洗。",
-        key="cp_data_source_mode",
-    )
     default_data_dir = get_default_data_dir()
     if st.session_state.get("_default_data_dir") != default_data_dir:
         st.session_state["_default_data_dir"] = default_data_dir
         st.session_state["cp_data_dir"] = default_data_dir
-    uploaded_artifact = None
-    if source_mode == DIRECTORY_SOURCE:
-        data_dir = st.sidebar.text_input(
-            "标准 CSV 输出目录",
-            key="cp_data_dir",
-            help="目录内应包含 *_cleaned_*.csv、*_yield_*.csv、*_spec_*.csv",
-        )
-    else:
-        data_dir = ""
-        uploaded_artifact = st.sidebar.file_uploader(
-            "手动选择图表数据压缩包",
-            type=["zip", "cpcockpit"],
-            help="选择此前保存的 Cockpit ZIP；旧版 .cpcockpit 文件也可继续载入。",
-            key=f"cockpit_saved_zip_{int(st.session_state.get('_cockpit_upload_generation', 0))}",
-        )
+    data_dir = st.sidebar.text_input(
+        "标准 CSV 输出目录",
+        key="cp_data_dir",
+        help="目录内应包含 *_cleaned_*.csv、*_yield_*.csv、*_spec_*.csv",
+    )
     pass_bin = int(
         st.sidebar.number_input(
             "Pass Bin",
@@ -1412,11 +1365,33 @@ def main() -> None:
         )
     )
     action_container = st.sidebar.container()
-    if source_mode == DIRECTORY_SOURCE:
-        reload_clicked = st.sidebar.button("📁 重新加载当前目录", type="primary")
-        if reload_clicked:
-            load_standard_dataset.clear()
-            build_dataset_artifact.clear()
+    reload_clicked = st.sidebar.button(
+        "📁 重新加载当前目录",
+        type="primary",
+        help="返回并重新读取上方目录的标准 CSV，不会删除保存的 ZIP 文件。",
+    )
+    if reload_clicked:
+        st.session_state.pop("_cockpit_active_artifact_bytes", None)
+        st.session_state.pop("_cockpit_active_artifact_name", None)
+        load_standard_dataset.clear()
+        build_dataset_artifact.clear()
+
+    active_artifact_bytes = st.session_state.get("_cockpit_active_artifact_bytes")
+    active_artifact_name = st.session_state.get("_cockpit_active_artifact_name")
+    if active_artifact_bytes and active_artifact_name:
+        try:
+            dataset = load_cockpit_dataset(active_artifact_bytes, active_artifact_name)
+        except (CockpitArtifactError, OSError, UnicodeError, pd.errors.ParserError) as exc:
+            st.sidebar.error(f"已加载的 Cockpit 文件无法继续使用：{exc}")
+            st.session_state.pop("_cockpit_active_artifact_bytes", None)
+            st.session_state.pop("_cockpit_active_artifact_name", None)
+            dataset = load_standard_dataset(data_dir)
+            artifact_bytes = None
+            active_artifact_name = None
+        else:
+            artifact_bytes = active_artifact_bytes
+            st.sidebar.success(f"当前展示：{active_artifact_name}")
+    else:
         dataset = load_standard_dataset(data_dir)
         artifact_bytes = None
         if dataset.cleaned_path is not None or dataset.yield_path is not None:
@@ -1428,49 +1403,45 @@ def main() -> None:
                 )
             except (OSError, CockpitArtifactError) as exc:
                 st.sidebar.warning(f"当前数据暂时无法保存为 Cockpit 文件：{exc}")
-    else:
-        if uploaded_artifact is None:
-            render_data_management_actions(action_container, None, "CP_Cockpit.zip")
-            if st.session_state.pop("_cockpit_reset_notice", False):
-                st.success("已重置 CP Cockpit。当前数据和图表已清空。")
-            else:
-                st.info("请点击左侧“加载数据”，然后浏览并选择此前保存的 Cockpit ZIP。")
-            st.stop()
-        selected_artifact_bytes = uploaded_artifact.getvalue()
-        selected_artifact_key = hashlib.sha256(selected_artifact_bytes).hexdigest()
-        try:
-            preview_dataset = load_cockpit_dataset(
-                selected_artifact_bytes,
-                uploaded_artifact.name,
-            )
-        except (CockpitArtifactError, OSError, UnicodeError, pd.errors.ParserError) as exc:
-            st.error(f"Cockpit 文件载入失败：{exc}")
-            st.stop()
-        render_cockpit_zip_preview(
-            preview_dataset,
-            uploaded_artifact.name,
-            len(selected_artifact_bytes),
+
+    if st.session_state.get("_cockpit_show_load_panel", False):
+        st.sidebar.markdown("#### 📂 选择已保存的图表")
+        uploaded_artifact = st.sidebar.file_uploader(
+            "选择图表数据压缩包",
+            type=["zip", "cpcockpit"],
+            help="选择此前保存的 Cockpit ZIP；只会先预览，确认后才替换当前图表。",
+            key=f"cockpit_saved_zip_{int(st.session_state.get('_cockpit_upload_generation', 0))}",
         )
-        reload_clicked = st.sidebar.button("✅ 加载并展示图表", type="primary")
-        if reload_clicked:
-            load_cockpit_dataset.clear()
-            st.session_state["_loaded_cockpit_artifact_key"] = selected_artifact_key
-        if st.session_state.get("_loaded_cockpit_artifact_key") != selected_artifact_key:
-            render_data_management_actions(action_container, None, "CP_Cockpit.zip")
-            st.info("已完成压缩包数据预览。确认无误后，请点击左侧“加载并展示图表”。")
-            st.stop()
-        dataset = load_cockpit_dataset(selected_artifact_bytes, uploaded_artifact.name)
-        artifact_bytes = selected_artifact_bytes
-        st.sidebar.success(f"已加载并展示：{uploaded_artifact.name}")
+        if st.session_state.pop("_cockpit_reset_notice", False):
+            st.sidebar.success("已重置本次选择。请重新选择要加载的 ZIP 文件。")
+        if uploaded_artifact is not None:
+            selected_artifact_bytes = uploaded_artifact.getvalue()
+            try:
+                preview_dataset = load_cockpit_dataset(
+                    selected_artifact_bytes,
+                    uploaded_artifact.name,
+                )
+            except (CockpitArtifactError, OSError, UnicodeError, pd.errors.ParserError) as exc:
+                st.sidebar.error(f"Cockpit 文件预览失败：{exc}")
+            else:
+                render_cockpit_zip_preview(
+                    preview_dataset,
+                    uploaded_artifact.name,
+                    len(selected_artifact_bytes),
+                )
+                if st.sidebar.button("✅ 确认加载并展示图表", type="primary"):
+                    st.session_state["_cockpit_active_artifact_bytes"] = selected_artifact_bytes
+                    st.session_state["_cockpit_active_artifact_name"] = uploaded_artifact.name
+                    st.session_state["_cockpit_show_load_panel"] = False
+                    load_cockpit_dataset.clear()
+                    st.rerun()
+        else:
+            st.sidebar.caption("选择 ZIP 后将在此页面预览；确认加载前，当前图表不会变化。")
 
     render_data_management_actions(
         action_container,
         artifact_bytes,
-        (
-            uploaded_artifact.name
-            if uploaded_artifact is not None
-            else cockpit_artifact_filename(dataset)
-        ),
+        active_artifact_name or cockpit_artifact_filename(dataset),
     )
     if len(dataset.spec_paths) > 1:
         if dataset.cleaned is None or "Lot_ID" not in dataset.cleaned.columns:
