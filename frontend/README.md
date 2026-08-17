@@ -31,7 +31,7 @@ streamlit run frontend/yield_analyzer_app.py
 
 多公司 PyQt GUI 在各公司页面操作区提供 `CP Cockpit` 按钮，会把当前页面的输出目录传给前端；左侧边栏只用于切换公司。
 
-进入 Cockpit 后，可在侧边栏点击 `保存图表数据压缩包`，把本次使用的 cleaned、yield 和全部 spec CSV 保存为一个 ZIP 文件。下次选择数据来源 `手动加载已保存文件`，点击浏览并选择该 ZIP；Cockpit 会先预览文件清单、数据行数、Lot/Wafer 数量及 cleaned 前 5 行，确认后点击 `重新加载数据` 才恢复全部图表，无需重新清洗。压缩包内保存版本清单、原始文件名、大小和 SHA-256 校验值；多 Lot 的独立规格会一起保存并继续按 Lot 隔离。旧版 `.cpcockpit` 文件仍可载入。
+参考 `F:\vdmos\VDMOS_Tool_v5.6.html` 的数据管理交互，Cockpit 左侧提供三个独立操作：`保存数据` 把本次使用的 cleaned、yield 和全部 spec CSV 保存为 ZIP；`加载数据` 打开新的文件选择入口，预览文件清单、数据行数、Lot/Wafer 数量及 cleaned 前 5 行，确认后恢复全部图表；`重置` 清空当前数据、图表和筛选状态。压缩包保留版本清单、原始文件名、大小和 SHA-256；多 Lot 独立规格继续按 Lot 隔离，旧版 `.cpcockpit` 文件仍可载入。只借鉴交互，不引入 VDMOS 数据解析或用户界面名称。
 
 ## Cockpit 当前包含
 
