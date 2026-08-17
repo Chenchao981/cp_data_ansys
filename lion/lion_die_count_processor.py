@@ -88,6 +88,20 @@ def _normalized_text(value: object) -> str:
     return "".join(_text(value).split())
 
 
+def _filename_matches_lot(source: Path, lot_id: str) -> bool:
+    """Allow the real lot ID followed by a space-separated user note.
+
+    The workbook metadata remains the identity source.  A note must begin
+    after whitespace, so a filename with an unrelated or merely similar lot
+    ID is still rejected.
+    """
+
+    if source.stem == lot_id:
+        return True
+    suffix = source.stem.removeprefix(lot_id)
+    return bool(suffix) and suffix[0].isspace() and bool(suffix.strip())
+
+
 def discover_workbooks(input_dir: str | Path) -> tuple[list[Path], list[Path]]:
     """Recursively find source workbooks and separate Excel lock files."""
 
@@ -153,9 +167,9 @@ def _read_probe_counter_rows(
     if len(rows) < 4:
         raise LionDieCountError(f"{source.name}: 文件行数不足")
     product, lot_id = _extract_identity(rows[1], source)
-    if source.stem != lot_id:
+    if not _filename_matches_lot(source, lot_id):
         raise LionDieCountError(
-            f"{source.name}: LOT#={lot_id} 与文件名不一致"
+            f"{source.name}: LOT#={lot_id} 与文件名不一致；仅允许“批号”或“批号 + 空格 + 备注”"
         )
 
     if not any(REPORT_MARKER in _text(value).upper() for row in rows for value in row):
@@ -318,9 +332,9 @@ def _read_lcd235_rows(
             raise LionDieCountError(
                 f"{source.name}: 第{row_no}行缺少型号或批号"
             )
-        if source.stem != lot_id:
+        if not _filename_matches_lot(source, lot_id):
             raise LionDieCountError(
-                f"{source.name}: 第{row_no}行批号={lot_id} 与文件名不一致"
+                f"{source.name}: 第{row_no}行批号={lot_id} 与文件名不一致；仅允许“批号”或“批号 + 空格 + 备注”"
             )
         if expected_product is None:
             expected_product = product

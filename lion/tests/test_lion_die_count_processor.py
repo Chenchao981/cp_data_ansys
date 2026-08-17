@@ -187,6 +187,15 @@ def test_filename_must_match_lot_metadata(tmp_path):
         read_workbook(source)
 
 
+def test_filename_allows_space_separated_user_note_after_lot(tmp_path):
+    source = tmp_path / "F25501342 下限1310V.xlsx"
+    make_source(source, lot_id="F25501342")
+
+    records = read_workbook(source)
+
+    assert {record.lot_id for record in records} == {"F25501342"}
+
+
 def test_duplicate_product_lot_wafer_across_files_fails_closed(tmp_path):
     input_dir = tmp_path / "input"
     make_source(input_dir / "a" / "F26240105.xlsx")
@@ -209,6 +218,15 @@ def test_lcd235_maps_cp_pass_and_subtracts_qad_for_good_die(tmp_path):
         ("NCEVD1500XAA", "V25391603", 1, 590, 589),
         ("NCEVD1500XAA", "V25391603", 2, 604, 602),
     ]
+
+
+def test_lcd235_filename_allows_space_separated_user_note_after_lot(tmp_path):
+    source = tmp_path / "V25391603 QAD补点.xlsx"
+    make_lcd235_source(source)
+
+    records = read_workbook(source)
+
+    assert {record.lot_id for record in records} == {"V25391603"}
 
 
 def test_lcd235_generates_the_same_five_column_output(tmp_path):
