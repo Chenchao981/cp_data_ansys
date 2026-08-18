@@ -3,7 +3,7 @@
 """Wafer Mapping 图表。
 
 该模块只消费标准 cleaned/spec 数据：
-- 综合 Bin Mapping：Bin == pass_bin 为良品，其余 Bin 为不良。
+- 综合 Bin Mapping：Bin 位于显式 Good Die Bin 范围内为良品，其余 Bin 为不良。
 - 参数 Mapping：按所选参数的 LSL/USL 判定低超限、高超限。
 - 所有 Lot/Wafer 在同一张 Plotly 小图矩阵中展示。
 
@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, replace
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -104,7 +104,7 @@ def prepare_wafer_mapping(
     *,
     parameter: Optional[str] = None,
     spec_info: Optional[Dict[str, object]] = None,
-    pass_bin: int = 1,
+    good_bins: Sequence[int] = (1,),
 ) -> WaferMappingResult:
     """按综合 Bin 或参数规格准备 Wafer Mapping 数据。"""
     required = {"Wafer_ID", "X", "Y"}
@@ -135,12 +135,13 @@ def prepare_wafer_mapping(
         data["_Status_Code"] = 0
         valid_bin = data["_Bin_Value"].notna()
         data.loc[valid_bin, "_Status_Code"] = 2
-        data.loc[valid_bin & (data["_Bin_Value"] == int(pass_bin)), "_Status_Code"] = 1
+        selected_good_bins = {int(value) for value in good_bins}
+        data.loc[valid_bin & data["_Bin_Value"].isin(selected_good_bins), "_Status_Code"] = 1
         data["_Status_Code"] = data["_Status_Code"].astype(int)
         return WaferMappingResult(
             data=data,
             mode="bin",
-            mapping_label=f"综合 Bin（Pass Bin={int(pass_bin)}）",
+            mapping_label=f"综合 Bin（Good Die Bin={', '.join(str(value) for value in sorted(selected_good_bins))}）",
             status_labels=BIN_STATUS_LABELS.copy(),
             status_colors=BIN_STATUS_COLORS.copy(),
         )

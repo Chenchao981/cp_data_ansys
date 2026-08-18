@@ -11,6 +11,8 @@ from frontend.cp_dashboard_app import (
     dataset_wafer_keys,
     filter_cleaned_by_die_scope,
     filter_standard_dataset,
+    format_good_bins,
+    parse_good_bin_range,
     wafer_key_label,
     ALL_DIE_SCOPE,
     GOOD_DIE_SCOPE,
@@ -83,12 +85,18 @@ def test_filter_dataset_supports_one_or_multiple_lots_and_wafers() -> None:
 def test_good_die_scope_filters_only_parameter_cleaned_view() -> None:
     dataset = _dataset()
 
-    good = filter_cleaned_by_die_scope(dataset.cleaned, GOOD_DIE_SCOPE, pass_bin=1)
-    all_die = filter_cleaned_by_die_scope(dataset.cleaned, ALL_DIE_SCOPE, pass_bin=1)
+    good = filter_cleaned_by_die_scope(dataset.cleaned, GOOD_DIE_SCOPE, good_bins=(1,))
+    all_die = filter_cleaned_by_die_scope(dataset.cleaned, ALL_DIE_SCOPE, good_bins=(1,))
 
     assert list(good["Bin"]) == [1, 1, 1]
     assert len(all_die) == len(dataset.cleaned)
     assert len(dataset.cleaned) == 4
+
+
+def test_good_bin_range_accepts_individual_and_continuous_bins() -> None:
+    assert parse_good_bin_range("1, 3, 5-7") == (1, 3, 5, 6, 7)
+    assert parse_good_bin_range("1，3；5-6") == (1, 3, 5, 6)
+    assert format_good_bins((1, 3, 5, 6, 7)) == "1, 3, 5-7"
 
 
 def test_cockpit_filter_controls_default_to_all(tmp_path, monkeypatch) -> None:
@@ -106,7 +114,8 @@ def test_cockpit_filter_controls_default_to_all(tmp_path, monkeypatch) -> None:
     assert select_all["全选批次"].value is True
     assert select_all["全选片号"].value is True
     assert select_all["全选参数"].value is True
-    assert {widget.label: widget for widget in app.radio}["参数样本范围"].value == ALL_DIE_SCOPE
+    radios = {widget.label: widget for widget in app.radio}
+    assert radios["参数样本范围"].value == ALL_DIE_SCOPE
     assert len(app.multiselect) == 0
     assert any("首次打开不会自动生成全部图表" in message.value for message in app.info)
     assert not app.exception
@@ -131,10 +140,8 @@ def test_cockpit_filter_controls_default_to_all(tmp_path, monkeypatch) -> None:
 
     assert not any("首次打开不会自动生成全部图表" in message.value for message in app.info)
     assert len(app.tabs) == 0
-    buttons = {button.label: button for button in app.button}
-    assert "🎯 Bin 总览" in buttons
-    assert "📊 参数 BoxPlot" in buttons
-    assert "💾 数据表" in buttons
+    radios = {widget.label: widget for widget in app.radio}
+    assert radios["图表导航"].value == "bin"
     assert not app.exception
 
     select_all = {widget.label: widget for widget in app.checkbox}
@@ -158,13 +165,15 @@ def test_cockpit_good_die_scope_and_grouped_navigation(tmp_path, monkeypatch) ->
     app = AppTest.from_file("frontend/cp_dashboard_app.py").run(timeout=20)
     app.get("radio")[0].set_value(GOOD_DIE_SCOPE)
     app.run(timeout=20)
+    {widget.label: widget for widget in app.text_input}["良品 Bin 范围"].set_value("1-2")
+    app.run(timeout=20)
     {button.label: button for button in app.button}["🎨 绘制图形"].click()
     app.run(timeout=20)
 
-    assert any("Good Die（Bin = 1）" in caption.value and "3 / 4 Die" in caption.value for caption in app.caption)
+    assert any("Good Die（Bin 1-2）" in caption.value and "4 / 4 Die" in caption.value for caption in app.caption)
     assert not app.exception
 
-    {button.label: button for button in app.button}["📊 参数 BoxPlot"].click()
+    {widget.label: widget for widget in app.radio}["图表导航"].set_value("boxplot")
     app.run(timeout=20)
     assert len(app.tabs) == 0
     assert not app.exception
