@@ -74,7 +74,6 @@ EXCLUDE_RELATIVE_PATHS = {
 }
 
 FRONTEND_SCRIPTS = [
-    "frontend/cp_dashboard_app.py",
     "frontend/yield_analyzer_app.py",
 ]
 
@@ -196,6 +195,8 @@ if not exist "frontend\yield_analyzer_app.py" (
 if /i "%~1"=="--check" (
     "%PYTHON_EXE%" -c "import sys; sys.path.insert(0, 'app.pyz'); import gui.multi_company_main; import frontend.cp_dashboard_app; print('Application package import check passed.')"
     if errorlevel 1 goto :failed
+    "%PYTHON_EXE%" -c "import runpy, sys; ns = runpy.run_path('frontend/yield_analyzer_app.py', run_name='release_entry_check'); module = sys.modules[ns['main'].__module__]; assert 'app.pyz' in str(module.__file__), module.__file__; print('Cockpit release entry check passed.')"
+    if errorlevel 1 goto :failed
     echo Startup environment check passed.
     endlocal
     exit /b 0
@@ -264,6 +265,7 @@ fi
 
 if [[ "${1:-}" == "--check" ]]; then
     "$PYTHON_EXE" -c "import sys; sys.path.insert(0, 'app.pyz'); import gui.multi_company_main; import frontend.cp_dashboard_app; print('Application package import check passed.')"
+    "$PYTHON_EXE" -c "import runpy, sys; ns = runpy.run_path('frontend/yield_analyzer_app.py', run_name='release_entry_check'); module = sys.modules[ns['main'].__module__]; assert 'app.pyz' in str(module.__file__), module.__file__; print('Cockpit release entry check passed.')"
     exit $?
 fi
 
