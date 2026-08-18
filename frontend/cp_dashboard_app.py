@@ -242,22 +242,31 @@ h1, h2, h3, h4, h5, h6 { color: var(--vt-text); letter-spacing: .2px; }
   width: 100%;
   min-height: 42px;
   background: rgba(77,171,247,.14);
-  color: var(--vt-text);
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  font-size: 0 !important;
   border: 1px solid var(--vt-accent);
   border-radius: 8px;
   font-weight: 650;
 }
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button:hover {
   background: var(--vt-accent);
-  color: #06111c;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
 }
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button::after {
   content: "📂加载数据";
   display: block;
   font-size: .92rem;
+  color: var(--vt-text) !important;
+  -webkit-text-fill-color: var(--vt-text) !important;
 }
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button > * {
-  display: none !important;
+  visibility: hidden !important;
+}
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button:hover::after {
+  color: #06111c !important;
+  -webkit-text-fill-color: #06111c !important;
 }
 [data-baseweb="input"],
 [data-baseweb="base-input"],
