@@ -251,12 +251,13 @@ h1, h2, h3, h4, h5, h6 { color: var(--vt-text); letter-spacing: .2px; }
   background: var(--vt-accent);
   color: #06111c;
 }
-[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button span {
-  font-size: 0;
-}
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button::after {
-  content: "📂 加载数据";
+  content: "📂加载数据";
+  display: block;
   font-size: .92rem;
+}
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button > * {
+  display: none !important;
 }
 [data-baseweb="input"],
 [data-baseweb="base-input"],
@@ -494,7 +495,7 @@ def render_data_management_actions(
         uploaded_artifact = st.file_uploader(
             "📂 加载数据",
             type=["zip", "cpcockpit"],
-            help="点击 Browse files 选择以前保存的 Cockpit ZIP，选中后立即恢复图表。",
+            help="选择以前保存的 Cockpit ZIP，选中后立即恢复图表。",
             key=f"cockpit_saved_zip_{int(st.session_state.get('_cockpit_upload_generation', 0))}",
             label_visibility="collapsed",
         )
