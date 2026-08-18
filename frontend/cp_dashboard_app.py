@@ -416,72 +416,6 @@ def cockpit_artifact_filename(dataset: StandardDataset) -> str:
     return f"{safe or 'cp_analysis'}_Cockpit.zip"
 
 
-def cockpit_dataset_preview(dataset: StandardDataset) -> Dict[str, object]:
-    """Return a compact, source-backed preview before a saved ZIP is activated."""
-
-    cleaned = dataset.cleaned
-    yield_df = dataset.yield_df
-    lots: List[str] = []
-    wafer_count = 0
-    if cleaned is not None and not cleaned.empty:
-        if "Lot_ID" in cleaned.columns:
-            lots = sorted(cleaned["Lot_ID"].dropna().astype(str).unique().tolist())
-        if {"Lot_ID", "Wafer_ID"}.issubset(cleaned.columns):
-            wafer_count = int(cleaned[["Lot_ID", "Wafer_ID"]].drop_duplicates().shape[0])
-        elif "Wafer_ID" in cleaned.columns:
-            wafer_count = int(cleaned["Wafer_ID"].nunique(dropna=True))
-    return {
-        "cleaned_rows": 0 if cleaned is None else int(len(cleaned)),
-        "yield_rows": 0 if yield_df is None else int(len(yield_df)),
-        "spec_files": len(dataset.spec_paths),
-        "lots": lots,
-        "wafer_count": wafer_count,
-    }
-
-
-def render_cockpit_zip_preview(
-    dataset: StandardDataset,
-    archive_name: str,
-    archive_size: int,
-) -> None:
-    """Preview a selected saved ZIP without activating its charts yet."""
-
-    summary = cockpit_dataset_preview(dataset)
-    with st.sidebar.expander("📦 压缩包数据预览", expanded=True):
-        st.markdown(f"**文件：** {archive_name}")
-        st.caption(f"压缩包大小：{archive_size / 1024 / 1024:.2f} MB")
-        st.markdown(
-            f"- cleaned：{summary['cleaned_rows']:,} 行\n"
-            f"- yield：{summary['yield_rows']:,} 行\n"
-            f"- spec：{summary['spec_files']:,} 份\n"
-            f"- Lot：{len(summary['lots']):,} 个\n"
-            f"- Wafer：{summary['wafer_count']:,} 片"
-        )
-        file_names = [
-            path.name
-            for path in (dataset.cleaned_path, dataset.yield_path)
-            if path is not None
-        ]
-        file_names.extend(path.name for path in dataset.spec_paths.values())
-        if file_names:
-            st.caption("包含文件")
-            for name in file_names:
-                st.code(name, language=None)
-
-    st.markdown("### 📦 已保存压缩包预览")
-    metric_columns = st.columns(5)
-    metric_columns[0].metric("cleaned 行数", f"{summary['cleaned_rows']:,}")
-    metric_columns[1].metric("yield 行数", f"{summary['yield_rows']:,}")
-    metric_columns[2].metric("spec 文件", f"{summary['spec_files']:,}")
-    metric_columns[3].metric("Lot", f"{len(summary['lots']):,}")
-    metric_columns[4].metric("Wafer", f"{summary['wafer_count']:,}")
-    if summary["lots"]:
-        st.caption("Lot：" + "、".join(summary["lots"]))
-    if dataset.cleaned is not None and not dataset.cleaned.empty:
-        st.caption("cleaned 数据前 5 行（仅预览，不修改原始值）")
-        st.dataframe(dataset.cleaned.head(5), use_container_width=True)
-
-
 def open_saved_data_loader() -> None:
     """Open a fresh saved-file chooser without replacing the current charts."""
 
@@ -530,7 +464,7 @@ def render_data_management_actions(
         st.button(
             "📂 加载数据",
             on_click=open_saved_data_loader,
-            help="选择以前保存的 Cockpit ZIP，预览并恢复图表。",
+            help="浏览并选择以前保存的 Cockpit ZIP，选择后立即恢复图表。",
             use_container_width=True,
         )
         st.button(
@@ -1409,7 +1343,7 @@ def main() -> None:
         uploaded_artifact = st.sidebar.file_uploader(
             "选择图表数据压缩包",
             type=["zip", "cpcockpit"],
-            help="选择此前保存的 Cockpit ZIP；只会先预览，确认后才替换当前图表。",
+            help="选择此前保存的 Cockpit ZIP；选中文件后立即加载并展示图表。",
             key=f"cockpit_saved_zip_{int(st.session_state.get('_cockpit_upload_generation', 0))}",
         )
         if st.session_state.pop("_cockpit_reset_notice", False):
@@ -1417,26 +1351,19 @@ def main() -> None:
         if uploaded_artifact is not None:
             selected_artifact_bytes = uploaded_artifact.getvalue()
             try:
-                preview_dataset = load_cockpit_dataset(
+                load_cockpit_dataset(
                     selected_artifact_bytes,
                     uploaded_artifact.name,
                 )
             except (CockpitArtifactError, OSError, UnicodeError, pd.errors.ParserError) as exc:
-                st.sidebar.error(f"Cockpit 文件预览失败：{exc}")
+                st.sidebar.error(f"Cockpit 文件加载失败：{exc}")
             else:
-                render_cockpit_zip_preview(
-                    preview_dataset,
-                    uploaded_artifact.name,
-                    len(selected_artifact_bytes),
-                )
-                if st.sidebar.button("✅ 确认加载并展示图表", type="primary"):
-                    st.session_state["_cockpit_active_artifact_bytes"] = selected_artifact_bytes
-                    st.session_state["_cockpit_active_artifact_name"] = uploaded_artifact.name
-                    st.session_state["_cockpit_show_load_panel"] = False
-                    load_cockpit_dataset.clear()
-                    st.rerun()
+                st.session_state["_cockpit_active_artifact_bytes"] = selected_artifact_bytes
+                st.session_state["_cockpit_active_artifact_name"] = uploaded_artifact.name
+                st.session_state["_cockpit_show_load_panel"] = False
+                st.rerun()
         else:
-            st.sidebar.caption("选择 ZIP 后将在此页面预览；确认加载前，当前图表不会变化。")
+            st.sidebar.caption("浏览并选择 ZIP；选中后会直接加载并展示图表。")
 
     render_data_management_actions(
         action_container,

@@ -19,7 +19,8 @@ def test_data_management_exposes_save_load_and_reset(tmp_path, monkeypatch) -> N
     buttons["📂 加载数据"].click()
     app.run(timeout=15)
     assert len(app.text_input) == 1
-    assert any("确认加载前，当前图表不会变化" in caption.value for caption in app.caption)
+    assert any("选中后会直接加载并展示图表" in caption.value for caption in app.caption)
+    assert all("确认加载" not in button.label for button in app.button)
     assert not app.exception
 
 
