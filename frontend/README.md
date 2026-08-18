@@ -15,7 +15,7 @@
 - `charts/js_embedder.py`：离线 Plotly.js 嵌入。
 - `core/`、`adapters/`、`data_sources/`：CSV 加载与适配。
 
-Cockpit 左侧提供批次、片号和参数三个全局筛选器，均默认全选，也可保留任意 1 个或多个选项。片号按 `Lot_ID + Wafer_ID` 组合键显示为“批次 / W片号”，避免不同批次存在相同片号时混淆。首次打开只加载筛选项，不生成图表；点击“绘制图形”后才按当前范围生成全部分析页。筛选再次变化时暂停绘图，直到用户再次点击按钮。筛选只改变当前分析视图，不修改标准 CSV。
+Cockpit 左侧提供批次、片号和参数筛选器，均默认全选，也可保留任意 1 个或多个选项。片号按 `Lot_ID + Wafer_ID` 组合键显示为“批次 / W片号”，避免不同批次存在相同片号时混淆。参数分析还可选择“全部 Die”或“仅 Good Die”；后者按 `Bin = Pass Bin` 过滤参数 BoxPlot、散点、区域参数、Wafer Summary、Cpk 和 cleaned 预览，良率与失效类图表仍保留全部 Die。首次打开只加载筛选项，不生成图表；点击“绘制图形”后才按当前范围生成分析页。筛选再次变化时暂停绘图，直到用户再次点击按钮。筛选只改变当前分析视图，不修改标准 CSV。
 
 图表层预期目录中存在：
 
@@ -39,6 +39,8 @@ streamlit run frontend/yield_analyzer_app.py
 
 - Bin 总览、失效 Bin Pareto、良率趋势
 - 批次、片号、参数全局筛选（默认全选，支持单选和多选）及“绘制图形”按需触发
+- Good Die 参数样本筛选（`Bin = Pass Bin`），与良率/失效统计范围明确分离
+- 分组折叠式图表导航：数据总览、失效分析、空间分析、参数分析、数据查看
 - 全参数 BoxPlot：按 Huahong 箱体图轴逻辑展示，X 轴为 Lot/Wafer 顺序，刻度显示 Wafer_ID，Y 轴为参数值；只显示箱线图，不叠加原始散点
 - 全参数散点图：按 Huahong/BoxPlot 轴逻辑展示，X 轴为 Lot/Wafer 顺序，刻度显示 Wafer_ID，Y 轴为参数值
 - Wafer Mapping：默认以轻量模式同时展示全部 Lot/Wafer，也可选择 1～25 片查看逐 die 悬浮详情；可选择综合 Bin 或具体测试参数，参数模式按 LSL/USL 高亮低超限和高超限 die

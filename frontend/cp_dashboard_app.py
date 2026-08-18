@@ -69,6 +69,25 @@ BASE_COLUMNS = {
     "Fail",
 }
 
+ALL_DIE_SCOPE = "全部 Die"
+GOOD_DIE_SCOPE = "仅 Good Die"
+
+CHART_MENU = (
+    ("📌 数据总览", (("bin", "🎯 Bin 总览"), ("yield", "📈 良率趋势"))),
+    ("🔍 失效分析", (("pareto", "📋 失效 Pareto"), ("overlay", "🔍 失效叠加"))),
+    ("🗺️ 空间分析", (("mapping", "🗺️ Wafer Mapping"), ("zone", "🎯 区域分析"))),
+    (
+        "📊 参数分析",
+        (
+            ("boxplot", "📊 参数 BoxPlot"),
+            ("scatter", "🔵 参数散点"),
+            ("summary", "📊 Wafer Summary"),
+            ("cpk", "⚠ Cpk / 超限"),
+        ),
+    ),
+    ("💾 数据查看", (("table", "💾 数据表"),)),
+)
+
 PLOTLY_TEMPLATE = {
     "layout": {
         "paper_bgcolor": "#0f1923",
@@ -174,6 +193,27 @@ h1, h2, h3, h4, h5, h6 { color: var(--vt-text); letter-spacing: .2px; }
   font-size: .78rem;
   margin-bottom: 8px;
 }
+.vt-compact-status {
+  background: rgba(46,204,113,.10);
+  border: 1px solid rgba(46,204,113,.24);
+  border-radius: 8px;
+  padding: 7px 10px;
+  margin: 8px 0 10px 0;
+  color: var(--vt-text);
+  font-size: .78rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.vt-compact-status-label {
+  color: var(--vt-muted);
+  margin-right: 4px;
+}
+.vt-sidebar-file-card {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+.vt-sidebar-file-card .vt-card-title { margin-bottom: 6px; }
+.vt-sidebar-file-card div { overflow-wrap: anywhere; }
 .vt-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
@@ -226,6 +266,7 @@ h1, h2, h3, h4, h5, h6 { color: var(--vt-text); letter-spacing: .2px; }
   color: #06111c;
   border: 1px solid var(--vt-accent);
 }
+
 [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] {
   min-height: 0;
   padding: 0;
@@ -623,6 +664,25 @@ def filter_standard_dataset(
     return replace(dataset, **updates)
 
 
+def filter_cleaned_by_die_scope(
+    cleaned: Optional[pd.DataFrame],
+    die_scope: str,
+    pass_bin: int,
+) -> Optional[pd.DataFrame]:
+    """Return the parameter-analysis view without changing source CSV data."""
+
+    if cleaned is None:
+        return None
+    if die_scope == ALL_DIE_SCOPE:
+        return cleaned.copy()
+    if die_scope != GOOD_DIE_SCOPE:
+        raise ValueError(f"未知的 Die 筛选范围：{die_scope}")
+    if "Bin" not in cleaned.columns:
+        return pd.DataFrame(columns=cleaned.columns)
+    bins = pd.to_numeric(cleaned["Bin"], errors="coerce")
+    return cleaned.loc[bins == int(pass_bin)].copy()
+
+
 def sync_multiselect_state(key: str, options: Sequence[str]) -> None:
     """Keep an explicit custom selection valid when upstream options change."""
 
@@ -925,7 +985,7 @@ def render_file_status(dataset: StandardDataset) -> None:
         ("yield", dataset.yield_path),
         ("spec", dataset.spec_path),
     ]
-    html = '<div class="vt-card"><div class="vt-card-title">📂 当前加载文件</div>'
+    html = '<div class="vt-card vt-sidebar-file-card"><div class="vt-card-title">📂 当前加载文件</div>'
     for name, path in rows:
         status = path.name if path else "未找到"
         color = "var(--vt-good)" if path else "var(--vt-fail)"
@@ -934,7 +994,43 @@ def render_file_status(dataset: StandardDataset) -> None:
     st.sidebar.markdown(html, unsafe_allow_html=True)
 
 
-def render_bin_grid(bin_counts: pd.Series, total: int) -> None:
+def render_active_artifact_status(active_artifact_name: Optional[str]) -> None:
+    """Render the active Cockpit archive without taking over the sidebar."""
+
+    if not active_artifact_name:
+        return
+    st.sidebar.markdown(
+        '<div class="vt-compact-status">'
+        f'<span class="vt-compact-status-label">当前展示：</span>{active_artifact_name}'
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+
+def render_chart_navigation() -> str:
+    """Render grouped chart navigation and return the active chart key."""
+
+    active = str(st.session_state.get("_active_chart", "bin"))
+    st.sidebar.markdown("### 📊 图表导航")
+    known_keys = {key for _, entries in CHART_MENU for key, _ in entries}
+    if active not in known_keys:
+        active = "bin"
+    for group, entries in CHART_MENU:
+        keys = {key for key, _ in entries}
+        with st.sidebar.expander(group, expanded=active in keys):
+            for key, label in entries:
+                if st.button(
+                    label,
+                    key=f"chart_nav_{key}",
+                    type="primary" if active == key else "secondary",
+                    use_container_width=True,
+                ):
+                    st.session_state["_active_chart"] = key
+                    st.rerun()
+    return active
+
+
+def render_bin_grid(bin_counts: pd.Series, total: int, pass_bin: int) -> None:
     if bin_counts.empty:
         st.info("当前数据没有可用的 Bin 统计。")
         return
@@ -942,7 +1038,7 @@ def render_bin_grid(bin_counts: pd.Series, total: int) -> None:
     for bin_id, count in bin_counts.items():
         count_int = int(count)
         rate = count_int / total * 100 if total else 0
-        color = "#2ecc71" if int(bin_id) == 1 else "#e74c3c"
+        color = "#2ecc71" if int(bin_id) == int(pass_bin) else "#e74c3c"
         html += (
             f'<div class="vt-bin-item" style="border-left:3px solid {color}">'
             f'<div class="vt-bid">BIN {bin_id}</div>'
@@ -1031,13 +1127,13 @@ def yield_trend_chart(yield_df: pd.DataFrame) -> go.Figure:
     return style_figure(fig)
 
 
-def bin_pareto_chart(bin_counts: pd.Series) -> go.Figure:
+def bin_pareto_chart(bin_counts: pd.Series, pass_bin: int) -> go.Figure:
     fig = go.Figure()
     if bin_counts.empty:
         return style_figure(fig)
     bins = [f"Bin {b}" for b in bin_counts.index]
     values = bin_counts.values
-    colors = ["#2ecc71" if int(b) == 1 else "#e74c3c" for b in bin_counts.index]
+    colors = ["#2ecc71" if int(b) == int(pass_bin) else "#e74c3c" for b in bin_counts.index]
     fig.add_trace(go.Bar(x=bins, y=values, marker_color=colors, name="数量"))
     fig.update_layout(title="🎯 Bin 分布", xaxis_title="Bin", yaxis_title="Die 数量")
     return style_figure(fig)
@@ -1434,12 +1530,13 @@ def main() -> None:
     )
     pass_bin = int(
         st.sidebar.number_input(
-            "Pass Bin",
+            "良品判定（Pass Bin）",
             min_value=0,
             max_value=999,
             value=1,
             step=1,
             key="cp_pass_bin",
+            help="用于良率、Bin 判定和失效分析；它本身不等同于 Good Die 筛选。",
         )
     )
     max_points = int(
@@ -1467,7 +1564,6 @@ def main() -> None:
             active_artifact_name = None
         else:
             artifact_bytes = active_artifact_bytes
-            st.sidebar.success(f"当前展示：{active_artifact_name}")
     else:
         dataset = load_standard_dataset(data_dir)
         artifact_bytes = None
@@ -1525,7 +1621,7 @@ def main() -> None:
             st.error(str(exc))
             st.stop()
         st.sidebar.caption("已按 Lot 隔离数据和规格，避免跨 Lot 误用限值。")
-    render_file_status(dataset)
+    render_active_artifact_status(active_artifact_name)
 
     if dataset.cleaned is None and dataset.yield_df is None:
         st.warning("未找到可分析的标准 CSV。请先用 CP 清洗流程生成 cleaned / yield / spec 文件。")
@@ -1597,6 +1693,13 @@ def main() -> None:
     else:
         params = []
 
+    die_scope = st.sidebar.radio(
+        "参数样本范围",
+        [ALL_DIE_SCOPE, GOOD_DIE_SCOPE],
+        key="analysis_die_scope",
+        help="仅影响参数 BoxPlot、散点、区域参数、Wafer Summary、Cpk 和 cleaned 数据预览。",
+    )
+
     selected_wafer_keys = [wafer_label_to_key[label] for label in selected_wafer_labels]
     st.sidebar.caption(
         f"当前：{len(selected_lots)}/{len(lot_options)} 个批次，"
@@ -1610,13 +1713,17 @@ def main() -> None:
         "lots": list(selected_lots),
         "wafers": list(selected_wafer_labels),
         "parameters": list(params),
+        "die_scope": die_scope,
+        "pass_bin": pass_bin,
     }
+    active_chart = render_chart_navigation()
     draw_requested = st.sidebar.button(
         "🎨 绘制图形",
         key="draw_analysis_charts",
         type="primary",
         use_container_width=True,
     )
+    render_file_status(dataset)
     if draw_requested:
         st.session_state["_analysis_applied_filters"] = draft_filters
 
@@ -1643,58 +1750,57 @@ def main() -> None:
         applied_wafer_keys,
     )
     params = list(applied_filters["parameters"])
+    die_scope = str(applied_filters.get("die_scope", ALL_DIE_SCOPE))
+    analysis_cleaned = filter_cleaned_by_die_scope(dataset.cleaned, die_scope, pass_bin)
+    if die_scope == GOOD_DIE_SCOPE and dataset.cleaned is not None and "Bin" not in dataset.cleaned.columns:
+        st.warning("当前 cleaned CSV 缺少 Bin，无法执行 Good Die（Bin = Pass Bin）筛选。")
+    if die_scope == GOOD_DIE_SCOPE and analysis_cleaned is not None and analysis_cleaned.empty:
+        st.warning(f"当前筛选范围没有 Good Die（Bin = {pass_bin}）。")
+    analysis_dataset = replace(dataset, cleaned=analysis_cleaned)
+    scope_caption = ALL_DIE_SCOPE if die_scope == ALL_DIE_SCOPE else f"Good Die（Bin = {pass_bin}）"
+    if dataset.cleaned is not None:
+        st.caption(
+            f"参数分析样本：{scope_caption} · "
+            f"{len(analysis_cleaned) if analysis_cleaned is not None else 0:,} / {len(dataset.cleaned):,} Die"
+        )
 
     summary = dataset_summary(dataset, pass_bin=pass_bin)
     summary["params"] = len(params)
     yield_df = normalize_yield_data(dataset.yield_df)
     render_metric_cards(summary)
 
-    tabs = st.tabs([
-        "🎯 BIN总览",
-        "📋 Pareto",
-        "📈 良率趋势",
-        "📊 参数BoxPlot",
-        "🔵 散点相关",
-        "🗺️ Wafer Mapping",
-        "🎯 区域分析",
-        "🔍 失效叠加",
-        "📊 Wafer Summary",
-        "⚠ Cpk/超限",
-        "💾 数据表",
-    ])
-
-    with tabs[0]:
+    if active_chart == "bin":
         st.markdown("#### Bin 结构")
-        render_bin_grid(summary["bin_counts"], int(summary["total_die"]))
-        render_plotly_chart(bin_pareto_chart(summary["bin_counts"]))
+        render_bin_grid(summary["bin_counts"], int(summary["total_die"]), pass_bin=pass_bin)
+        render_plotly_chart(bin_pareto_chart(summary["bin_counts"], pass_bin=pass_bin))
 
-    with tabs[1]:
+    elif active_chart == "pareto":
         st.markdown("#### 失效 Pareto")
         st.caption("排除 Pass Bin 后，按失效数量从高到低排序，用于质量部门快速抓主因。")
         render_plotly_chart(failure_pareto_chart(summary["bin_counts"], pass_bin=pass_bin))
 
-    with tabs[2]:
+    elif active_chart == "yield":
         if yield_df is None:
             st.info("当前目录没有 yield CSV，无法展示 wafer 级良率趋势。")
         else:
             render_plotly_chart(yield_trend_chart(yield_df))
             st.dataframe(yield_df.drop(columns=["_Wafer_Sort"], errors="ignore"), use_container_width=True)
 
-    with tabs[3]:
+    elif active_chart == "boxplot":
         if not params:
             st.info("cleaned CSV 中没有识别到数值测试参数。")
         else:
             st.caption("按 Huahong 箱体图的轴逻辑展示：X 轴为 Lot/Wafer 顺序，刻度显示 Wafer_ID；Y 轴为参数值。这里只显示箱线图，不叠加原始散点。")
             for parameter in params:
-                spec_info = get_spec_info(dataset.spec, parameter)
+                spec_info = get_spec_info(analysis_dataset.spec, parameter)
                 col1, col2, col3, col4 = st.columns(4)
                 col1.metric("参数", parameter)
                 col2.metric("单位", spec_info.get("unit") or "N/A")
                 col3.metric("LSL", "N/A" if spec_info.get("limit_lower") is None else f"{spec_info['limit_lower']:g}")
                 col4.metric("USL", "N/A" if spec_info.get("limit_upper") is None else f"{spec_info['limit_upper']:g}")
-                render_plotly_chart(parameter_boxplot(dataset.cleaned, parameter, spec_info))
+                render_plotly_chart(parameter_boxplot(analysis_dataset.cleaned, parameter, spec_info))
 
-    with tabs[4]:
+    elif active_chart == "scatter":
         if not params:
             st.info("cleaned CSV 中没有识别到数值测试参数。")
         else:
@@ -1702,14 +1808,14 @@ def main() -> None:
             for parameter in params:
                 render_plotly_chart(
                     parameter_scatter_chart(
-                        dataset.cleaned,
+                        analysis_dataset.cleaned,
                         parameter,
-                        get_spec_info(dataset.spec, parameter),
+                        get_spec_info(analysis_dataset.spec, parameter),
                         max_points=max_points,
                     ),
                 )
 
-    with tabs[5]:
+    elif active_chart == "mapping":
         cleaned = dataset.cleaned
         if cleaned is None or not {"Wafer_ID", "X", "Y"}.issubset(cleaned.columns):
             st.info("当前 cleaned CSV 缺少 Wafer_ID/X/Y，无法绘制 Wafer Mapping。")
@@ -1808,7 +1914,7 @@ def main() -> None:
                 )
                 render_plotly_chart(mapping_fig)
 
-    with tabs[6]:
+    elif active_chart == "zone":
         cleaned = dataset.cleaned
         if cleaned is None or not {"Wafer_ID", "X", "Y", "Bin"}.issubset(cleaned.columns):
             st.info("区域分析需要 cleaned CSV 包含 Wafer_ID、X、Y、Bin。")
@@ -1818,9 +1924,16 @@ def main() -> None:
             render_plotly_chart(zone_fail_bin_chart(cleaned, pass_bin=pass_bin))
             if params:
                 zone_param = st.selectbox("区域参数分布", params, key="zone_param")
-                render_plotly_chart(zone_parameter_boxplot(cleaned, zone_param, pass_bin=pass_bin, max_points=max_points))
+                render_plotly_chart(
+                    zone_parameter_boxplot(
+                        analysis_dataset.cleaned,
+                        zone_param,
+                        pass_bin=pass_bin,
+                        max_points=max_points,
+                    )
+                )
 
-    with tabs[7]:
+    elif active_chart == "overlay":
         cleaned = dataset.cleaned
         if cleaned is None or not {"Wafer_ID", "X", "Y", "Bin"}.issubset(cleaned.columns):
             st.info("失效叠加需要 cleaned CSV 包含 Wafer_ID、X、Y、Bin。")
@@ -1829,11 +1942,11 @@ def main() -> None:
             overlay_wafer = st.selectbox("选择叠加范围", ["全部 Wafer"] + wafers, key="overlay_wafer")
             render_plotly_chart(failure_overlay_chart(cleaned, pass_bin=pass_bin, wafer_id=overlay_wafer, max_points=max_points))
 
-    with tabs[8]:
+    elif active_chart == "summary":
         if not params:
             st.info("没有可生成 Wafer Summary 的参数。")
         else:
-            wsum_df = wafer_summary_table(dataset.cleaned, dataset.spec, params)
+            wsum_df = wafer_summary_table(analysis_dataset.cleaned, analysis_dataset.spec, params)
             if wsum_df.empty:
                 st.info("当前数据无法生成 Wafer Summary。")
             else:
@@ -1841,11 +1954,11 @@ def main() -> None:
                 csv = wsum_df.to_csv(index=False, encoding="utf-8-sig")
                 st.download_button("⬇ 导出 Wafer Summary", data=csv, file_name="cp_wafer_summary.csv", mime="text/csv")
 
-    with tabs[9]:
+    elif active_chart == "cpk":
         if not params:
             st.info("没有可计算 Cpk 的参数。")
         else:
-            cpk_df = cpk_table(dataset.cleaned, dataset.spec, params)
+            cpk_df = cpk_table(analysis_dataset.cleaned, analysis_dataset.spec, params)
             if cpk_df.empty:
                 st.info("spec 信息不足或参数数据不足，暂无法计算 Cpk。")
             else:
@@ -1853,9 +1966,9 @@ def main() -> None:
                 csv = cpk_df.to_csv(index=False, encoding="utf-8-sig")
                 st.download_button("⬇ 导出 Cpk/超限表", data=csv, file_name="cp_cpk_limit_summary.csv", mime="text/csv")
 
-    with tabs[10]:
+    elif active_chart == "table":
         view = st.radio("选择数据表", ["cleaned", "yield", "spec"], horizontal=True)
-        table = {"cleaned": dataset.cleaned, "yield": dataset.yield_df, "spec": dataset.spec}[view]
+        table = {"cleaned": analysis_dataset.cleaned, "yield": dataset.yield_df, "spec": dataset.spec}[view]
         if table is None:
             st.info(f"未找到 {view} CSV。")
         else:
