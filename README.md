@@ -7,7 +7,7 @@
 - 读取并清洗多种 CP 原始数据：HH DCP/TXT、JT Excel、Lion 两种已验收 CP Excel 格式、Lion 管芯数月度 Excel 汇总、扬州国宇 FRD Excel；华虹 GUI 支持文件夹、ZIP 和 7z，JT/Lion CP/国宇支持文件夹和 ZIP
 - 将不同来源转换为统一的 `CPLot` / `CPWafer` / `CPParameter` 数据模型
 - 输出 cleaned、yield、spec 三类标准 CSV
-- 生成良率趋势、失效分析、参数箱体图、散点图和汇总 HTML；CP Cockpit 提供“保存数据 / 加载数据 / 重置”，可保存 ZIP、选中文件后直接恢复图表或重新选择待加载文件
+- 生成良率趋势、失效分析、参数箱体图、散点图和汇总 HTML；CP Cockpit 提供“保存数据 / 加载数据”，可保存 ZIP 或选中文件后直接恢复图表
 - 提供 PyQt5 多公司 GUI、全局暗黑/亮色主题切换、公司专用脚本和 Python API
 - 提供面向开发人员的新晶圆厂接入 Agent、阶段化 Skills 和确定性画像/骨架/验收工具；这些研发能力不进入用户 GUI 和发布包
 

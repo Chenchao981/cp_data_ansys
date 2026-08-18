@@ -458,15 +458,6 @@ def cockpit_artifact_filename(dataset: StandardDataset) -> str:
     return f"{safe or 'cp_analysis'}_Cockpit.zip"
 
 
-def reset_cockpit_state() -> None:
-    """Reset only the saved-ZIP browser without replacing the current charts."""
-
-    st.session_state["_cockpit_upload_generation"] = (
-        int(st.session_state.get("_cockpit_upload_generation", 0)) + 1
-    )
-    st.session_state["_cockpit_reset_notice"] = True
-
-
 def activate_directory_data() -> None:
     """Use the manually entered standard CSV directory as the active source."""
 
@@ -481,7 +472,7 @@ def render_data_management_actions(
     artifact_bytes: Optional[bytes],
     file_name: str,
 ) -> object:
-    """Render Save, native ZIP browser, and Reset actions."""
+    """Render Save and native ZIP browser actions."""
 
     with container:
         st.markdown("### 💾 数据管理")
@@ -508,14 +499,6 @@ def render_data_management_actions(
             key=f"cockpit_saved_zip_{int(st.session_state.get('_cockpit_upload_generation', 0))}",
             label_visibility="collapsed",
         )
-        st.button(
-            "🔄 重置",
-            on_click=reset_cockpit_state,
-            help="清空加载数据控件中的文件选择；当前图表保持不变。",
-            use_container_width=True,
-        )
-        if st.session_state.pop("_cockpit_reset_notice", False):
-            st.success("已清空本次文件选择，可以重新浏览 ZIP；当前图表保持不变。")
         return uploaded_artifact
 
 
