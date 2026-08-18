@@ -171,4 +171,5 @@ logs/
 .kiro/
 # Local primary release artifacts
 packaging/release/
+packaging/release_candidate/
 packaging/release.zip

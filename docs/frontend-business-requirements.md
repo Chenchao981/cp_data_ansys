@@ -21,7 +21,7 @@
 前端需要满足以下业务目标：
 
 1. 让用户在完成 CP 清洗后，可以直接打开分析界面，不需要手工整理 Excel。
-2. 支持按批次、Wafer、参数、Bin 查看数据。
+2. 支持按批次、Wafer、参数、Bin 查看数据；批次、Wafer、参数默认全选，均可单选或多选，确认范围后再触发绘图。
 3. 支持研发/质量常用统计图：
    - 良率总览
    - Wafer 良率趋势
@@ -92,6 +92,7 @@ Parameter,Unit,LimitL,LimitU,LSL,USL,Target
 | 图表 | 业务用途 | 关键字段 |
 | --- | --- | --- |
 | KPI 总览 | 快速看总测试数、良率、Wafer 数、参数数；跨批次时 Wafer 数按 `Lot_ID + Wafer_ID` 计数 | cleaned / yield |
+| 全局筛选 | 批次、片号、参数默认全选，也可选择任意 1 个或多个；片号按 `Lot_ID + Wafer_ID` 唯一识别；首次打开不绘图，点击“绘制图形”后应用 | cleaned / yield / spec |
 | 良率趋势 | 比较不同 Wafer 或批次良率 | `Wafer_ID`, `Yield` |
 | 失效 Bin Pareto | 找主要失效类型 | `Bin` 或 yield 动态 Bin 列 |
 | 参数 BoxPlot | 看参数分布、离群值、规格边界 | 参数列、spec |

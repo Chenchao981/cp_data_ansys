@@ -20,7 +20,9 @@ if hasattr(sys.stdout, "reconfigure"):
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PACKAGING_DIR = Path(__file__).resolve().parent
-RELEASE_DIR = PACKAGING_DIR / "release"
+RELEASE_DIR = Path(
+    os.environ.get("CP_RELEASE_BUILD_DIR", str(PACKAGING_DIR / "release"))
+).resolve()
 TARGET_PYZ = RELEASE_DIR / "app.pyz"
 TEMP_BUILD_DIR = PACKAGING_DIR / "_temp_frontend_build_src"
 MAIN_ENTRY_POINT = "gui.multi_company_main:main"
@@ -526,7 +528,10 @@ def copy_release_assets() -> None:
 ## CP Cockpit
 
 清洗完成后点击公司页面中的 `CP Cockpit`，打开当前输出目录的交互分析页面。
-Cockpit 左侧“数据管理”提供 `保存数据`、`加载数据`、`重置` 三个独立操作。保存数据下载 ZIP；加载数据选择并预览以前保存的 ZIP，确认后恢复全部图表；重置清空当前数据、图表和筛选状态，但不删除磁盘文件。
+Cockpit 左侧“数据管理”可保存 ZIP，或选择以前保存的 ZIP 后直接恢复分析数据。
+“图表筛选”中的批次、片号和参数默认全选；取消对应“全选”后，可选择 1 个或多个选项。
+片号按“批次 / W片号”显示，避免跨批次同号 Wafer 混淆。首次打开不自动绘图；选择完成后点击“绘制图形”。
+筛选再次变化时需要重新点击按钮，页面不会在每次勾选时自动重算，也不会修改标准 CSV。
 
 ## 数据安全
 

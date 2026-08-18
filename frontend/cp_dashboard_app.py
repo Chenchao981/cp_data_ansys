@@ -17,7 +17,7 @@ import sys
 from io import BytesIO
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -463,6 +463,7 @@ def activate_directory_data() -> None:
 
     st.session_state.pop("_cockpit_active_artifact_bytes", None)
     st.session_state.pop("_cockpit_active_artifact_name", None)
+    st.session_state.pop("_analysis_applied_filters", None)
     load_standard_dataset.clear()
     build_dataset_artifact.clear()
 
@@ -523,6 +524,128 @@ def scope_dataset_to_lot(dataset: StandardDataset, lot_id: str) -> StandardDatas
         yield_df=yield_df,
         spec_path=dataset.spec_paths[lot_id],
         spec=dataset.specs[lot_id],
+    )
+
+
+WaferKey = Tuple[str, str]
+
+
+def dataset_lot_ids(dataset: StandardDataset) -> List[str]:
+    """Return real Lot IDs available in cleaned/yield data."""
+
+    lots = set()
+    for frame in (dataset.cleaned, dataset.yield_df):
+        if frame is None or frame.empty:
+            continue
+        if "Lot_ID" not in frame.columns:
+            lots.add("Unknown_Lot")
+            continue
+        values = frame["Lot_ID"].dropna().astype(str)
+        lots.update(
+            value
+            for value in values
+            if value.strip() and value.upper() not in {"ALL", "NAN"}
+        )
+    return sorted(lots)
+
+
+def dataset_wafer_keys(
+    dataset: StandardDataset,
+    selected_lots: Optional[Sequence[str]] = None,
+) -> List[WaferKey]:
+    """Return unique ``Lot_ID + Wafer_ID`` keys for unambiguous filtering."""
+
+    lot_filter = {str(value) for value in selected_lots} if selected_lots is not None else None
+    wafer_keys = set()
+    for frame in (dataset.cleaned, dataset.yield_df):
+        if frame is None or frame.empty or "Wafer_ID" not in frame.columns:
+            continue
+        lot_values = (
+            frame["Lot_ID"].astype(str)
+            if "Lot_ID" in frame.columns
+            else pd.Series("Unknown_Lot", index=frame.index)
+        )
+        wafer_values = frame["Wafer_ID"].astype(str)
+        for lot_id, wafer_id in zip(lot_values, wafer_values):
+            if lot_id.upper() in {"ALL", "NAN"} or wafer_id.upper() in {"ALL", "TOTAL", "NAN"}:
+                continue
+            if lot_filter is not None and lot_id not in lot_filter:
+                continue
+            wafer_keys.add((lot_id, wafer_id))
+    return sorted(wafer_keys, key=lambda key: (key[0], wafer_sort_key(key[1])))
+
+
+def wafer_key_label(key: WaferKey) -> str:
+    """Render a wafer choice while retaining the composite business key."""
+
+    return f"{key[0]} / W{key[1]}"
+
+
+def filter_standard_dataset(
+    dataset: StandardDataset,
+    selected_lots: Sequence[str],
+    selected_wafers: Sequence[WaferKey],
+) -> StandardDataset:
+    """Filter cleaned/yield views without changing source values or CSV files."""
+
+    lot_filter = {str(value) for value in selected_lots}
+    wafer_filter = {(str(lot_id), str(wafer_id)) for lot_id, wafer_id in selected_wafers}
+
+    def filter_frame(frame: Optional[pd.DataFrame]) -> Optional[pd.DataFrame]:
+        if frame is None:
+            return None
+        if frame.empty:
+            return frame.copy()
+        lot_values = (
+            frame["Lot_ID"].astype(str)
+            if "Lot_ID" in frame.columns
+            else pd.Series("Unknown_Lot", index=frame.index)
+        )
+        mask = lot_values.isin(lot_filter)
+        if "Wafer_ID" in frame.columns:
+            wafer_values = frame["Wafer_ID"].astype(str)
+            key_mask = pd.Series(
+                [key in wafer_filter for key in zip(lot_values, wafer_values)],
+                index=frame.index,
+            )
+            mask &= key_mask
+        return frame.loc[mask].copy()
+
+    updates = {
+        "cleaned": filter_frame(dataset.cleaned),
+        "yield_df": filter_frame(dataset.yield_df),
+    }
+    if len(lot_filter) == 1:
+        selected_lot = next(iter(lot_filter))
+        if selected_lot in dataset.specs and selected_lot in dataset.spec_paths:
+            updates["spec"] = dataset.specs[selected_lot]
+            updates["spec_path"] = dataset.spec_paths[selected_lot]
+    return replace(dataset, **updates)
+
+
+def sync_multiselect_state(key: str, options: Sequence[str]) -> None:
+    """Keep an explicit custom selection valid when upstream options change."""
+
+    option_list = list(options)
+    current = st.session_state.get(key)
+    if current is None:
+        st.session_state[key] = option_list[:1]
+    else:
+        valid = [value for value in current if value in option_list]
+        st.session_state[key] = valid or option_list[:1]
+
+
+def dataset_render_token(dataset: StandardDataset) -> Tuple[object, ...]:
+    """Identify the loaded dataset so an old draw request is never reused."""
+
+    return (
+        str(dataset.data_dir),
+        str(dataset.cleaned_path or ""),
+        str(dataset.yield_path or ""),
+        str(dataset.spec_path or ""),
+        len(dataset.cleaned) if dataset.cleaned is not None else -1,
+        len(dataset.yield_df) if dataset.yield_df is not None else -1,
+        tuple(dataset.cleaned.columns) if dataset.cleaned is not None else (),
     )
 
 
@@ -701,10 +824,13 @@ def cleaned_with_zone(cleaned: Optional[pd.DataFrame], pass_bin: int) -> pd.Data
     if df.empty:
         return df
 
-    df["_cx"] = df.groupby("Wafer_ID")["X"].transform("median")
-    df["_cy"] = df.groupby("Wafer_ID")["Y"].transform("median")
+    wafer_group = ["Wafer_ID"]
+    if "Lot_ID" in df.columns:
+        wafer_group.insert(0, "Lot_ID")
+    df["_cx"] = df.groupby(wafer_group)["X"].transform("median")
+    df["_cy"] = df.groupby(wafer_group)["Y"].transform("median")
     df["_radius"] = np.sqrt((df["X"] - df["_cx"]) ** 2 + (df["Y"] - df["_cy"]) ** 2)
-    max_radius = df.groupby("Wafer_ID")["_radius"].transform("max").replace(0, np.nan)
+    max_radius = df.groupby(wafer_group)["_radius"].transform("max").replace(0, np.nan)
     df["_radius_norm"] = (df["_radius"] / max_radius).fillna(0)
     df["Zone"] = pd.cut(
         df["_radius_norm"],
@@ -1405,8 +1531,121 @@ def main() -> None:
         st.warning("未找到可分析的标准 CSV。请先用 CP 清洗流程生成 cleaned / yield / spec 文件。")
         st.stop()
 
+    st.sidebar.markdown("### 🔎 图表筛选")
+    lot_options = dataset_lot_ids(dataset)
+    select_all_lots = st.sidebar.checkbox(
+        "全选批次",
+        value=True,
+        key="analysis_all_lots",
+        help="取消勾选后，可选择 1 个或多个批次。",
+    )
+    if select_all_lots:
+        selected_lots = lot_options
+    else:
+        sync_multiselect_state("analysis_lots", lot_options)
+        selected_lots = st.sidebar.multiselect(
+            "筛选批次",
+            lot_options,
+            key="analysis_lots",
+        )
+    if not selected_lots:
+        st.warning("请至少选择一个批次。")
+        st.stop()
+
+    wafer_options = dataset_wafer_keys(dataset, selected_lots)
+    wafer_label_to_key = {wafer_key_label(key): key for key in wafer_options}
+    wafer_labels = list(wafer_label_to_key)
+    select_all_wafers = st.sidebar.checkbox(
+        "全选片号",
+        value=True,
+        key="analysis_all_wafers",
+        help="取消勾选后，可选择 1 个或多个片号；片号按“批次 / W片号”显示。",
+    )
+    if select_all_wafers:
+        selected_wafer_labels = wafer_labels
+    else:
+        sync_multiselect_state("analysis_wafers", wafer_labels)
+        selected_wafer_labels = st.sidebar.multiselect(
+            "筛选片号",
+            wafer_labels,
+            key="analysis_wafers",
+        )
+    if not selected_wafer_labels:
+        st.warning("请至少选择一个片号。")
+        st.stop()
+
+    parameter_options = available_parameters(dataset.cleaned)
+    if parameter_options:
+        select_all_parameters = st.sidebar.checkbox(
+            "全选参数",
+            value=True,
+            key="analysis_all_parameters",
+            help="取消勾选后，可选择 1 个或多个测试参数。",
+        )
+        if select_all_parameters:
+            params = parameter_options
+        else:
+            sync_multiselect_state("analysis_parameters", parameter_options)
+            params = st.sidebar.multiselect(
+                "筛选参数",
+                parameter_options,
+                key="analysis_parameters",
+            )
+        if not params:
+            st.warning("请至少选择一个参数。")
+            st.stop()
+    else:
+        params = []
+
+    selected_wafer_keys = [wafer_label_to_key[label] for label in selected_wafer_labels]
+    st.sidebar.caption(
+        f"当前：{len(selected_lots)}/{len(lot_options)} 个批次，"
+        f"{len(selected_wafer_keys)}/{len(wafer_options)} 片，"
+        f"{len(params)}/{len(parameter_options)} 个参数。"
+    )
+
+    render_token = dataset_render_token(dataset)
+    draft_filters = {
+        "token": render_token,
+        "lots": list(selected_lots),
+        "wafers": list(selected_wafer_labels),
+        "parameters": list(params),
+    }
+    draw_requested = st.sidebar.button(
+        "🎨 绘制图形",
+        key="draw_analysis_charts",
+        type="primary",
+        use_container_width=True,
+    )
+    if draw_requested:
+        st.session_state["_analysis_applied_filters"] = draft_filters
+
+    applied_filters = st.session_state.get("_analysis_applied_filters")
+    if not applied_filters or applied_filters.get("token") != render_token:
+        st.info("请选择批次、片号和参数，然后点击左侧“绘制图形”。首次打开不会自动生成全部图表。")
+        st.stop()
+    if applied_filters != draft_filters:
+        st.info("筛选条件已修改。请点击左侧“绘制图形”，按新的范围生成图表。")
+        st.stop()
+
+    applied_wafer_map = {
+        wafer_key_label(key): key
+        for key in dataset_wafer_keys(dataset, applied_filters["lots"])
+    }
+    applied_wafer_keys = [
+        applied_wafer_map[label]
+        for label in applied_filters["wafers"]
+        if label in applied_wafer_map
+    ]
+    dataset = filter_standard_dataset(
+        dataset,
+        applied_filters["lots"],
+        applied_wafer_keys,
+    )
+    params = list(applied_filters["parameters"])
+
     summary = dataset_summary(dataset, pass_bin=pass_bin)
-    params = available_parameters(dataset.cleaned)
+    summary["params"] = len(params)
     yield_df = normalize_yield_data(dataset.yield_df)
     render_metric_cards(summary)
 
@@ -1594,8 +1833,7 @@ def main() -> None:
         if not params:
             st.info("没有可生成 Wafer Summary 的参数。")
         else:
-            selected_params = st.multiselect("选择参数", params, default=params[: min(8, len(params))], key="wsum_params")
-            wsum_df = wafer_summary_table(dataset.cleaned, dataset.spec, selected_params)
+            wsum_df = wafer_summary_table(dataset.cleaned, dataset.spec, params)
             if wsum_df.empty:
                 st.info("当前数据无法生成 Wafer Summary。")
             else:
