@@ -15,6 +15,7 @@ def test_data_management_exposes_save_load_and_reset(tmp_path, monkeypatch) -> N
 
     assert {"💾 保存数据", "🔄 重置"}.issubset(buttons)
     assert "📂 加载数据" not in buttons
+    assert "📁 重新加载当前目录" not in buttons
     assert buttons["💾 保存数据"].disabled is True
     assert len(uploaders) == 1
     assert uploaders[0].label == "📂 加载数据"

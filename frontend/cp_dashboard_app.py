@@ -226,6 +226,38 @@ h1, h2, h3, h4, h5, h6 { color: var(--vt-text); letter-spacing: .2px; }
   color: #06111c;
   border: 1px solid var(--vt-accent);
 }
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] {
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzoneInstructions"] {
+  display: none;
+}
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] > div {
+  width: 100%;
+}
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button {
+  width: 100%;
+  min-height: 42px;
+  background: rgba(77,171,247,.14);
+  color: var(--vt-text);
+  border: 1px solid var(--vt-accent);
+  border-radius: 8px;
+  font-weight: 650;
+}
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button:hover {
+  background: var(--vt-accent);
+  color: #06111c;
+}
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button span {
+  font-size: 0;
+}
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] button::after {
+  content: "📂 加载数据";
+  font-size: .92rem;
+}
 [data-baseweb="input"],
 [data-baseweb="base-input"],
 [data-baseweb="select"] > div {
@@ -425,6 +457,15 @@ def reset_cockpit_state() -> None:
     st.session_state["_cockpit_reset_notice"] = True
 
 
+def activate_directory_data() -> None:
+    """Use the manually entered standard CSV directory as the active source."""
+
+    st.session_state.pop("_cockpit_active_artifact_bytes", None)
+    st.session_state.pop("_cockpit_active_artifact_name", None)
+    load_standard_dataset.clear()
+    build_dataset_artifact.clear()
+
+
 def render_data_management_actions(
     container,
     artifact_bytes: Optional[bytes],
@@ -455,6 +496,7 @@ def render_data_management_actions(
             type=["zip", "cpcockpit"],
             help="点击 Browse files 选择以前保存的 Cockpit ZIP，选中后立即恢复图表。",
             key=f"cockpit_saved_zip_{int(st.session_state.get('_cockpit_upload_generation', 0))}",
+            label_visibility="collapsed",
         )
         st.button(
             "🔄 重置",
@@ -1269,6 +1311,7 @@ def main() -> None:
         "标准 CSV 输出目录",
         key="cp_data_dir",
         help="目录内应包含 *_cleaned_*.csv、*_yield_*.csv、*_spec_*.csv",
+        on_change=activate_directory_data,
     )
     pass_bin = int(
         st.sidebar.number_input(
@@ -1291,17 +1334,6 @@ def main() -> None:
         )
     )
     action_container = st.sidebar.container()
-    reload_clicked = st.sidebar.button(
-        "📁 重新加载当前目录",
-        type="primary",
-        help="返回并重新读取上方目录的标准 CSV，不会删除保存的 ZIP 文件。",
-    )
-    if reload_clicked:
-        st.session_state.pop("_cockpit_active_artifact_bytes", None)
-        st.session_state.pop("_cockpit_active_artifact_name", None)
-        load_standard_dataset.clear()
-        build_dataset_artifact.clear()
-
     active_artifact_bytes = st.session_state.get("_cockpit_active_artifact_bytes")
     active_artifact_name = st.session_state.get("_cockpit_active_artifact_name")
     if active_artifact_bytes and active_artifact_name:
