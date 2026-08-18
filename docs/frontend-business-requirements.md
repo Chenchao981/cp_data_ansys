@@ -92,18 +92,16 @@ Parameter,Unit,LimitL,LimitU,LSL,USL,Target
 | 图表 | 业务用途 | 关键字段 |
 | --- | --- | --- |
 | KPI 总览 | 快速看总测试数、良率、Wafer 数、参数数；跨批次时 Wafer 数按 `Lot_ID + Wafer_ID` 计数 | cleaned / yield |
-| 全局筛选 | 批次、片号、参数默认全选，也可选择任意 1 个或多个；片号按 `Lot_ID + Wafer_ID` 唯一识别；良品 Bin 范围可输入 `1`、`1,3` 或 `1-3,7`，并可选择“全部 Die / 仅 Good Die”参数样本；首次打开不绘图，点击“绘制图形”后应用 | cleaned / yield / spec |
+| 全局筛选 | 批次、片号、参数默认全选，也可选择任意 1 个或多个；片号按 `Lot_ID + Wafer_ID` 唯一识别；首次打开不绘图，点击“绘制图形”后应用 | cleaned / yield / spec |
 | 良率趋势 | 比较不同 Wafer 或批次良率 | `Wafer_ID`, `Yield` |
 | 失效 Bin Pareto | 找主要失效类型 | `Bin` 或 yield 动态 Bin 列 |
-| 参数 BoxPlot | 看参数分布、离群值、规格边界；支持按自定义 Good Die Bin 范围分析 | 参数列、`Bin`、spec |
-| 参数 Wafer 散点图 | 看每个参数在不同 Wafer 上的原始点分布和离散程度；支持按自定义 Good Die Bin 范围分析 | `Lot_ID`、`Wafer_ID`、`Bin`、参数列、spec |
+| 参数 BoxPlot | 看参数分布、离群值、规格边界 | 参数列、spec |
+| 参数 Wafer 散点图 | 看每个参数在不同 Wafer 上的原始点分布和离散程度 | `Lot_ID`、`Wafer_ID`、参数列、spec |
 | Wafer Mapping | 默认一次展示全部圆片的同一着色项目；也可选择 1～25 片查看逐 die 详情。可切换综合 Bin 或测试参数，定位 Bin 不良、低于 LSL 和高于 USL 的 die | `Lot_ID`, `Wafer_ID`, `X`, `Y`, `Bin`, 参数列、spec |
 | 区域分析 | 比较 Center / Mid / Edge | `X`, `Y`, 参数列 |
 | 失效叠加 | 看多个失效点位是否聚集 | `X`, `Y`, `Bin` |
 | Wafer Summary | 横向比较 Wafer 的均值、标准差、中位数 | `Wafer_ID`, 参数列 |
 | Cpk / 超限表 | 质量评价与规格风险识别 | 参数列、spec |
-
-“良品 Bin 范围”是 Cockpit 的统一展示口径：它同时影响良品数、良率、失效判断、综合 Bin Mapping，以及“仅 Good Die”的参数样本。该配置不回写 cleaned/yield/spec CSV，也不替代清洗流程已批准的 `CPLot.pass_bin` 契约。
 
 ## 7. 业务边界
 

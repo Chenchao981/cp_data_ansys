@@ -39,7 +39,7 @@ def sample_cleaned() -> pd.DataFrame:
 
 
 def test_bin_mapping_keeps_same_wafer_id_separate_across_lots() -> None:
-    result = prepare_wafer_mapping(sample_cleaned(), good_bins=(1,))
+    result = prepare_wafer_mapping(sample_cleaned(), pass_bin=1)
     summary = wafer_mapping_summary(result)
 
     assert summary["wafers"] == 4
@@ -60,31 +60,10 @@ def test_dashboard_summary_counts_physical_wafers_across_lots() -> None:
         spec=None,
     )
 
-    summary = dataset_summary(dataset, good_bins=(1,))
+    summary = dataset_summary(dataset, pass_bin=1)
 
     assert summary["lots"] == 2
     assert summary["wafers"] == 4
-
-
-def test_custom_good_bin_range_changes_dashboard_and_mapping_judgement() -> None:
-    cleaned = sample_cleaned()
-    dataset = StandardDataset(
-        data_dir=Path("."),
-        cleaned_path=None,
-        yield_path=None,
-        spec_path=None,
-        cleaned=cleaned,
-        yield_df=None,
-        spec=None,
-    )
-
-    summary = dataset_summary(dataset, good_bins=(1, 2))
-    mapping = prepare_wafer_mapping(cleaned, good_bins=(1, 2))
-
-    assert summary["pass_die"] == 36
-    assert summary["fail_die"] == 0
-    assert set(mapping.data["_Status_Code"]) == {1}
-    assert "1, 2" in mapping.mapping_label
 
 
 def test_parameter_mapping_marks_low_and_high_spec_failures() -> None:
@@ -127,7 +106,7 @@ def test_one_sided_parameter_mapping_only_shows_applicable_fail_legend() -> None
 
 
 def test_mapping_grid_renders_every_wafer_in_one_figure() -> None:
-    result = prepare_wafer_mapping(sample_cleaned(), good_bins=(1,))
+    result = prepare_wafer_mapping(sample_cleaned(), pass_bin=1)
     figure = wafer_mapping_grid(result, columns=2)
 
     heatmaps = [trace for trace in figure.data if trace.type == "heatmap"]
@@ -138,7 +117,7 @@ def test_mapping_grid_renders_every_wafer_in_one_figure() -> None:
 
 
 def test_mapping_can_filter_exact_lot_and_wafer_for_detail_view() -> None:
-    result = prepare_wafer_mapping(sample_cleaned(), good_bins=(1,))
+    result = prepare_wafer_mapping(sample_cleaned(), pass_bin=1)
     assert wafer_mapping_wafer_keys(result) == [
         ("LOT-A", "1"),
         ("LOT-A", "2"),
@@ -155,7 +134,7 @@ def test_mapping_can_filter_exact_lot_and_wafer_for_detail_view() -> None:
 
 
 def test_mapping_compact_mode_omits_per_die_hover_payload() -> None:
-    result = prepare_wafer_mapping(sample_cleaned(), good_bins=(1,))
+    result = prepare_wafer_mapping(sample_cleaned(), pass_bin=1)
     compact = wafer_mapping_grid(result, columns=2, include_hover=False)
     detailed = wafer_mapping_grid(result, columns=2, include_hover=True)
     compact_heatmap = next(trace for trace in compact.data if trace.type == "heatmap")
@@ -182,7 +161,7 @@ def test_duplicate_coordinate_uses_fail_priority_and_is_reported() -> None:
     duplicate["Seq"] = 999
     cleaned = pd.concat([cleaned, duplicate], ignore_index=True)
 
-    result = prepare_wafer_mapping(cleaned, good_bins=(1,))
+    result = prepare_wafer_mapping(cleaned, pass_bin=1)
     summary = wafer_mapping_summary(result)
     figure = wafer_mapping_grid(result, columns=2)
 
