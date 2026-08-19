@@ -14,6 +14,7 @@ from __future__ import annotations
 import math
 import os
 import sys
+from html import escape
 from io import BytesIO
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -934,6 +935,27 @@ def render_file_status(dataset: StandardDataset) -> None:
     st.sidebar.markdown(html, unsafe_allow_html=True)
 
 
+def active_artifact_status_html(file_name: Optional[str]) -> str:
+    """Build the compact active Cockpit ZIP status card."""
+    if not file_name:
+        return ""
+    safe_name = escape(str(file_name))
+    return (
+        '<div class="vt-card">'
+        f'<div style="font-size:.78rem;margin:4px 0;color:var(--vt-good)">'
+        f"当前展示：{safe_name}</div>"
+        "</div>"
+    )
+
+
+def render_active_artifact_status(file_name: Optional[str]) -> None:
+    """Show the active Cockpit ZIP with the same compact typography as file status."""
+    html = active_artifact_status_html(file_name)
+    if not html:
+        return
+    st.sidebar.markdown(html, unsafe_allow_html=True)
+
+
 def render_bin_grid(bin_counts: pd.Series, total: int) -> None:
     if bin_counts.empty:
         st.info("当前数据没有可用的 Bin 统计。")
@@ -1467,7 +1489,7 @@ def main() -> None:
             active_artifact_name = None
         else:
             artifact_bytes = active_artifact_bytes
-            st.sidebar.success(f"当前展示：{active_artifact_name}")
+            render_active_artifact_status(active_artifact_name)
     else:
         dataset = load_standard_dataset(data_dir)
         artifact_bytes = None
@@ -1525,8 +1547,6 @@ def main() -> None:
             st.error(str(exc))
             st.stop()
         st.sidebar.caption("已按 Lot 隔离数据和规格，避免跨 Lot 误用限值。")
-    render_file_status(dataset)
-
     if dataset.cleaned is None and dataset.yield_df is None:
         st.warning("未找到可分析的标准 CSV。请先用 CP 清洗流程生成 cleaned / yield / spec 文件。")
         st.stop()
@@ -1617,6 +1637,8 @@ def main() -> None:
         type="primary",
         use_container_width=True,
     )
+    # Keep the file summary below all controls so it never covers the operations.
+    render_file_status(dataset)
     if draw_requested:
         st.session_state["_analysis_applied_filters"] = draft_filters
 

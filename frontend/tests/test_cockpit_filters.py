@@ -5,13 +5,24 @@ from pathlib import Path
 import pandas as pd
 from streamlit.testing.v1 import AppTest
 
+import frontend.cp_dashboard_app as cockpit_app
 from frontend.cp_dashboard_app import (
     StandardDataset,
+    active_artifact_status_html,
     dataset_lot_ids,
     dataset_wafer_keys,
     filter_standard_dataset,
     wafer_key_label,
 )
+
+
+def test_file_status_is_compact_and_rendered_after_draw_control() -> None:
+    html = active_artifact_status_html("FA54-5339_Cockpit & 1.zip")
+    assert "font-size:.78rem" in html
+    assert "FA54-5339_Cockpit &amp; 1.zip" in html
+
+    source = Path(cockpit_app.__file__).read_text(encoding="utf-8")
+    assert source.index('key="draw_analysis_charts"') < source.index("render_file_status(dataset)")
 
 
 def _dataset() -> StandardDataset:
