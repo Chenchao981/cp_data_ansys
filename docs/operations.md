@@ -92,3 +92,16 @@ Lion 格式 2 使用旧版二进制 `.xls`。发布脚本会把纯 Python 的 `x
 - HH、JT、Lion CP、lion-管芯数、国宇FRD Widget 均可加载
 - 至少一套脱敏样例可完成清洗和图表生成
 - 发布目录不包含原始 CP 数据、日志或内部文档
+
+## 5. TMS 快速 PAT 无界面入口
+
+`app.pyz` 同时包含 `cp_data_processor.analysis.quick_pat`。TMS 应先调用同一发布包的厂商 Cleaner 生成标准 cleaned/spec CSV，再调用 `generate_cleaned_csv_pat`；TMS 不应重写解析、单位转换或 PAT 公式。
+
+当前公式合同为 `AEC_Q101_MEDIAN_IQR_5SIGMA_VDMOS_V5_6`，来源是历史 `VDMOS_Tool_v5.6.html` 的现有 CP PAT：至少 10 个有效值，位置四分位数，`sigma=max(0.0001,IQR)/1.349`，上下限为 `Median ± 5σ`。非数值和不足 10 点的 spec 项跳过；全部参数均不可统计时失败。该口径仍需业务负责人确认后再标记为生产批准标准。
+
+发布验证还应执行：
+
+```powershell
+python -m pytest cp_data_processor\tests\test_quick_pat.py packaging\tests\test_frontend_release.py -q
+packaging\release\start.bat --check
+```
