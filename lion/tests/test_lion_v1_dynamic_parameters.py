@@ -144,6 +144,48 @@ def test_dynamic_parameter_same_name_spec_conflict_names_both_files(tmp_path):
         create_batch_lot(lots)
 
 
+def test_multi_lot_v1_keeps_conflicting_specs_isolated_per_lot(tmp_path):
+    first = _write_lion_v1(
+        tmp_path,
+        "F10001",
+        1,
+        [("VF1", "V", 1.0, 1.2), ("PARAM_A", "uA", 0.0, 1.0)],
+    )
+    second = _write_lion_v1(
+        tmp_path,
+        "F20002",
+        1,
+        [("VF1", "V", 0.5, 1.3), ("PARAM_B", "mV", -1.0, 2.0)],
+    )
+    first_batch = create_batch_lot(process_lion_batch_files([str(first)]))
+    second_batch = create_batch_lot(process_lion_batch_files([str(second)]))
+
+    outputs = generate_lion_run_csvs(
+        [first_batch, second_batch],
+        str(tmp_path / "output"),
+    )
+
+    assert "spec" not in outputs
+    assert set(outputs["specs"]) == {"F10001", "F20002"}
+    cleaned = pd.read_csv(outputs["cleaned"])
+    yield_df = pd.read_csv(outputs["yield"])
+    assert set(cleaned["Lot_ID"].astype(str)) == {"F10001", "F20002"}
+    assert set(yield_df["Lot_ID"].astype(str)) == {"F10001", "F20002"}
+    assert cleaned.loc[cleaned["Lot_ID"] == "F10001", "PARAM_B"].isna().all()
+    assert cleaned.loc[cleaned["Lot_ID"] == "F20002", "PARAM_A"].isna().all()
+
+    specs = {
+        lot_id: pd.read_csv(path, header=None)
+        for lot_id, path in outputs["specs"].items()
+    }
+    first_vf1 = specs["F10001"].columns[specs["F10001"].iloc[0] == "VF1"][0]
+    second_vf1 = specs["F20002"].columns[specs["F20002"].iloc[0] == "VF1"][0]
+    assert float(specs["F10001"].iloc[2, first_vf1]) == 1.0
+    assert float(specs["F10001"].iloc[3, first_vf1]) == 1.2
+    assert float(specs["F20002"].iloc[2, second_vf1]) == 0.5
+    assert float(specs["F20002"].iloc[3, second_vf1]) == 1.3
+
+
 def test_dynamic_parameter_rejects_nonnumeric_text_and_duplicate_die(tmp_path):
     invalid = _write_lion_v1(
         tmp_path / "invalid",

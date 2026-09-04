@@ -68,7 +68,7 @@ Wafer 级良率汇总。当前实现以 `Gross_die`、`Good_die`、`Yield` 为�
 
 参数规格。HH/JT 通常使用逐参数行结构，例如 `Parameter`、`Unit`、`LimitL`、`LimitU`、`LSL`、`USL`、`Target`。
 
-Lion 使用横向矩阵式规格文件。成熟 V1 单次运行保持一份 spec，但参数列来自所有 Wafer 的有序并集：测试项允许增加或减少，未执行测试的 Wafer 在 cleaned 对应列中为空；同名参数只有在 Unit、LimitL、LimitU 和测试条件一致时才能合并，否则停止并报告冲突文件。格式 2 在多 Lot 规格不一致时按 `Lot_ID` 分别输出 `{lot_id}_spec_*.csv`，每份仍保持 `Parameter / UNIT / LIMIT_LOW / LIMIT_HIGH` 四行矩阵。消费方不得任取第一份规格；必须按 cleaned 行的 `Lot_ID` 选择对应 spec。CP Cockpit 会在多规格运行中要求先选择参数分析 Lot，并同步过滤 cleaned/yield。
+Lion 使用横向矩阵式规格文件。成熟 V1 在同一 Lot 内从所有 Wafer 生成参数有序并集：测试项允许增加或减少，未执行测试的 Wafer 在 cleaned 对应列中为空；同一 Lot 内的同名参数只有在 Unit、LimitL、LimitU 和测试条件一致时才能合并，否则停止并报告冲突文件。单 Lot 运行保持一份 spec；多 Lot V1 与格式 2 均按 `Lot_ID` 分别输出 `{lot_id}_spec_*.csv`，每份保持 `Parameter / UNIT / LIMIT_LOW / LIMIT_HIGH` 四行矩阵。不同 Lot 的同名参数允许采用不同规格版本。消费方不得任取第一份规格；必须按 cleaned 行的 `Lot_ID` 选择对应 spec。CP Cockpit 会在多规格运行中要求先选择参数分析 Lot，并同步过滤 cleaned/yield。
 
 ### 输出文件夹
 
@@ -98,7 +98,7 @@ Cockpit ZIP 是标准 CSV 的便携分析压缩包，不是新的原始数据格
 
 Lion 格式 2 明确使用 `pass_bin=1`，保留所有整数 Fail Bin 且不重映射；失败 Die 的后续未测参数保留为空值，不能因此删除整行。`PART_ID`、`SITE_NUM`、`T_TIME`、`TEST_NUM` 属于过程/追溯字段，不作为测量参数。测量参数必须匹配已批准的完整有序 schema：原格式 2 为 15 参数，F0122A1 为 14 参数；不能仅凭“参数位于 TEST_NUM 右侧”接受未知产品结构。
 
-Lion V1 同样使用 `pass_bin=1`，但格式边界不同：`SITE_NUM / PART_INDEX / PASSFG / SOFT_BIN / T_TIME / X_COORD / Y_COORD / TEST_NUM` 是固定且有序的过程字段，后续列全部按源表顺序作为动态测量参数。V1 不限制参数数量或名称；参数增减通过并集兼容，同名规格冲突、重复坐标、重复 Seq、重复 Wafer、缺少基础字段或非空非数值测量内容均停止。
+Lion V1 同样使用 `pass_bin=1`，但格式边界不同：`SITE_NUM / PART_INDEX / PASSFG / SOFT_BIN / T_TIME / X_COORD / Y_COORD / TEST_NUM` 是固定且有序的过程字段，后续列全部按源表顺序作为动态测量参数。V1 不限制参数数量或名称；同一 Lot 内参数增减通过并集兼容，同一 Lot 内同名规格冲突、重复坐标、重复 Seq、重复 Wafer、缺少基础字段或非空非数值测量内容均停止。不同 Lot 的规格按 Lot 隔离，规格收紧或放宽不会回写、覆盖或重算其他 Lot。
 | 国宇 `Serial#` | `Seq` |
 | 国宇 `Bin#` | `Bin` |
 | 国宇重复 `IR` 列 | `IR_665V_1[nA]` / `IR_665V_2[nA]` |

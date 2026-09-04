@@ -247,6 +247,22 @@ def _merge_dynamic_parameters(
     return list(merged.values())
 
 
+def _collect_parameter_union(lots: List[CPLot]) -> List[CPParameter]:
+    """Collect parameter names across Lots without treating specs as global.
+
+    Specifications are authoritative only inside their source Lot.  The returned
+    objects provide a stable column union for the combined in-memory lot; they
+    must not be used to emit a cross-Lot spec file.
+    """
+
+    merged: Dict[str, CPParameter] = {}
+    for lot in lots:
+        for parameter in lot.params:
+            if parameter.id not in merged:
+                merged[parameter.id] = deepcopy(parameter)
+    return list(merged.values())
+
+
 def _lion_spec_frame(parameters: List[CPParameter]) -> pd.DataFrame:
     """Build the existing horizontal Lion spec from a merged parameter union."""
 
@@ -400,10 +416,9 @@ def create_combined_lot(all_batch_lots: List[CPLot]) -> CPLot:
     # 收集所有晶圆和参数（按批次顺序）
     all_wafers = []
     if next(iter(source_formats)) == LION_V1_FORMAT:
-        all_params = _merge_dynamic_parameters(
-            [(lot.lot_id, lot) for lot in all_batch_lots],
-            context="Lion 合并运行",
-        )
+        # 不同 Lot 可以使用不同产品规格；这里只收集 cleaned 的列并集，
+        # 每个 Lot 的权威规格由 generate_lion_run_csvs 分别输出。
+        all_params = _collect_parameter_union(all_batch_lots)
     else:
         all_params = deepcopy(first_lot.params)
     all_chip_data = []
@@ -431,7 +446,7 @@ def create_combined_lot(all_batch_lots: List[CPLot]) -> CPLot:
     
     combined_lot.wafers = all_wafers
     combined_lot.params = all_params
-    if combined_lot.source_format == LION_V1_FORMAT:
+    if combined_lot.source_format == LION_V1_FORMAT and len(all_batch_lots) == 1:
         combined_lot.lion_spec_data = _lion_spec_frame(all_params)
     
     # 合并所有芯片数据（按批次顺序）
@@ -446,10 +461,9 @@ def generate_lion_run_csvs(
 ) -> Dict[str, object]:
     """Generate the approved outputs for one homogeneous Lion run.
 
-    V1 retains the mature single-spec behavior.  V2 emits one combined cleaned
-    file, one combined yield file, and one existing-format horizontal spec file
-    per Lot so a different Lot specification can never be hidden by first-Lot
-    selection.
+    A single V1 Lot retains the mature three-file behavior.  Multi-Lot V1 and
+    V2 runs emit one combined cleaned file, one combined yield file, and one
+    horizontal spec file per Lot so different Lot specifications are isolated.
     """
 
     if not all_batch_lots:
@@ -461,14 +475,14 @@ def generate_lion_run_csvs(
     combined_lot.lot_id = first_lot_id
     generator = StandardCSVGenerator()
 
-    if source_format == LION_V1_FORMAT:
+    if source_format == LION_V1_FORMAT and len(all_batch_lots) == 1:
         return generator.generate_standard_csvs(combined_lot, output_dir)
-    if source_format != LION_V2_FORMAT:
+    if source_format not in {LION_V1_FORMAT, LION_V2_FORMAT}:
         raise ValueError(f"未知 Lion 输出格式版本: {source_format}")
 
     lot_ids = [lot.lot_id for lot in all_batch_lots]
     if len(lot_ids) != len(set(lot_ids)):
-        raise ValueError("同一次 Lion V2 运行包含重复 Lot_ID")
+        raise ValueError("同一次 Lion 运行包含重复 Lot_ID")
 
     timestamp = generator._generate_timestamp()
     cleaned_path = generator.generate_cleaned_csv(
