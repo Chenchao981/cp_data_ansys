@@ -19,6 +19,7 @@ Lion公司Excel格式CP测试数据处理适配器，将Lion格式转换为标�
 
 from typing import Dict, List, Optional, Tuple
 import logging
+import math
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -76,12 +77,14 @@ class LionAdapter(BaseCompanyAdapter):
         processed_lot = CPLot(
             lot_id=lot.lot_id,
             product=getattr(lot, 'product', 'Unknown'),
-            wafer_count=len(lot.wafers)
+            wafer_count=len(lot.wafers),
+            pass_bin=lot.pass_bin,
         )
         
         # 处理每个晶圆
         processed_wafers = []
-        all_params = set()
+        all_params = []
+        seen_params = set()
         
         for wafer in lot.wafers:
             processed_wafer = self._process_wafer(wafer)
@@ -89,14 +92,26 @@ class LionAdapter(BaseCompanyAdapter):
                 processed_wafers.append(processed_wafer)
                 # 收集所有参数名
                 if hasattr(processed_wafer, 'chip_data') and processed_wafer.chip_data is not None:
-                    param_columns = [col for col in processed_wafer.chip_data.columns 
-                                   if col not in ['Lot_ID', 'Wafer_ID', 'X', 'Y', 'Seq', 'Bin', 'CONT']]
-                    all_params.update(param_columns)
+                    excluded_columns = {
+                        'Lot_ID', 'Wafer_ID', 'X', 'Y', 'Seq', 'Bin', 'CONT',
+                        'SITE_NUM', 'T_TIME',
+                    }
+                    param_columns = [
+                        col for col in processed_wafer.chip_data.columns
+                        if col not in excluded_columns
+                    ]
+                    for column in param_columns:
+                        if column not in seen_params:
+                            seen_params.add(column)
+                            all_params.append(column)
         
         processed_lot.wafers = processed_wafers
         
         # 生成参数规格信息
         processed_lot.params = self._extract_parameters(lot, all_params)
+        processed_lot.parameter_schema = tuple(
+            name for name in all_params if name != 'TEST_NUM'
+        )
         
         # 生成合并数据
         processed_lot.combined_data = self._create_combined_data(processed_lot)
@@ -146,6 +161,8 @@ class LionAdapter(BaseCompanyAdapter):
         # 创建新的晶圆对象
         processed_wafer = CPWafer(
             wafer_id=wafer.wafer_id,
+            file_path=wafer.file_path,
+            source_lot_id=wafer.source_lot_id or getattr(wafer, 'lot_id', None),
             chip_count=total_chips,
             yield_rate=yield_rate
         )
@@ -169,7 +186,7 @@ class LionAdapter(BaseCompanyAdapter):
         
         return processed_wafer
     
-    def _extract_parameters(self, original_lot: CPLot, param_names: set) -> List[CPParameter]:
+    def _extract_parameters(self, original_lot: CPLot, param_names) -> List[CPParameter]:
         """
         从原始数据中提取参数规格信息
         
@@ -216,14 +233,18 @@ class LionAdapter(BaseCompanyAdapter):
                 su = None
                 
                 if 'LIMIT_LOW' in spec_data.index:
-                    sl_value = spec_data.loc['LIMIT_LOW', param_name]
-                    if pd.notna(sl_value) and str(sl_value).replace('.', '', 1).isdigit():
-                        sl = float(sl_value)
-                
+                    sl = self._optional_finite_float(
+                        spec_data.loc['LIMIT_LOW', param_name],
+                        param_name,
+                        'LIMIT_LOW',
+                    )
+
                 if 'LIMIT_HIGH' in spec_data.index:
-                    su_value = spec_data.loc['LIMIT_HIGH', param_name]
-                    if pd.notna(su_value) and str(su_value).replace('.', '', 1).isdigit():
-                        su = float(su_value)
+                    su = self._optional_finite_float(
+                        spec_data.loc['LIMIT_HIGH', param_name],
+                        param_name,
+                        'LIMIT_HIGH',
+                    )
                 
                 param = CPParameter(
                     id=param_name,
@@ -243,6 +264,20 @@ class LionAdapter(BaseCompanyAdapter):
                 parameters.append(param)
         
         return parameters
+
+    @staticmethod
+    def _optional_finite_float(value, parameter: str, limit_name: str):
+        if pd.isna(value) or str(value).strip() == '':
+            return None
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f'{parameter} 的 {limit_name} 不是数值: {value}'
+            ) from exc
+        if not math.isfinite(numeric):
+            raise ValueError(f'{parameter} 的 {limit_name} 不是有限数值: {value}')
+        return numeric
     
     def _create_combined_data(self, lot: CPLot) -> pd.DataFrame:
         """

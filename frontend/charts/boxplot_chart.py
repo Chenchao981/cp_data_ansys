@@ -142,8 +142,11 @@ class BoxplotChart:
         if self.cleaned_data is None:
             return []
         
-        # 排除系统字段，返回测试参数
-        exclude_cols = ['Lot_ID', 'Wafer_ID', 'Seq', 'Bin', 'X', 'Y']
+        # 排除标准身份字段和可选过程/追溯字段，只返回真实测量参数。
+        exclude_cols = [
+            'Lot_ID', 'Wafer_ID', 'Seq', 'Bin', 'X', 'Y',
+            'CONT', 'SITE_NUM', 'PART_ID', 'T_TIME', 'TEST_NUM',
+        ]
         params = [col for col in self.cleaned_data.columns if col not in exclude_cols]
         return params
     
@@ -1251,4 +1254,4 @@ def test_boxplot_chart():
 if __name__ == "__main__":
     # 配置日志记录，方便调试
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-    test_boxplot_chart() 
+    test_boxplot_chart()

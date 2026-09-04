@@ -23,6 +23,7 @@ from typing import List, Dict, Optional, Tuple
 import logging
 import sys
 import os
+import math
 
 # 添加项目根目录到路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -31,6 +32,23 @@ from cp_data_processor.data_models.cp_data import CPLot, CPWafer, CPParameter
 from cp_data_processor.readers.base_reader import BaseReader
 
 logger = logging.getLogger(__name__)
+
+
+LION_V1_FIXED_COLUMNS = (
+    'SITE_NUM',
+    'PART_INDEX',
+    'PASSFG',
+    'SOFT_BIN',
+    'T_TIME',
+    'X_COORD',
+    'Y_COORD',
+    'TEST_NUM',
+)
+LION_V1_SPEC_ROWS = ('UNIT', 'LIMIT_LOW', 'LIMIT_HIGH')
+
+
+class LionV1FormatError(ValueError):
+    """Raised when a workbook violates the approved dynamic Lion V1 contract."""
 
 
 class LionExcelReader(BaseReader):
@@ -71,19 +89,31 @@ class LionExcelReader(BaseReader):
             if not file_path_obj.exists():
                 return False
             
-            # 尝试读取Excel文件并检查工作表
+            # 只按工作簿内容识别，不依赖目录名称或固定参数数量。
             xl_file = pd.ExcelFile(file_path)
-            if 'dut_data' not in xl_file.sheet_names:
+            required_sheets = {'summary_information', 'dut_data'}
+            if not required_sheets.issubset(set(xl_file.sheet_names)):
                 return False
-            
-            # 检查dut_data工作表的基本结构
-            df = pd.read_excel(file_path, sheet_name='dut_data')
-            required_columns = ['PART_INDEX', 'SOFT_BIN', 'X_COORD', 'Y_COORD']
-            
-            # 检查是否包含必要的列
-            if not all(col in df.columns for col in required_columns):
+
+            preview = pd.read_excel(
+                file_path,
+                sheet_name='dut_data',
+                header=None,
+                nrows=4,
+            )
+            if len(preview) < 4 or preview.shape[1] <= len(LION_V1_FIXED_COLUMNS):
                 return False
-            
+            header = tuple(self._normalize_header(value) for value in preview.iloc[0])
+            if header[:len(LION_V1_FIXED_COLUMNS)] != LION_V1_FIXED_COLUMNS:
+                return False
+            if any(not name for name in header[len(LION_V1_FIXED_COLUMNS):]):
+                return False
+            spec_labels = tuple(
+                self._normalize_header(value) for value in preview.iloc[1:4, 0]
+            )
+            if spec_labels != LION_V1_SPEC_ROWS:
+                return False
+
             return True
             
         except Exception as e:
@@ -161,6 +191,9 @@ class LionExcelReader(BaseReader):
             
             # 提取参数信息
             lot.params = self._extract_parameters_from_spec(spec_df)
+            lot.parameter_schema = tuple(
+                spec_df.columns[len(LION_V1_FIXED_COLUMNS):]
+            )
             
             # 创建合并数据
             lot.combined_data = data_df.copy()
@@ -255,38 +288,114 @@ class LionExcelReader(BaseReader):
         Returns:
             Tuple[pd.DataFrame, pd.DataFrame]: (数据DataFrame, 规格DataFrame)
         """
-        # 读取dut_data工作表
-        df = pd.read_excel(file_path, sheet_name='dut_data')
-        
-        # 分离规格信息和实际数据
-        spec_rows = ['UNIT', 'LIMIT_LOW', 'LIMIT_HIGH']
-        
-        # 提取规格信息（前3行）
-        spec_data = df.head(3).copy()
-        spec_data.index = spec_rows
-        
-        # 提取实际数据（从第4行开始）
-        data_df = df.iloc[3:].copy().reset_index(drop=True)
-        
-        # 清理数据：移除空行和无效数据
-        data_df = data_df.dropna(subset=['PART_INDEX', 'SOFT_BIN', 'X_COORD', 'Y_COORD'])
-        
-        # 确保数值列的数据类型正确
-        numeric_columns = ['PART_INDEX', 'SOFT_BIN', 'X_COORD', 'Y_COORD', 'PASSFG']
-        for col in numeric_columns:
-            if col in data_df.columns:
-                data_df[col] = pd.to_numeric(data_df[col], errors='coerce')
-        
-        # 处理测试参数列
-        param_columns = [col for col in data_df.columns 
-                        if col not in numeric_columns + ['SITE_NUM', 'T_TIME', 'TEST_NUM']]
-        
-        for col in param_columns:
-            if col in data_df.columns:
-                # 尝试转换为数值，如果失败则保持原值
-                data_df[col] = pd.to_numeric(data_df[col], errors='coerce')
-        
+        raw = pd.read_excel(file_path, sheet_name='dut_data', header=None)
+        if len(raw) < 5:
+            raise LionV1FormatError('dut_data 缺少规格行或 Die 数据')
+
+        header = [self._normalize_header(value) for value in raw.iloc[0]]
+        if tuple(header[:len(LION_V1_FIXED_COLUMNS)]) != LION_V1_FIXED_COLUMNS:
+            raise LionV1FormatError(
+                'dut_data 固定字段必须为 ' + ','.join(LION_V1_FIXED_COLUMNS)
+            )
+        parameter_columns = header[len(LION_V1_FIXED_COLUMNS):]
+        if not parameter_columns or any(not name for name in parameter_columns):
+            raise LionV1FormatError('dut_data 至少需要一个非空动态测试参数')
+        duplicates = sorted({name for name in header if header.count(name) > 1})
+        if duplicates:
+            raise LionV1FormatError(f'dut_data 存在重复字段: {duplicates}')
+
+        body = raw.iloc[1:].copy()
+        body.columns = header
+        spec_labels = tuple(
+            self._normalize_header(value)
+            for value in body.iloc[:3][LION_V1_FIXED_COLUMNS[0]]
+        )
+        if spec_labels != LION_V1_SPEC_ROWS:
+            raise LionV1FormatError(
+                'dut_data 前三行必须依次为 UNIT、LIMIT_LOW、LIMIT_HIGH'
+            )
+
+        spec_data = body.head(3).copy()
+        spec_data.index = list(LION_V1_SPEC_ROWS)
+        self._validate_parameter_specs(spec_data, parameter_columns)
+
+        data_df = body.iloc[3:].copy()
+        data_df = data_df.loc[~data_df.isna().all(axis=1)].copy()
+        if data_df.empty:
+            raise LionV1FormatError('dut_data 没有有效 Die 数据')
+
+        required_base = ['PART_INDEX', 'SOFT_BIN', 'X_COORD', 'Y_COORD']
+        partial_rows = data_df[required_base].isna().any(axis=1)
+        if partial_rows.any():
+            rows = [int(index) + 1 for index in data_df.index[partial_rows][:5]]
+            raise LionV1FormatError(f'Die 基础字段不完整，Excel 行: {rows}')
+
+        for col in LION_V1_FIXED_COLUMNS:
+            self._coerce_numeric_column(
+                data_df,
+                col,
+                allow_blank=(col == 'T_TIME'),
+            )
+        for col in parameter_columns:
+            self._coerce_numeric_column(data_df, col, allow_blank=True)
+
+        bins = data_df['SOFT_BIN'].dropna()
+        if not np.isclose(bins, np.round(bins)).all():
+            raise LionV1FormatError('SOFT_BIN 必须为整数')
+        if data_df.duplicated(['X_COORD', 'Y_COORD']).any():
+            raise LionV1FormatError('同一 Wafer 存在重复 X_COORD + Y_COORD')
+        if data_df.duplicated(['PART_INDEX']).any():
+            raise LionV1FormatError('同一 Wafer 存在重复 PART_INDEX/Seq')
+
+        data_df = data_df.reset_index(drop=True)
         return data_df, spec_data
+
+    @staticmethod
+    def _normalize_header(value) -> str:
+        if pd.isna(value):
+            return ''
+        return str(value).strip()
+
+    @staticmethod
+    def _coerce_numeric_column(
+        data: pd.DataFrame,
+        column: str,
+        *,
+        allow_blank: bool,
+    ) -> None:
+        source = data[column]
+        converted = pd.to_numeric(source, errors='coerce')
+        invalid = source.notna() & converted.isna()
+        if invalid.any():
+            rows = [int(index) + 1 for index in source.index[invalid][:5]]
+            raise LionV1FormatError(
+                f'{column} 包含未批准的非数值内容，Excel 行: {rows}'
+            )
+        if not allow_blank and converted.isna().any():
+            rows = [int(index) + 1 for index in source.index[converted.isna()][:5]]
+            raise LionV1FormatError(f'{column} 不允许为空，Excel 行: {rows}')
+        data[column] = converted
+
+    @staticmethod
+    def _validate_parameter_specs(
+        spec_data: pd.DataFrame,
+        parameter_columns: List[str],
+    ) -> None:
+        for column in parameter_columns:
+            for row_name in ('LIMIT_LOW', 'LIMIT_HIGH'):
+                value = spec_data.loc[row_name, column]
+                if pd.isna(value) or str(value).strip() == '':
+                    continue
+                try:
+                    numeric = float(value)
+                except (TypeError, ValueError) as exc:
+                    raise LionV1FormatError(
+                        f'{column} 的 {row_name} 不是数值: {value}'
+                    ) from exc
+                if not math.isfinite(numeric):
+                    raise LionV1FormatError(
+                        f'{column} 的 {row_name} 不是有限数值: {value}'
+                    )
     
     def _read_summary_information(self, file_path: str) -> Dict:
         """
@@ -386,6 +495,8 @@ class LionExcelReader(BaseReader):
         # 创建晶圆对象
         wafer = CPWafer(
             wafer_id=wafer_id,
+            file_path=file_path,
+            source_lot_id=lot_id,
             chip_count=total_chips,
             yield_rate=yield_rate
         )

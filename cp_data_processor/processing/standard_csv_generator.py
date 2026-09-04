@@ -340,15 +340,19 @@ class StandardCSVGenerator:
             str: 生成的文件路径
         """
         
-        # 从第一个晶圆的spec_data中获取参数信息
-        spec_data = None
+        # 动态 Lion V1 批次会提供已对账的参数并集规格；旧流程和 V2
+        # 在未提供时继续回退到首个带 spec_data 的晶圆。
+        spec_data = getattr(lot, 'lion_spec_data', None)
         if lot.wafers and len(lot.wafers) > 0:
             # 查找有spec_data的晶圆
-            for wafer in lot.wafers:
-                if hasattr(wafer, 'spec_data') and wafer.spec_data is not None:
-                    spec_data = wafer.spec_data
-                    self.logger.info(f"找到规格数据，来源晶圆: {wafer.wafer_id}")
-                    break
+            if spec_data is None:
+                for wafer in lot.wafers:
+                    if hasattr(wafer, 'spec_data') and wafer.spec_data is not None:
+                        spec_data = wafer.spec_data
+                        self.logger.info(f"找到规格数据，来源晶圆: {wafer.wafer_id}")
+                        break
+            else:
+                self.logger.info("使用已对账的 Lion 动态参数并集规格")
         
         if spec_data is None:
             # 如果没有spec_data，创建空文件

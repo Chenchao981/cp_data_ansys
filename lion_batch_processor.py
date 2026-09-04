@@ -20,6 +20,7 @@ from pathlib import Path
 from collections import defaultdict
 from typing import Dict, List
 import logging
+from copy import deepcopy
 
 if sys.stdout and hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -35,7 +36,7 @@ from lion.lion_v2_reader import LION_V2_FORMAT, LionV2Reader
 from cp_data_processor.readers.company_adapters.company_config import get_company_config
 from cp_data_processor.readers.company_adapters.lion_adapter import LIONAdapter
 from cp_data_processor.processing.standard_csv_generator import StandardCSVGenerator
-from cp_data_processor.data_models.cp_data import CPLot
+from cp_data_processor.data_models.cp_data import CPLot, CPParameter
 
 # 设置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -173,8 +174,16 @@ def process_lion_batch_files(file_paths: List[str]) -> Dict[str, CPLot]:
             # 使用Lion适配器标准化
             standardized_lot = adapter.transform_to_standard_format(raw_lot)
             standardized_lot.source_format = source_format
+            standardized_lot.parameter_schema = tuple(
+                getattr(raw_lot, "parameter_schema", ())
+            )
             results[file_path] = standardized_lot
-            print(f"    ✓ 成功")
+            if source_format == LION_V1_FORMAT:
+                print(
+                    f"    ✓ 成功（动态参数 {len(standardized_lot.parameter_schema)} 个）"
+                )
+            else:
+                print(f"    ✓ 成功")
 
         except Exception as e:
             print(f"    ❌ 失败: {e}")
@@ -199,6 +208,64 @@ def _lot_spec_signature(lot: CPLot) -> tuple:
     )
 
 
+def _parameter_spec_signature(parameter: CPParameter) -> tuple:
+    unit = parameter.unit
+    if unit is not None:
+        unit = str(unit).strip()
+    return (
+        unit,
+        parameter.sl,
+        parameter.su,
+        tuple(getattr(parameter, "test_cond", []) or []),
+    )
+
+
+def _merge_dynamic_parameters(
+    labeled_lots,
+    *,
+    context: str,
+) -> List[CPParameter]:
+    """Merge additive Lion V1 schemas while blocking same-name spec conflicts."""
+
+    merged: Dict[str, CPParameter] = {}
+    sources: Dict[str, str] = {}
+    for source_label, lot in labeled_lots:
+        for parameter in lot.params:
+            existing = merged.get(parameter.id)
+            if existing is None:
+                merged[parameter.id] = deepcopy(parameter)
+                sources[parameter.id] = source_label
+                continue
+            if _parameter_spec_signature(existing) != _parameter_spec_signature(
+                parameter
+            ):
+                raise ValueError(
+                    f"{context} 参数 {parameter.id} 规格冲突: "
+                    f"{sources[parameter.id]}={_parameter_spec_signature(existing)}, "
+                    f"{source_label}={_parameter_spec_signature(parameter)}"
+                )
+    return list(merged.values())
+
+
+def _lion_spec_frame(parameters: List[CPParameter]) -> pd.DataFrame:
+    """Build the existing horizontal Lion spec from a merged parameter union."""
+
+    columns = [parameter.id for parameter in parameters]
+    values = {
+        parameter.id: {
+            "UNIT": ""
+            if parameter.unit in (None, "Unknown")
+            else str(parameter.unit).strip(),
+            "LIMIT_LOW": parameter.sl,
+            "LIMIT_HIGH": parameter.su,
+        }
+        for parameter in parameters
+    }
+    return pd.DataFrame(values, index=["UNIT", "LIMIT_LOW", "LIMIT_HIGH"])[
+        columns
+    ]
+
+
 def create_batch_lot(individual_lots: Dict[str, CPLot]) -> CPLot:
     """
     将多个单晶圆CPLot合并为一个包含所有晶圆的CPLot
@@ -212,7 +279,8 @@ def create_batch_lot(individual_lots: Dict[str, CPLot]) -> CPLot:
     if not individual_lots:
         raise ValueError("没有提供数据")
     
-    # 获取批次信息；格式、身份、Pass Bin 和规格必须片内一致。
+    # 获取批次信息；格式、身份和 Pass Bin 必须片内一致。V2 仍要求
+    # 完整规格一致；V1 允许参数增减，但同名参数的规格必须一致。
     first_lot = next(iter(individual_lots.values()))
     lot_id = first_lot.lot_id
     source_format = getattr(first_lot, "source_format", LION_V1_FORMAT)
@@ -224,8 +292,33 @@ def create_batch_lot(individual_lots: Dict[str, CPLot]) -> CPLot:
             raise ValueError("同一 Lion 批次的 Lot_ID 或 product 不一致")
         if lot.pass_bin != first_lot.pass_bin:
             raise ValueError("同一 Lion 批次的 pass_bin 不一致")
-        if _lot_spec_signature(lot) != spec_signature:
+        if (
+            source_format != LION_V1_FORMAT
+            and _lot_spec_signature(lot) != spec_signature
+        ):
             raise ValueError(f"Lion 批次 {lot_id} 内部规格不一致")
+
+    wafer_sources: Dict[str, str] = {}
+    for file_path, lot in individual_lots.items():
+        for wafer in lot.wafers:
+            wafer_id = str(wafer.wafer_id)
+            if wafer_id in wafer_sources:
+                raise ValueError(
+                    f"Lion 批次 {lot_id} 存在重复 Wafer_ID {wafer_id}: "
+                    f"{Path(wafer_sources[wafer_id]).name}, {Path(file_path).name}"
+                )
+            wafer_sources[wafer_id] = file_path
+
+    if source_format == LION_V1_FORMAT:
+        merged_params = _merge_dynamic_parameters(
+            [
+                (Path(file_path).name, lot)
+                for file_path, lot in individual_lots.items()
+            ],
+            context=f"Lion 批次 {lot_id}",
+        )
+    else:
+        merged_params = deepcopy(first_lot.params)
     
     # 创建合并后的CPLot
     batch_lot = CPLot(
@@ -238,16 +331,12 @@ def create_batch_lot(individual_lots: Dict[str, CPLot]) -> CPLot:
     
     # 收集所有晶圆和参数
     all_wafers = []
-    all_params = []
+    all_params = merged_params
     all_chip_data = []
     
     for file_path, lot in individual_lots.items():
         # 添加晶圆
         all_wafers.extend(lot.wafers)
-        
-        # 收集参数（避免重复）
-        if lot.params and not all_params:
-            all_params = lot.params
         
         # 收集芯片数据
         for wafer in lot.wafers:
@@ -256,6 +345,12 @@ def create_batch_lot(individual_lots: Dict[str, CPLot]) -> CPLot:
     
     batch_lot.wafers = all_wafers
     batch_lot.params = all_params
+    if source_format == LION_V1_FORMAT:
+        batch_lot.lion_spec_data = _lion_spec_frame(all_params)
+        batch_lot.parameter_schemas = tuple(
+            tuple(getattr(lot, "parameter_schema", ()))
+            for lot in individual_lots.values()
+        )
     
     # 合并所有芯片数据
     if all_chip_data:
@@ -304,7 +399,13 @@ def create_combined_lot(all_batch_lots: List[CPLot]) -> CPLot:
     
     # 收集所有晶圆和参数（按批次顺序）
     all_wafers = []
-    all_params = []
+    if next(iter(source_formats)) == LION_V1_FORMAT:
+        all_params = _merge_dynamic_parameters(
+            [(lot.lot_id, lot) for lot in all_batch_lots],
+            context="Lion 合并运行",
+        )
+    else:
+        all_params = deepcopy(first_lot.params)
     all_chip_data = []
     
     # 按批次顺序处理，确保排序正确
@@ -314,10 +415,6 @@ def create_combined_lot(all_batch_lots: List[CPLot]) -> CPLot:
         # 对当前批次的晶圆按wafer_id排序
         sorted_wafers = sorted(batch_lot.wafers, key=lambda w: int(w.wafer_id))
         all_wafers.extend(sorted_wafers)
-        
-        # 收集参数（避免重复）
-        if batch_lot.params and not all_params:
-            all_params = batch_lot.params
         
         # 收集芯片数据（保持批次顺序）
         if hasattr(batch_lot, 'combined_data') and batch_lot.combined_data is not None:
@@ -334,6 +431,8 @@ def create_combined_lot(all_batch_lots: List[CPLot]) -> CPLot:
     
     combined_lot.wafers = all_wafers
     combined_lot.params = all_params
+    if combined_lot.source_format == LION_V1_FORMAT:
+        combined_lot.lion_spec_data = _lion_spec_frame(all_params)
     
     # 合并所有芯片数据（按批次顺序）
     if all_chip_data:

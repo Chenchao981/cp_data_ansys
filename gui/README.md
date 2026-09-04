@@ -14,7 +14,7 @@ python -m gui.multi_company_main
 - `widgets/input_source_selector.py`：共用的“单文件夹 / 多压缩文件”数据源选择窗口
 - `widgets/huahong_widget.py`：HH 文件夹/单个或多个 ZIP/7z 输入、清洗与共用图表
 - `widgets/jetech_widget.py`：JT 文件夹/单 ZIP/多 ZIP 输入、专用处理与共用图表
-- `widgets/lion_widget.py`：Lion 文件夹/单 ZIP/多 ZIP 输入、V1/V2 严格内容分派、批次合并与 CP Cockpit 编排
+- `widgets/lion_widget.py`：Lion 文件夹/单 ZIP/多 ZIP 输入、动态参数 V1/V2 严格内容分派、批次合并与 CP Cockpit 编排
 - `widgets/lion_die_count_widget.py`：Lion 管芯数两种已验收 Excel 格式的递归识别、五列汇总与日志编排
 - `widgets/guoyu_widget.py`：国宇FRD 文件夹/单 ZIP/多 ZIP 输入与标准 CSV 编排
 - `cp_data_gui.py`：早期 HH 简化 GUI，保留兼容
